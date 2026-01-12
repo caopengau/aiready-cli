@@ -12,6 +12,7 @@ export interface PatternDetectOptions extends ScanOptions {
   maxCandidatesPerBlock?: number; // Cap candidates per block, default 100
   fastMode?: boolean; // Use fast Jaccard similarity (default true)
   maxComparisons?: number; // Maximum total comparisons budget, default 50000
+  streamResults?: boolean; // Output duplicates incrementally as found (default false)
 }
 
 export interface PatternSummary {
@@ -68,6 +69,7 @@ export async function analyzePatterns(
     maxCandidatesPerBlock = 100,
     fastMode = true,
     maxComparisons = 50000,
+    streamResults = false,
     ...scanOptions
   } = options;
 
@@ -93,6 +95,7 @@ export async function analyzePatterns(
     maxCandidatesPerBlock,
     fastMode,
     maxComparisons,
+    streamResults,
   });
 
   for (const file of files) {

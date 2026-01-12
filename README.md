@@ -239,8 +239,14 @@ Estimated tokens wasted when AI tools process duplicate code:
 # Default (fast and accurate enough for most use cases)
 aiready-patterns ./src
 
-# Increase quality at cost of speed
+# Stream results incrementally (see duplicates as they're found)
+aiready-patterns ./src --stream-results
+
+# Increase quality at cost of speed  
 aiready-patterns ./src --no-fast-mode --max-comparisons 100000
+
+# Exact mode with progress tracking (slowest, shows % and ETA)
+aiready-patterns ./src --no-approx --no-fast-mode --stream-results --max-blocks 100
 
 # Maximum speed (aggressive filtering)
 aiready-patterns ./src --max-blocks 200 --min-shared-tokens 12
@@ -249,11 +255,24 @@ aiready-patterns ./src --max-blocks 200 --min-shared-tokens 12
 aiready-patterns ./src --no-approx --no-fast-mode --max-comparisons 500000
 ```
 
+**CLI Options:**
+- `--stream-results` - Output duplicates as found (useful for long analysis)
+- `--no-fast-mode` - Use Levenshtein instead of Jaccard (more accurate, much slower)
+- `--no-approx` - Disable candidate filtering (enables progress % and ETA)
+- `--max-comparisons N` - Cap total comparisons (default 50K)
+- `--max-blocks N` - Limit blocks analyzed (default 500)
+
+**Progress Indicators:**
+- **Approx mode**: Shows blocks processed + duplicates found
+- **Exact mode**: Shows % complete, ETA, and comparisons processed
+- **Stream mode**: Prints each duplicate immediately when found
+
 **Recommendations:**
 - **< 100 files**: Use defaults, or try `--no-fast-mode` for higher accuracy
-- **100-500 files**: Use defaults with fast mode
-- **500-1000 files**: Use `--max-blocks 500 --min-lines 10`
+- **100-500 files**: Use defaults with fast mode (2-5s typical)
+- **500-1000 files**: Use `--max-blocks 500 --min-lines 10` (~3-10s)
 - **1000+ files**: Use `--max-blocks 300 --min-lines 15` or analyze by module
+- **Slow analysis**: Add `--stream-results` to see progress in real-time
 
 ## 🔧 CI/CD Integration
 

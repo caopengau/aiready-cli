@@ -23,6 +23,7 @@ program
   .option('--max-candidates <number>', 'Maximum candidates per block', '100')
   .option('--no-fast-mode', 'Use slower but more accurate Levenshtein distance (default: fast Jaccard)')
   .option('--max-comparisons <number>', 'Maximum total comparisons budget', '50000')
+  .option('--stream-results', 'Output duplicates incrementally as found (useful for slow analysis)')
   .option('--include <patterns>', 'File patterns to include (comma-separated)')
   .option('--exclude <patterns>', 'File patterns to exclude (comma-separated)')
   .option(
@@ -45,6 +46,7 @@ program
       maxCandidatesPerBlock: parseInt(options.maxCandidates),
       fastMode: options.fastMode !== false, // default true; --no-fast-mode sets to false
       maxComparisons: parseInt(options.maxComparisons),
+      streamResults: options.streamResults === true, // default false; --stream-results sets to true
       include: options.include?.split(','),
       exclude: options.exclude?.split(','),
     });

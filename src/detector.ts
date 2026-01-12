@@ -36,6 +36,7 @@ interface DetectionOptions {
   maxCandidatesPerBlock?: number; // Cap candidates per block
   fastMode?: boolean; // Use fast Jaccard similarity instead of Levenshtein (default true)
   maxComparisons?: number; // Maximum total comparisons budget
+  streamResults?: boolean; // Output duplicates as they're found (useful for slow mode)
 }
 
 interface CodeBlock {
@@ -263,6 +264,7 @@ export async function detectDuplicatePatterns(
     maxCandidatesPerBlock = 100,
     fastMode = true,
     maxComparisons = 50000, // Cap at 50K comparisons by default
+    streamResults = false,
   } = options;
   const duplicates: DuplicatePattern[] = [];
 
@@ -337,11 +339,15 @@ export async function detectDuplicatePatterns(
     // Progress reporting every batch
     if (i % batchSize === 0 && i > 0) {
       const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+      const duplicatesFound = duplicates.length;
       if (totalComparisons !== undefined) {
         const progress = ((comparisonsProcessed / totalComparisons) * 100).toFixed(1);
-        console.log(`   ${progress}% complete (${comparisonsProcessed.toLocaleString()}/${totalComparisons.toLocaleString()} comparisons, ${elapsed}s elapsed)`);
+        const remaining = totalComparisons - comparisonsProcessed;
+        const rate = comparisonsProcessed / parseFloat(elapsed);
+        const eta = remaining > 0 ? (remaining / rate).toFixed(0) : 0;
+        console.log(`   ${progress}% (${comparisonsProcessed.toLocaleString()}/${totalComparisons.toLocaleString()} comparisons, ${elapsed}s elapsed, ~${eta}s remaining, ${duplicatesFound} duplicates)`);
       } else {
-        console.log(`   Processed ${i.toLocaleString()} blocks (${elapsed}s elapsed)`);
+        console.log(`   Processed ${i.toLocaleString()}/${allBlocks.length} blocks (${elapsed}s elapsed, ${duplicatesFound} duplicates)`);
       }
       // Allow garbage collection between batches
       await new Promise((resolve) => setImmediate(resolve));
@@ -383,7 +389,7 @@ export async function detectDuplicatePatterns(
           ? jaccardSimilarity(blockTokens[i], blockTokens[j])
           : calculateSimilarity(block1.content, block2.content);
         if (similarity >= minSimilarity) {
-          duplicates.push({
+          const duplicate = {
             file1: block1.file,
             file2: block2.file,
             line1: block1.startLine,
@@ -393,7 +399,14 @@ export async function detectDuplicatePatterns(
             patternType: block1.patternType,
             tokenCost: block1.tokenCost + block2.tokenCost,
             linesOfCode: block1.linesOfCode,
-          });
+          };
+          duplicates.push(duplicate);
+          
+          if (streamResults) {
+            console.log(`\n   ✅ Found: ${duplicate.patternType} ${Math.round(similarity * 100)}% similar`);
+            console.log(`      ${duplicate.file1}:${duplicate.line1} ⇔ ${duplicate.file2}:${duplicate.line2}`);
+            console.log(`      Token cost: ${duplicate.tokenCost.toLocaleString()}`);
+          }
         }
       }
     } else {
@@ -414,7 +427,7 @@ export async function detectDuplicatePatterns(
           ? jaccardSimilarity(blockTokens[i], blockTokens[j])
           : calculateSimilarity(block1.content, block2.content);
         if (similarity >= minSimilarity) {
-          duplicates.push({
+          const duplicate = {
             file1: block1.file,
             file2: block2.file,
             line1: block1.startLine,
@@ -424,7 +437,14 @@ export async function detectDuplicatePatterns(
             patternType: block1.patternType,
             tokenCost: block1.tokenCost + block2.tokenCost,
             linesOfCode: block1.linesOfCode,
-          });
+          };
+          duplicates.push(duplicate);
+          
+          if (streamResults) {
+            console.log(`\n   ✅ Found: ${duplicate.patternType} ${Math.round(similarity * 100)}% similar`);
+            console.log(`      ${duplicate.file1}:${duplicate.line1} ⇔ ${duplicate.file2}:${duplicate.line2}`);
+            console.log(`      Token cost: ${duplicate.tokenCost.toLocaleString()}`);
+          }
         }
       }
     }
