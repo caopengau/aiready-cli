@@ -1,6 +1,6 @@
 {
   "name": "@aiready/pattern-detect",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Semantic duplicate pattern detection for AI-generated code - finds similar implementations that waste AI context tokens",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
@@ -50,7 +50,7 @@
     "url": "https://github.com/caopengau/aiready-pattern-detect/issues"
   },
   "dependencies": {
-    "@aiready/core": "workspace:*",
+    "@aiready/core": "^0.1.2",
     "commander": "^12.1.0",
     "chalk": "^5.3.0"
   },
