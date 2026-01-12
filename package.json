@@ -1,6 +1,6 @@
 {
   "name": "@aiready/cli",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Unified CLI for AIReady analysis tools",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
@@ -26,6 +26,11 @@
     "tsup": "^8.3.5",
     "@types/node": "^20.0.0"
   },
-  "keywords": ["aiready", "cli", "ai-readiness", "code-analysis"],
+  "keywords": [
+    "aiready",
+    "cli",
+    "ai-readiness",
+    "code-analysis"
+  ],
   "license": "MIT"
 }
