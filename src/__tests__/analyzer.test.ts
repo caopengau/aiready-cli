@@ -38,8 +38,8 @@ describe('calculateImportDepth', () => {
   it('should calculate import depth correctly', () => {
     const files = [
       { file: 'a.ts', content: 'export const a = 1;' },
-      { file: 'b.ts', content: 'import { a } from "./a";\nexport const b = a;' },
-      { file: 'c.ts', content: 'import { b } from "./b";\nexport const c = b;' },
+      { file: 'b.ts', content: 'import { a } from "a.ts";\nexport const b = a;' },
+      { file: 'c.ts', content: 'import { b } from "b.ts";\nexport const c = b;' },
     ];
 
     const graph = buildDependencyGraph(files);
@@ -67,15 +67,15 @@ describe('getTransitiveDependencies', () => {
   it('should get all transitive dependencies', () => {
     const files = [
       { file: 'a.ts', content: 'export const a = 1;' },
-      { file: 'b.ts', content: 'import { a } from "./a";\nexport const b = a;' },
-      { file: 'c.ts', content: 'import { b } from "./b";\nexport const c = b;' },
+      { file: 'b.ts', content: 'import { a } from "a.ts";\nexport const b = a;' },
+      { file: 'c.ts', content: 'import { b } from "b.ts";\nexport const c = b;' },
     ];
 
     const graph = buildDependencyGraph(files);
     const deps = getTransitiveDependencies('c.ts', graph);
 
-    expect(deps).toContain('./b');
-    expect(deps).toContain('./a');
+    expect(deps).toContain('b.ts');
+    expect(deps).toContain('a.ts');
     expect(deps.length).toBe(2);
   });
 });
@@ -98,8 +98,8 @@ describe('calculateContextBudget', () => {
 describe('detectCircularDependencies', () => {
   it('should detect circular dependencies', () => {
     const files = [
-      { file: 'a.ts', content: 'import { b } from "./b";\nexport const a = 1;' },
-      { file: 'b.ts', content: 'import { a } from "./a";\nexport const b = 2;' },
+      { file: 'a.ts', content: 'import { b } from "b.ts";\nexport const a = 1;' },
+      { file: 'b.ts', content: 'import { a } from "a.ts";\nexport const b = 2;' },
     ];
 
     const graph = buildDependencyGraph(files);
@@ -111,7 +111,7 @@ describe('detectCircularDependencies', () => {
   it('should return empty for no circular dependencies', () => {
     const files = [
       { file: 'a.ts', content: 'export const a = 1;' },
-      { file: 'b.ts', content: 'import { a } from "./a";\nexport const b = a;' },
+      { file: 'b.ts', content: 'import { a } from "a.ts";\nexport const b = a;' },
     ];
 
     const graph = buildDependencyGraph(files);
