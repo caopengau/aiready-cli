@@ -168,12 +168,37 @@ router.get('/posts/:id', createResourceHandler('Post', database.posts.findOne));
 
 ## ⚙️ Configuration
 
+### Common Options
+
 | Option | Description | Default |
 |--------|-------------|---------|
-| `minSimilarity` | Similarity threshold (0-1) | `0.85` |
+| `minSimilarity` | Similarity threshold (0-1). Use 0.65 for Jaccard (default), 0.85+ for Levenshtein | `0.65` |
 | `minLines` | Minimum lines to consider a pattern | `5` |
-| `include` | File patterns to include | `['**/*.ts', '**/*.js']` |
-| `exclude` | File patterns to exclude | `['**/node_modules/**', '**/*.test.*']` |
+| `maxBlocks` | Maximum code blocks to analyze (prevents OOM) | `500` |
+| `include` | File patterns to include | `['**/*.{ts,tsx,js,jsx,py,java}']` |
+| `exclude` | File patterns to exclude | See below |
+
+### Exclude Patterns (Default)
+
+By default, these patterns are excluded:
+```bash
+**/node_modules/**
+**/dist/**
+**/build/**
+**/.git/**
+**/coverage/**
+**/*.min.js
+**/*.bundle.js
+```
+
+Override with `--exclude` flag:
+```bash
+# Exclude test files and generated code
+aiready-patterns ./src --exclude "**/test/**,**/generated/**,**/__snapshots__/**"
+
+# Add to defaults (comma-separated)
+aiready-patterns ./src --exclude "**/node_modules/**,**/dist/**,**/build/**,**/*.spec.ts"
+```
 
 ## 📈 Understanding the Output
 
@@ -217,7 +242,7 @@ Estimated tokens wasted when AI tools process duplicate code:
 - C = average candidates per block (~100)  
 - T = average tokens per block (~50)
 - **Jaccard similarity** is O(T) instead of O(N²) Levenshtein
-- **Default threshold: 0.70** (Jaccard scores lower than Levenshtein)
+- **Default threshold: 0.65** (Jaccard scores 20-25% lower than Levenshtein)
 
 **Exact Mode** (`--no-approx --no-fast-mode`): **O(B² × N²)** where:
 - B = number of blocks
