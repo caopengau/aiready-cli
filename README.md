@@ -24,6 +24,19 @@ AI coding assistants (GitHub Copilot, ChatGPT, Claude) generate functionally sim
 | Refactoring Suggestions | ❌ Generic | ✅ Specific to pattern type |
 | Output Formats | Text/JSON | Console/JSON/HTML with rich formatting |
 
+#### How We Differ (and When to Use Each)
+
+- **Semantic intent vs exact clones**: jscpd flags copy-paste or near-duplicates; we detect functionally similar code even when structure differs (e.g., two API handlers with different frameworks).
+- **Pattern typing**: We classify duplicates into `api-handler`, `validator`, `utility`, `component`, etc., so teams can prioritize coherent refactors.
+- **AI context cost**: We estimate tokens wasted to quantify impact on AI tools (larger context, higher cost, more confusion).
+- **Refactoring guidance**: We propose targeted fixes per pattern type (e.g., extract middleware or create base handler).
+- **Performance profile**: We use Jaccard similarity with candidate filtering; ~2–3s for ~500 blocks on medium repos.
+
+Recommended workflow:
+- Run **jscpd** in CI to enforce low clone percentage (blocking).
+- Run **@aiready/pattern-detect** to surface semantic duplicates and token waste (advisory), feeding a refactoring backlog.
+- Use both for comprehensive hygiene: jscpd for exact clones; AIReady for intent-level duplication that AI tends to reintroduce.
+
 ## 🚀 Installation
 
 ```bash
@@ -173,6 +186,7 @@ router.get('/posts/:id', createResourceHandler('Post', database.posts.findOne));
 | Option | Description | Default |
 |--------|-------------|---------|
 | `minSimilarity` | Similarity threshold (0-1). Use 0.40 for Jaccard (default), 0.85+ for Levenshtein | `0.40` |
+| `minSimilarity` | Similarity threshold (0-1). Default `0.40` (Jaccard). Raise for only obvious duplicates; lower to catch more | `0.40` |
 | `minLines` | Minimum lines to consider a pattern | `5` |
 | `maxBlocks` | Maximum code blocks to analyze (prevents OOM) | `500` |
 | `include` | File patterns to include | `['**/*.{ts,tsx,js,jsx,py,java}']` |

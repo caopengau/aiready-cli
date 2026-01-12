@@ -63,7 +63,7 @@ export async function analyzePatterns(
   options: PatternDetectOptions
 ): Promise<AnalysisResult[]> {
   const {
-    minSimilarity = 0.40, // Jaccard similarity default (40% threshold)
+    minSimilarity = 0.4, // Jaccard similarity default (40% threshold)
     minLines = 5,
     maxBlocks = 500,
     batchSize = 100,
