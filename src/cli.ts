@@ -3,9 +3,9 @@
 import { Command } from 'commander';
 import { analyzeContext, generateSummary } from './index';
 import chalk from 'chalk';
-import { writeFileSync, existsSync, readFileSync } from 'fs';
-import { join } from 'path';
-import { loadMergedConfig, handleJSONOutput, handleCLIError, getElapsedTime } from '@aiready/core';
+import { writeFileSync, existsSync, readFileSync, mkdirSync } from 'fs';
+import { join, dirname } from 'path';
+import { loadMergedConfig, handleJSONOutput, handleCLIError, getElapsedTime, resolveOutputPath } from '@aiready/core';
 import prompts from 'prompts';
 
 const program = new Command();
@@ -91,14 +91,29 @@ program
           analysisTime: elapsedTime,
         };
 
-        handleJSONOutput(jsonOutput, options.outputFile, `\n✓ JSON report saved to ${options.outputFile}`);
+        const outputPath = resolveOutputPath(
+          options.outputFile,
+          `context-report-${new Date().toISOString().split('T')[0]}.json`,
+          directory
+        );
+        
+        handleJSONOutput(jsonOutput, outputPath, `\n✓ JSON report saved to ${outputPath}`);
         return;
       }
 
       if (options.output === 'html') {
         const html = generateHTMLReport(summary, results);
-        const outputPath =
-          options.outputFile || join(process.cwd(), 'context-report.html');
+        const outputPath = resolveOutputPath(
+          options.outputFile,
+          `context-report-${new Date().toISOString().split('T')[0]}.html`,
+          directory
+        );
+        
+        const dir = dirname(outputPath);
+        if (!existsSync(dir)) {
+          mkdirSync(dir, { recursive: true });
+        }
+        
         writeFileSync(outputPath, html);
         console.log(chalk.green(`\n✓ HTML report saved to ${outputPath}`));
         return;

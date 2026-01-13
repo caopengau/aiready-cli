@@ -75,8 +75,14 @@ aiready-context ./src --focus depth
 # Set thresholds
 aiready-context ./src --max-depth 5 --max-context 10000 --min-cohesion 0.6
 
-# Export to JSON
-aiready-context ./src --output json --output-file report.json
+# Export to JSON (saved to .aiready/ by default)
+aiready-context ./src --output json
+
+# Or specify custom path
+aiready-context ./src --output json --output-file custom-report.json
+```
+
+> **📁 Output Files:** By default, all output files are saved to the `.aiready/` directory in your project root. You can override this with `--output-file`.
 
 # Generate HTML report
 aiready-context ./src --output html --output-file report.html
