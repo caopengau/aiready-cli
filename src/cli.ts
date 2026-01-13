@@ -22,7 +22,7 @@ program
   .command('scan')
   .description('Run unified analysis on a codebase')
   .argument('<directory>', 'Directory to analyze')
-  .option('-t, --tools <tools>', 'Tools to run (comma-separated: patterns,context)', 'patterns,context')
+  .option('-t, --tools <tools>', 'Tools to run (comma-separated: patterns,context,consistency)', 'patterns,context,consistency')
   .option('--include <patterns>', 'File patterns to include (comma-separated)')
   .option('--exclude <patterns>', 'File patterns to exclude (comma-separated)')
   .option('-o, --output <format>', 'Output format: console, json', 'console')
@@ -35,7 +35,7 @@ program
     try {
       // Define defaults
       const defaults = {
-        tools: ['patterns', 'context'],
+        tools: ['patterns', 'context', 'consistency'],
         include: undefined,
         exclude: undefined,
         output: {
@@ -46,7 +46,7 @@ program
 
       // Load and merge config with CLI options
       const baseOptions = loadMergedConfig(directory, defaults, {
-        tools: options.tools ? options.tools.split(',').map((t: string) => t.trim()) as ('patterns' | 'context')[] : undefined,
+        tools: options.tools ? options.tools.split(',').map((t: string) => t.trim()) as ('patterns' | 'context' | 'consistency')[] : undefined,
         include: options.include?.split(','),
         exclude: options.exclude?.split(','),
       }) as any;
