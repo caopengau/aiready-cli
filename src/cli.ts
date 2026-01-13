@@ -152,7 +152,7 @@ program
 
       const { analyzePatterns, generateSummary } = await import('@aiready/pattern-detect');
 
-      const { results } = await analyzePatterns(finalOptions);
+      const { results, duplicates } = await analyzePatterns(finalOptions);
 
       const elapsedTime = getElapsedTime(startTime);
       const summary = generateSummary(results);
@@ -174,9 +174,57 @@ program
         
         handleJSONOutput(outputData, outputPath, `✅ Results saved to ${outputPath}`);
       } else {
-        console.log(`Pattern Analysis Complete (${elapsedTime}s)`);
-        console.log(`Found ${summary.totalPatterns} duplicate patterns`);
-        console.log(`Total token cost: ${summary.totalTokenCost} tokens`);
+        // Console output - format to match standalone CLI
+        const terminalWidth = process.stdout.columns || 80;
+        const dividerWidth = Math.min(60, terminalWidth - 2);
+        const divider = '━'.repeat(dividerWidth);
+        
+        console.log(chalk.cyan(divider));
+        console.log(chalk.bold.white('  PATTERN ANALYSIS SUMMARY'));
+        console.log(chalk.cyan(divider) + '\n');
+
+        console.log(chalk.white(`📁 Files analyzed: ${chalk.bold(results.length)}`));
+        console.log(chalk.yellow(`⚠  Duplicate patterns found: ${chalk.bold(summary.totalPatterns)}`));
+        console.log(chalk.red(`💰 Token cost (wasted): ${chalk.bold(summary.totalTokenCost.toLocaleString())}`));
+        console.log(chalk.gray(`⏱  Analysis time: ${chalk.bold(elapsedTime + 's')}`));
+
+        // Show breakdown by pattern type
+        const sortedTypes = Object.entries(summary.patternsByType || {})
+          .filter(([, count]) => count > 0)
+          .sort(([, a], [, b]) => (b as number) - (a as number));
+
+        if (sortedTypes.length > 0) {
+          console.log(chalk.cyan('\n' + divider));
+          console.log(chalk.bold.white('  PATTERNS BY TYPE'));
+          console.log(chalk.cyan(divider) + '\n');
+          sortedTypes.forEach(([type, count]) => {
+            console.log(`  ${chalk.white(type.padEnd(15))} ${chalk.bold(count)}`);
+          });
+        }
+
+        // Show top duplicates
+        if (summary.totalPatterns > 0 && duplicates.length > 0) {
+          console.log(chalk.cyan('\n' + divider));
+          console.log(chalk.bold.white('  TOP DUPLICATE PATTERNS'));
+          console.log(chalk.cyan(divider) + '\n');
+
+          // Sort by similarity and take top 10
+          const topDuplicates = [...duplicates]
+            .sort((a, b) => b.similarity - a.similarity)
+            .slice(0, 10);
+
+          topDuplicates.forEach((dup) => {
+            const severity = dup.similarity > 0.95 ? 'CRITICAL' : dup.similarity > 0.9 ? 'HIGH' : 'MEDIUM';
+            const severityIcon = dup.similarity > 0.95 ? '🔴' : dup.similarity > 0.9 ? '🟡' : '🔵';
+            const file1Name = dup.file1.split('/').pop() || dup.file1;
+            const file2Name = dup.file2.split('/').pop() || dup.file2;
+            console.log(`${severityIcon} ${severity}: ${chalk.bold(file1Name)} ↔ ${chalk.bold(file2Name)}`);
+            console.log(`   Similarity: ${chalk.bold(Math.round(dup.similarity * 100) + '%')} | Wasted: ${chalk.bold(dup.tokenCost.toLocaleString())} tokens each`);
+            console.log(`   Lines: ${chalk.cyan(dup.line1 + '-' + dup.endLine1)} ↔ ${chalk.cyan(dup.line2 + '-' + dup.endLine2)}\n`);
+          });
+        } else {
+          console.log(chalk.green('\n✨ Great! No duplicate patterns detected.\n'));
+        }
       }
     } catch (error) {
       handleCLIError(error, 'Pattern analysis');
@@ -419,17 +467,83 @@ program
           writeFileSync(outputPath, markdown);
           console.log(chalk.green(`✅ Report saved to ${outputPath}`));
         } else {
-          console.log(`Consistency Analysis Complete (${elapsedTime}s)`);
-          console.log(`Files analyzed: ${report.summary.filesAnalyzed}`);
-          console.log(`Total issues: ${report.summary.totalIssues}`);
-          console.log(`  Naming: ${report.summary.namingIssues}`);
-          console.log(`  Patterns: ${report.summary.patternIssues}`);
-        
-          if (report.recommendations.length > 0) {
-            console.log(chalk.bold('\n💡 Recommendations:'));
-            report.recommendations.forEach((rec, i) => {
-              console.log(`${i + 1}. ${rec}`);
-            });
+          // Console output - format to match standalone CLI
+          console.log(chalk.bold('\n📊 Summary\n'));
+          console.log(`Files Analyzed: ${chalk.cyan(report.summary.filesAnalyzed)}`);
+          console.log(`Total Issues: ${chalk.yellow(report.summary.totalIssues)}`);
+          console.log(`  Naming: ${chalk.yellow(report.summary.namingIssues)}`);
+          console.log(`  Patterns: ${chalk.yellow(report.summary.patternIssues)}`);
+          console.log(`  Architecture: ${chalk.yellow(report.summary.architectureIssues || 0)}`);
+          console.log(`Analysis Time: ${chalk.gray(elapsedTime + 's')}\n`);
+
+          if (report.summary.totalIssues === 0) {
+            console.log(chalk.green('✨ No consistency issues found! Your codebase is well-maintained.\n'));
+          } else {
+            // Group and display issues by category
+            const namingResults = report.results.filter((r: any) =>
+              r.issues.some((i: any) => i.category === 'naming')
+            );
+            const patternResults = report.results.filter((r: any) =>
+              r.issues.some((i: any) => i.category === 'patterns')
+            );
+
+            if (namingResults.length > 0) {
+              console.log(chalk.bold('🏷️  Naming Issues\n'));
+              let shown = 0;
+              for (const result of namingResults) {
+                if (shown >= 5) break;
+                for (const issue of result.issues) {
+                  if (shown >= 5) break;
+                  const severityColor = issue.severity === 'critical' ? chalk.red :
+                    issue.severity === 'major' ? chalk.yellow :
+                    issue.severity === 'minor' ? chalk.blue : chalk.gray;
+                  console.log(`${severityColor(issue.severity.toUpperCase())} ${chalk.dim(`${issue.location.file}:${issue.location.line}`)}`);
+                  console.log(`  ${issue.message}`);
+                  if (issue.suggestion) {
+                    console.log(`  ${chalk.dim('→')} ${chalk.italic(issue.suggestion)}`);
+                  }
+                  console.log();
+                  shown++;
+                }
+              }
+              const remaining = namingResults.reduce((sum, r) => sum + r.issues.length, 0) - shown;
+              if (remaining > 0) {
+                console.log(chalk.dim(`  ... and ${remaining} more issues\n`));
+              }
+            }
+
+            if (patternResults.length > 0) {
+              console.log(chalk.bold('🔄 Pattern Issues\n'));
+              let shown = 0;
+              for (const result of patternResults) {
+                if (shown >= 5) break;
+                for (const issue of result.issues) {
+                  if (shown >= 5) break;
+                  const severityColor = issue.severity === 'critical' ? chalk.red :
+                    issue.severity === 'major' ? chalk.yellow :
+                    issue.severity === 'minor' ? chalk.blue : chalk.gray;
+                  console.log(`${severityColor(issue.severity.toUpperCase())} ${chalk.dim(`${issue.location.file}:${issue.location.line}`)}`);
+                  console.log(`  ${issue.message}`);
+                  if (issue.suggestion) {
+                    console.log(`  ${chalk.dim('→')} ${chalk.italic(issue.suggestion)}`);
+                  }
+                  console.log();
+                  shown++;
+                }
+              }
+              const remaining = patternResults.reduce((sum, r) => sum + r.issues.length, 0) - shown;
+              if (remaining > 0) {
+                console.log(chalk.dim(`  ... and ${remaining} more issues\n`));
+              }
+            }
+
+            if (report.recommendations.length > 0) {
+              console.log(chalk.bold('💡 Recommendations\n'));
+              report.recommendations.forEach((rec: string, i: number) => {
+                console.log(`${i + 1}. ${rec}`);
+              });
+              console.log();
+            }
           }
         }
       } catch (error) {
