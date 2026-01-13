@@ -265,7 +265,7 @@ By default, these patterns are excluded (unless `--include-node-modules` is used
 **/node_modules/**
 
 # Build outputs
-**/dist/**, **/build/**, **/out/**, **/output/**, **/target/**, **/bin/**, **/obj/**
+**/dist/**, **/build/**, **/out/**, **/output/**, **/target/**, **/bin/**, **/obj/**, **/cdk.out/**
 
 # Framework-specific build dirs
 **/.next/**, **/.nuxt/**, **/.vuepress/**, **/.cache/**, **/.turbo/**
@@ -356,6 +356,20 @@ Shareable report with tables and visualizations. Perfect for stakeholders:
 ```bash
 aiready-context ./src --output html --output-file context-report.html
 ```
+
+## 🧭 Interactive Mode
+
+For first-time users, enable interactive guidance to apply smart defaults and focus areas:
+
+```bash
+# Suggest excludes for common frameworks (Next.js, AWS CDK) and choose focus
+aiready-context ./src --interactive
+```
+
+Interactive mode:
+- Detects frameworks and recommends excludes (e.g., .next, cdk.out)
+- Lets you choose focus areas: frontend, backend, or both
+- Applies configuration without modifying your files
 
 ## 🔗 Integration
 

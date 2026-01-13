@@ -453,7 +453,46 @@ function analyzeIssues(params: {
     recommendations.push('File is well-structured for AI context usage');
   }
 
+  // Detect build artifacts and downgrade severity to reduce noise
+  if (isBuildArtifact(file)) {
+    issues.push('Detected build artifact (bundled/output file)');
+    recommendations.push('Exclude build outputs (e.g., cdk.out, dist, build, .next) from analysis');
+    severity = downgradeSeverity(severity);
+    // Build artifacts do not represent actionable savings
+    potentialSavings = 0;
+  }
+
   return { severity, issues, recommendations, potentialSavings: Math.floor(potentialSavings) };
 }
 
 export { getSmartDefaults };
+
+/**
+ * Heuristic: identify common build artifact paths
+ */
+function isBuildArtifact(filePath: string): boolean {
+  const lower = filePath.toLowerCase();
+  return (
+    lower.includes('/node_modules/') ||
+    lower.includes('/dist/') ||
+    lower.includes('/build/') ||
+    lower.includes('/out/') ||
+    lower.includes('/output/') ||
+    lower.includes('/cdk.out/') ||
+    lower.includes('/.next/') ||
+    /\/asset\.[^/]+\//.test(lower) // e.g., cdk.out/asset.*
+  );
+}
+
+function downgradeSeverity(s: ContextAnalysisResult['severity']): ContextAnalysisResult['severity'] {
+  switch (s) {
+    case 'critical':
+      return 'minor';
+    case 'major':
+      return 'minor';
+    case 'minor':
+      return 'info';
+    default:
+      return 'info';
+  }
+}

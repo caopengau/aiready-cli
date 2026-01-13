@@ -3,9 +3,10 @@
 import { Command } from 'commander';
 import { analyzeContext, generateSummary } from './index';
 import chalk from 'chalk';
-import { writeFileSync } from 'fs';
+import { writeFileSync, existsSync, readFileSync } from 'fs';
 import { join } from 'path';
 import { loadMergedConfig, handleJSONOutput, handleCLIError, getElapsedTime } from '@aiready/core';
+import prompts from 'prompts';
 
 const program = new Command();
 
@@ -39,6 +40,7 @@ program
     'console'
   )
   .option('--output-file <path>', 'Output file path (for json/html)')
+  .option('--interactive', 'Run interactive setup to suggest excludes and focus areas')
   .action(async (directory, options) => {
     console.log(chalk.blue('🔍 Analyzing context window costs...\n'));
 
@@ -59,7 +61,7 @@ program
       };
 
       // Load and merge config with CLI options
-      const finalOptions = loadMergedConfig(directory, defaults, {
+      let finalOptions = loadMergedConfig(directory, defaults, {
         maxDepth: options.maxDepth ? parseInt(options.maxDepth) : undefined,
         maxContextBudget: options.maxContext ? parseInt(options.maxContext) : undefined,
         minCohesion: options.minCohesion ? parseFloat(options.minCohesion) : undefined,
@@ -70,6 +72,11 @@ program
         exclude: options.exclude?.split(','),
         maxResults: options.maxResults ? parseInt(options.maxResults) : undefined,
       }) as any;
+
+      // Optional: interactive setup to refine options for first-time users
+      if (options.interactive) {
+        finalOptions = await runInteractiveSetup(directory, finalOptions);
+      }
 
       const results = await analyzeContext(finalOptions);
 
@@ -454,4 +461,67 @@ function generateHTMLReport(
   </div>
 </body>
 </html>`;
+}
+
+/**
+ * Interactive setup: detect common frameworks and suggest excludes & focus areas
+ */
+async function runInteractiveSetup(directory: string, current: any): Promise<any> {
+  console.log(chalk.yellow('🧭 Interactive mode: let’s tailor the analysis.'));
+
+  const pkgPath = join(directory, 'package.json');
+  let deps: Record<string, string> = {};
+  if (existsSync(pkgPath)) {
+    try {
+      const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8'));
+      deps = { ...(pkg.dependencies || {}), ...(pkg.devDependencies || {}) };
+    } catch {}
+  }
+
+  const hasNextJs = existsSync(join(directory, '.next')) || !!deps['next'];
+  const hasCDK = existsSync(join(directory, 'cdk.out')) || !!deps['aws-cdk-lib'] || Object.keys(deps).some(d => d.startsWith('@aws-cdk/'));
+
+  const recommendedExcludes = new Set<string>(current.exclude || []);
+  if (hasNextJs && !Array.from(recommendedExcludes).some((p) => p.includes('.next'))) {
+    recommendedExcludes.add('**/.next/**');
+  }
+  if (hasCDK && !Array.from(recommendedExcludes).some((p) => p.includes('cdk.out'))) {
+    recommendedExcludes.add('**/cdk.out/**');
+  }
+
+  const { applyExcludes } = await prompts({
+    type: 'toggle',
+    name: 'applyExcludes',
+    message: `Detected ${hasNextJs ? 'Next.js ' : ''}${hasCDK ? 'AWS CDK ' : ''}frameworks. Apply recommended excludes?`,
+    initial: true,
+    active: 'yes',
+    inactive: 'no',
+  });
+
+  let nextOptions = { ...current };
+  if (applyExcludes) {
+    nextOptions.exclude = Array.from(recommendedExcludes);
+  }
+
+  const { focusArea } = await prompts({
+    type: 'select',
+    name: 'focusArea',
+    message: 'Which areas to focus?',
+    choices: [
+      { title: 'Frontend (web app)', value: 'frontend' },
+      { title: 'Backend (API/infra)', value: 'backend' },
+      { title: 'Both', value: 'both' },
+    ],
+    initial: 2,
+  });
+
+  if (focusArea === 'frontend') {
+    nextOptions.include = ['**/*.{ts,tsx,js,jsx}'];
+    nextOptions.exclude = Array.from(new Set([...(nextOptions.exclude || []), '**/cdk.out/**', '**/infra/**', '**/server/**', '**/backend/**']));
+  } else if (focusArea === 'backend') {
+    nextOptions.include = ['**/api/**', '**/server/**', '**/backend/**', '**/infra/**', '**/*.{ts,js,py,java}'];
+  }
+
+  console.log(chalk.green('✓ Interactive configuration applied.'));
+  return nextOptions;
 }
