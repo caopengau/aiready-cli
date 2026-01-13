@@ -171,8 +171,8 @@ Create an `aiready.json` or `aiready.config.json` file in your project root:
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-💎 Want historical trends and refactoring plans? → aiready.dev/pro
-💼 Enterprise: CI/CD integration → aiready.dev/demo
+💎 Roadmap: Historical trends and guided refactoring (planned)
+💼 Roadmap: CI/CD integration and team benchmarks (planned)
 ```
 
 ### Programmatic API
@@ -420,20 +420,15 @@ aiready-patterns src           # Duplicate pattern detection
 ✅ All metrics and recommendations  
 ✅ JSON/HTML export
 
-### Pro ($49/month)
-📈 Historical trend tracking  
-📊 Team benchmarks  
-🎯 Automated refactoring plans (5/month)  
-🔌 Integration API
+## 🚧 Project Status
 
-### Enterprise (Custom Pricing)
-🔄 CI/CD integration  
-💰 AI usage correlation (show $ waste)  
-⚙️ Custom rules engine  
-👥 Team analytics  
-🎯 Unlimited refactoring plans
+The SaaS and hosted features are not live yet. Today, this package ships as a CLI/tool-only module focused on local analysis. Future SaaS features will include:
 
-**Want to track improvements over time?** Visit [aiready.dev](https://aiready.dev)
+- Historical trend tracking and team benchmarks
+- Automated refactoring plans
+- CI/CD integration and export APIs
+
+Follow progress in the monorepo and release notes.
 
 ## 🤝 Contributing
 
