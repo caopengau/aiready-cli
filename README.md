@@ -84,6 +84,54 @@ aiready-context ./src --output json --output-file custom-report.json
 
 > **📁 Output Files:** By default, all output files are saved to the `.aiready/` directory in your project root. You can override this with `--output-file`.
 
+## 🎛️ Tuning Guide
+
+**Smart defaults automatically adjust based on your repository size** to show ~10 most serious issues.
+
+### Getting More/Fewer Results
+
+**Want to catch MORE potential issues?** (More sensitive, shows smaller problems)
+
+```bash
+# Lower thresholds to be more strict:
+aiready-context ./src --max-depth 3 --max-context 5000 --min-cohesion 0.7 --max-fragmentation 0.4
+```
+
+**Want to see FEWER issues?** (Less noise, focus on critical problems only)
+
+```bash
+# Raise thresholds to be more lenient:
+aiready-context ./src --max-depth 10 --max-context 30000 --min-cohesion 0.4 --max-fragmentation 0.8
+```
+
+### Threshold Parameters Explained
+
+| Parameter | Default (Auto) | Lower = More Strict | Higher = Less Strict |
+|-----------|---------------|-------------------|---------------------|
+| `--max-depth` | 4-10* | Catches shallower imports | Only very deep chains |
+| `--max-context` | 8k-40k* | Catches smaller files | Only huge files |
+| `--min-cohesion` | 0.35-0.5* | Stricter about mixed concerns | More lenient |
+| `--max-fragmentation` | 0.5-0.8* | Catches less scattered code | Only severely scattered |
+
+\* Auto-adjusted based on your repository size (100 files vs 2000+ files)
+
+### Common Tuning Scenarios
+
+**Small codebase getting too many warnings?**
+```bash
+aiready-context ./src --max-depth 6 --min-cohesion 0.5
+```
+
+**Large codebase showing too few issues?**
+```bash
+aiready-context ./src --max-depth 5 --max-context 15000
+```
+
+**Focus on critical issues only:**
+```bash
+aiready-context ./src --max-depth 8 --max-context 25000 --min-cohesion 0.3
+```
+
 # Generate HTML report
 aiready-context ./src --output html --output-file report.html
 

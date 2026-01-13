@@ -21,6 +21,7 @@ export type { ContextAnalyzerOptions, ContextAnalysisResult, ContextSummary, Mod
 
 /**
  * Generate smart defaults for context analysis based on repository size
+ * Automatically tunes thresholds to target ~10 most serious issues
  */
 async function getSmartDefaults(
   directory: string,
@@ -36,35 +37,37 @@ async function getSmartDefaults(
   const estimatedBlocks = files.length;
 
   // Smart defaults based on repository size
+  // Adjusted to be stricter (higher thresholds) to catch only serious issues
+  // This targets ~10 most critical issues instead of showing all files
   let maxDepth: number;
   let maxContextBudget: number;
   let minCohesion: number;
   let maxFragmentation: number;
 
   if (estimatedBlocks < 100) {
-    // Small project
-    maxDepth = 3;
-    maxContextBudget = 5000;
-    minCohesion = 0.7;
-    maxFragmentation = 0.3;
-  } else if (estimatedBlocks < 500) {
-    // Medium project
+    // Small project - be more lenient
     maxDepth = 4;
     maxContextBudget = 8000;
-    minCohesion = 0.65;
-    maxFragmentation = 0.4;
-  } else if (estimatedBlocks < 2000) {
-    // Large project
-    maxDepth = 5;
-    maxContextBudget = 12000;
-    minCohesion = 0.6;
+    minCohesion = 0.5;
     maxFragmentation = 0.5;
-  } else {
-    // Enterprise project
-    maxDepth = 6;
-    maxContextBudget = 20000;
-    minCohesion = 0.55;
+  } else if (estimatedBlocks < 500) {
+    // Medium project - moderate strictness
+    maxDepth = 5;
+    maxContextBudget = 15000;
+    minCohesion = 0.45;
     maxFragmentation = 0.6;
+  } else if (estimatedBlocks < 2000) {
+    // Large project - stricter to focus on worst issues
+    maxDepth = 7;
+    maxContextBudget = 25000;
+    minCohesion = 0.4;
+    maxFragmentation = 0.7;
+  } else {
+    // Enterprise project - very strict to show only critical issues
+    maxDepth = 10;
+    maxContextBudget = 40000;
+    minCohesion = 0.35;
+    maxFragmentation = 0.8;
   }
 
   return {
@@ -205,13 +208,20 @@ export async function analyzeContext(
     });
   }
 
+  // Filter to only files with actual issues (not just info)
+  // This reduces output noise and focuses on actionable problems
+  const issuesOnly = results.filter(r => r.severity !== 'info');
+  
   // Sort by severity and context budget
-  return results.sort((a, b) => {
+  const sorted = issuesOnly.sort((a, b) => {
     const severityOrder = { critical: 0, major: 1, minor: 2, info: 3 };
     const severityDiff = severityOrder[a.severity] - severityOrder[b.severity];
     if (severityDiff !== 0) return severityDiff;
     return b.contextBudget - a.contextBudget;
   });
+  
+  // If we have issues, return them; otherwise return all results
+  return sorted.length > 0 ? sorted : results;
 }
 
 /**
