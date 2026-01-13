@@ -1,6 +1,6 @@
 {
   "name": "@aiready/context-analyzer",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "AI context window cost analysis - detect fragmented code, deep import chains, and expensive context budgets",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
