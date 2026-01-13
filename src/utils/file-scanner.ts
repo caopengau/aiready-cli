@@ -3,13 +3,49 @@ import { readFile } from 'fs/promises';
 import { ScanOptions } from '../types';
 
 const DEFAULT_EXCLUDE = [
+  // Dependencies
   '**/node_modules/**',
+
+  // Build outputs
   '**/dist/**',
   '**/build/**',
-  '**/.git/**',
+  '**/out/**',
+  '**/output/**',
+  '**/target/**',
+  '**/bin/**',
+  '**/obj/**',
+
+  // Framework-specific build dirs
+  '**/.next/**',
+  '**/.nuxt/**',
+  '**/.vuepress/**',
+  '**/.cache/**',
+  '**/.turbo/**',
+
+  // Test and coverage
   '**/coverage/**',
+  '**/.nyc_output/**',
+  '**/.jest/**',
+
+  // Version control and IDE
+  '**/.git/**',
+  '**/.svn/**',
+  '**/.hg/**',
+  '**/.vscode/**',
+  '**/.idea/**',
+  '**/*.swp',
+  '**/*.swo',
+
+  // Build artifacts and minified files
   '**/*.min.js',
+  '**/*.min.css',
   '**/*.bundle.js',
+  '**/*.tsbuildinfo',
+
+  // Logs and temporary files
+  '**/logs/**',
+  '**/*.log',
+  '**/.DS_Store',
 ];
 
 export async function scanFiles(options: ScanOptions): Promise<string[]> {

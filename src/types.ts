@@ -43,6 +43,41 @@ export interface ScanOptions {
   maxDepth?: number;
 }
 
+export interface AIReadyConfig {
+  // Global scan options
+  scan?: {
+    include?: string[];
+    exclude?: string[];
+  };
+
+  // Tool-specific configurations
+  tools?: {
+    'pattern-detect'?: {
+      minSimilarity?: number;
+      minLines?: number;
+      batchSize?: number;
+      approx?: boolean;
+      minSharedTokens?: number;
+      maxCandidatesPerBlock?: number;
+      streamResults?: boolean;
+    };
+    'context-analyzer'?: {
+      maxDepth?: number;
+      maxContextBudget?: number;
+      minCohesion?: number;
+      maxFragmentation?: number;
+      focus?: 'fragmentation' | 'cohesion' | 'depth' | 'all';
+      includeNodeModules?: boolean;
+    };
+  };
+
+  // Output preferences
+  output?: {
+    format?: 'console' | 'json' | 'html';
+    file?: string;
+  };
+}
+
 export interface Report {
   summary: {
     totalFiles: number;
