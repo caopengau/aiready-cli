@@ -5,7 +5,7 @@ import { analyzeUnified, generateUnifiedSummary } from './index';
 import chalk from 'chalk';
 import { writeFileSync } from 'fs';
 import { join } from 'path';
-import { loadMergedConfig, handleJSONOutput, handleCLIError, getElapsedTime } from '@aiready/core';
+import { loadMergedConfig, handleJSONOutput, handleCLIError, getElapsedTime, resolveOutputPath } from '@aiready/core';
 import { readFileSync } from 'fs';
 
 const packageJson = JSON.parse(readFileSync(join(__dirname, '../package.json'), 'utf8'));
@@ -64,7 +64,7 @@ program
       const elapsedTime = getElapsedTime(startTime);
 
       const outputFormat = options.output || finalOptions.output?.format || 'console';
-      const outputFile = options.outputFile || finalOptions.output?.file;
+      const userOutputFile = options.outputFile || finalOptions.output?.file;
 
       if (outputFormat === 'json') {
         const outputData = {
@@ -75,7 +75,13 @@ program
           },
         };
 
-        handleJSONOutput(outputData, outputFile, `✅ Results saved to ${outputFile}`);
+        const outputPath = resolveOutputPath(
+          userOutputFile,
+          `aiready-scan-${new Date().toISOString().split('T')[0]}.json`,
+          directory
+        );
+        
+        handleJSONOutput(outputData, outputPath, `✅ Results saved to ${outputPath}`);
       } else {
         // Console output
         console.log(generateUnifiedSummary(results));
@@ -152,7 +158,7 @@ program
       const summary = generateSummary(results);
 
       const outputFormat = options.output || finalOptions.output?.format || 'console';
-      const outputFile = options.outputFile || finalOptions.output?.file;
+      const userOutputFile = options.outputFile || finalOptions.output?.file;
 
       if (outputFormat === 'json') {
         const outputData = {
@@ -160,7 +166,13 @@ program
           summary: { ...summary, executionTime: parseFloat(elapsedTime) },
         };
 
-        handleJSONOutput(outputData, outputFile, `✅ Results saved to ${outputFile}`);
+        const outputPath = resolveOutputPath(
+          userOutputFile,
+          `pattern-report-${new Date().toISOString().split('T')[0]}.json`,
+          directory
+        );
+        
+        handleJSONOutput(outputData, outputPath, `✅ Results saved to ${outputPath}`);
       } else {
         console.log(`Pattern Analysis Complete (${elapsedTime}s)`);
         console.log(`Found ${summary.totalPatterns} duplicate patterns`);
@@ -230,7 +242,7 @@ program
       const summary = generateSummary(results);
 
       const outputFormat = options.output || finalOptions.output?.format || 'console';
-      const outputFile = options.outputFile || finalOptions.output?.file;
+      const userOutputFile = options.outputFile || finalOptions.output?.file;
 
       if (outputFormat === 'json') {
         const outputData = {
@@ -238,7 +250,13 @@ program
           summary: { ...summary, executionTime: parseFloat(elapsedTime) },
         };
 
-        handleJSONOutput(outputData, outputFile, `✅ Results saved to ${outputFile}`);
+        const outputPath = resolveOutputPath(
+          userOutputFile,
+          `context-report-${new Date().toISOString().split('T')[0]}.json`,
+          directory
+        );
+        
+        handleJSONOutput(outputData, outputPath, `✅ Results saved to ${outputPath}`);
       } else {
         console.log(`Context Analysis Complete (${elapsedTime}s)`);
         console.log(`Files analyzed: ${summary.totalFiles}`);
@@ -299,7 +317,7 @@ program
         const elapsedTime = getElapsedTime(startTime);
 
         const outputFormat = options.output || finalOptions.output?.format || 'console';
-        const outputFile = options.outputFile || finalOptions.output?.file;
+        const userOutputFile = options.outputFile || finalOptions.output?.file;
 
         if (outputFormat === 'json') {
           const outputData = {
@@ -310,16 +328,23 @@ program
             },
           };
 
-          handleJSONOutput(outputData, outputFile, `✅ Results saved to ${outputFile}`);
+          const outputPath = resolveOutputPath(
+            userOutputFile,
+            `consistency-report-${new Date().toISOString().split('T')[0]}.json`,
+            directory
+          );
+          
+          handleJSONOutput(outputData, outputPath, `✅ Results saved to ${outputPath}`);
         } else if (outputFormat === 'markdown') {
           // Markdown output
           const markdown = generateMarkdownReport(report, elapsedTime);
-          if (outputFile) {
-            writeFileSync(outputFile, markdown);
-            console.log(chalk.green(`✅ Report saved to ${outputFile}`));
-          } else {
-            console.log(markdown);
-          }
+          const outputPath = resolveOutputPath(
+            userOutputFile,
+            `consistency-report-${new Date().toISOString().split('T')[0]}.md`,
+            directory
+          );
+          writeFileSync(outputPath, markdown);
+          console.log(chalk.green(`✅ Report saved to ${outputPath}`));
         } else {
           console.log(`Consistency Analysis Complete (${elapsedTime}s)`);
           console.log(`Files analyzed: ${report.summary.filesAnalyzed}`);

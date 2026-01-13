@@ -36,7 +36,7 @@ Options:
 - `--include <patterns>`: File patterns to include (comma-separated)
 - `--exclude <patterns>`: File patterns to exclude (comma-separated)
 - `-o, --output <format>`: Output format: console, json (default: console)
-- `--output-file <path>`: Output file path (for json)
+- `--output-file <path>`: Output file path (defaults to `.aiready/pattern-report-YYYY-MM-DD.json`)
 
 #### Context Analysis
 
@@ -50,7 +50,7 @@ Options:
 - `--include <patterns>`: File patterns to include (comma-separated)
 - `--exclude <patterns>`: File patterns to exclude (comma-separated)
 - `-o, --output <format>`: Output format: console, json (default: console)
-- `--output-file <path>`: Output file path (for json)
+- `--output-file <path>`: Output file path (defaults to `.aiready/context-report-YYYY-MM-DD.json`)
 
 ### Unified Scan Options
 
@@ -63,7 +63,9 @@ Options:
 - `--include <patterns>`: File patterns to include (comma-separated)
 - `--exclude <patterns>`: File patterns to exclude (comma-separated)
 - `-o, --output <format>`: Output format: console, json (default: console)
-- `--output-file <path>`: Output file path (for json)
+- `--output-file <path>`: Output file path (defaults to `.aiready/aiready-scan-YYYY-MM-DD.json`)
+
+> **📁 Output Files:** By default, all output files are saved to the `.aiready/` directory in your project root with timestamped filenames. You can override this with `--output-file`.
 
 ## Examples
 
@@ -89,8 +91,11 @@ aiready scan ./src --include "**/*.ts,**/*.js"
 # Exclude test files
 aiready scan . --exclude "**/*.test.*,**/*.spec.*"
 
-# Save results to JSON file
-aiready scan . --output json --output-file results.json
+# Save results to JSON file (.aiready/ directory by default)
+aiready scan . --output json
+
+# Save to custom location
+aiready scan . --output json --output-file custom-results.json
 
 # Run only pattern analysis with custom similarity threshold
 aiready patterns . --similarity 0.6 --min-lines 10
