@@ -251,4 +251,113 @@ program
     }
   });
 
+  program
+    .command('consistency')
+    .description('Check naming, patterns, and architecture consistency')
+    .argument('<directory>', 'Directory to analyze')
+    .option('--naming', 'Check naming conventions (default: true)')
+    .option('--no-naming', 'Skip naming analysis')
+    .option('--patterns', 'Check code patterns (default: true)')
+    .option('--no-patterns', 'Skip pattern analysis')
+    .option('--min-severity <level>', 'Minimum severity: info|minor|major|critical', 'info')
+    .option('--include <patterns>', 'File patterns to include (comma-separated)')
+    .option('--exclude <patterns>', 'File patterns to exclude (comma-separated)')
+    .option('-o, --output <format>', 'Output format: console, json, markdown', 'console')
+    .option('--output-file <path>', 'Output file path (for json/markdown)')
+    .action(async (directory, options) => {
+      console.log(chalk.blue('🔍 Analyzing consistency...\n'));
+
+      const startTime = Date.now();
+
+      try {
+        // Define defaults
+        const defaults = {
+          checkNaming: true,
+          checkPatterns: true,
+          minSeverity: 'info' as const,
+          include: undefined,
+          exclude: undefined,
+          output: {
+            format: 'console',
+            file: undefined,
+          },
+        };
+
+        // Load and merge config with CLI options
+        const finalOptions = loadMergedConfig(directory, defaults, {
+          checkNaming: options.naming !== false,
+          checkPatterns: options.patterns !== false,
+          minSeverity: options.minSeverity,
+          include: options.include?.split(','),
+          exclude: options.exclude?.split(','),
+        });
+
+        const { analyzeConsistency } = await import('@aiready/consistency');
+
+        const report = await analyzeConsistency(finalOptions);
+
+        const elapsedTime = getElapsedTime(startTime);
+
+        const outputFormat = options.output || finalOptions.output?.format || 'console';
+        const outputFile = options.outputFile || finalOptions.output?.file;
+
+        if (outputFormat === 'json') {
+          const outputData = {
+            ...report,
+            summary: {
+              ...report.summary,
+              executionTime: parseFloat(elapsedTime),
+            },
+          };
+
+          handleJSONOutput(outputData, outputFile, `✅ Results saved to ${outputFile}`);
+        } else if (outputFormat === 'markdown') {
+          // Markdown output
+          const markdown = generateMarkdownReport(report, elapsedTime);
+          if (outputFile) {
+            writeFileSync(outputFile, markdown);
+            console.log(chalk.green(`✅ Report saved to ${outputFile}`));
+          } else {
+            console.log(markdown);
+          }
+        } else {
+          console.log(`Consistency Analysis Complete (${elapsedTime}s)`);
+          console.log(`Files analyzed: ${report.summary.filesAnalyzed}`);
+          console.log(`Total issues: ${report.summary.totalIssues}`);
+          console.log(`  Naming: ${report.summary.namingIssues}`);
+          console.log(`  Patterns: ${report.summary.patternIssues}`);
+        
+          if (report.recommendations.length > 0) {
+            console.log(chalk.bold('\n💡 Recommendations:'));
+            report.recommendations.forEach((rec, i) => {
+              console.log(`${i + 1}. ${rec}`);
+            });
+          }
+        }
+      } catch (error) {
+        handleCLIError(error, 'Consistency analysis');
+      }
+    });
+
+  function generateMarkdownReport(report: any, elapsedTime: string): string {
+    let markdown = `# Consistency Analysis Report\n\n`;
+    markdown += `**Generated:** ${new Date().toISOString()}\n`;
+    markdown += `**Analysis Time:** ${elapsedTime}s\n\n`;
+
+    markdown += `## Summary\n\n`;
+    markdown += `- **Files Analyzed:** ${report.summary.filesAnalyzed}\n`;
+    markdown += `- **Total Issues:** ${report.summary.totalIssues}\n`;
+    markdown += `  - Naming: ${report.summary.namingIssues}\n`;
+    markdown += `  - Patterns: ${report.summary.patternIssues}\n\n`;
+
+    if (report.recommendations.length > 0) {
+      markdown += `## Recommendations\n\n`;
+      report.recommendations.forEach((rec: string, i: number) => {
+        markdown += `${i + 1}. ${rec}\n`;
+      });
+    }
+
+    return markdown;
+  }
+
 program.parse();
