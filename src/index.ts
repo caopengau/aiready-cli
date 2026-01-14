@@ -1,6 +1,9 @@
 import { scanFiles, readFileContent } from '@aiready/core';
 import type { AnalysisResult, Issue, ScanOptions } from '@aiready/core';
 import { detectDuplicatePatterns, type PatternType, type DuplicatePattern } from './detector';
+import type { Severity } from './context-rules';
+
+export type { PatternType, DuplicatePattern, Severity };
 
 export interface PatternDetectOptions extends ScanOptions {
   minSimilarity?: number; // 0-1, default 0.40 (Jaccard similarity)
@@ -330,5 +333,5 @@ export function generateSummary(
 }
 
 export { detectDuplicatePatterns } from './detector';
-export type { DuplicatePattern, PatternType } from './detector';
+export { getSeverityLabel, filterBySeverity, calculateSeverity } from './context-rules';
 export { getSmartDefaults };

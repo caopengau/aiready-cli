@@ -1,4 +1,5 @@
 import { estimateTokens } from '@aiready/core';
+import { calculateSeverity, type Severity } from './context-rules';
 
 export interface DuplicatePattern {
   file1: string;
@@ -12,6 +13,10 @@ export interface DuplicatePattern {
   patternType: PatternType;
   tokenCost: number;
   linesOfCode: number;
+  severity: Severity;
+  reason?: string;
+  suggestion?: string;
+  matchedRule?: string;
 }
 
 export type PatternType =
@@ -403,6 +408,15 @@ export async function detectDuplicatePatterns(
 
         const similarity = jaccardSimilarity(blockTokens[i], blockTokens[j]);
         if (similarity >= minSimilarity) {
+          // Calculate context-aware severity
+          const { severity, reason, suggestion, matchedRule } = calculateSeverity(
+            block1.file,
+            block2.file,
+            block1.content,
+            similarity,
+            block1.linesOfCode
+          );
+
           const duplicate = {
             file1: block1.file,
             file2: block2.file,
@@ -415,6 +429,10 @@ export async function detectDuplicatePatterns(
             patternType: block1.patternType,
             tokenCost: block1.tokenCost + block2.tokenCost,
             linesOfCode: block1.linesOfCode,
+            severity,
+            reason,
+            suggestion,
+            matchedRule,
           };
           duplicates.push(duplicate);
           
@@ -441,6 +459,15 @@ export async function detectDuplicatePatterns(
 
         const similarity = jaccardSimilarity(blockTokens[i], blockTokens[j]);
         if (similarity >= minSimilarity) {
+          // Calculate context-aware severity
+          const { severity, reason, suggestion, matchedRule } = calculateSeverity(
+            block1.file,
+            block2.file,
+            block1.content,
+            similarity,
+            block1.linesOfCode
+          );
+
           const duplicate = {
             file1: block1.file,
             file2: block2.file,
@@ -453,6 +480,10 @@ export async function detectDuplicatePatterns(
             patternType: block1.patternType,
             tokenCost: block1.tokenCost + block2.tokenCost,
             linesOfCode: block1.linesOfCode,
+            severity,
+            reason,
+            suggestion,
+            matchedRule,
           };
           duplicates.push(duplicate);
           

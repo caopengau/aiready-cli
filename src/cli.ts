@@ -3,6 +3,7 @@
 import { Command } from 'commander';
 import { analyzePatterns, generateSummary, detectDuplicatePatterns } from './index';
 import type { PatternType, DuplicatePattern } from './detector';
+import { filterBySeverity, getSeverityLabel, type Severity } from './context-rules';
 import chalk from 'chalk';
 import { writeFileSync, mkdirSync, existsSync } from 'fs';
 import { join, dirname } from 'path';
@@ -25,7 +26,9 @@ program
   .option('--no-stream-results', 'Disable incremental output (default: enabled)')
   .option('--include <patterns>', 'File patterns to include (comma-separated)')
   .option('--exclude <patterns>', 'File patterns to exclude (comma-separated)')
-  .option('--severity <level>', 'Filter by severity: critical|high|medium|all. Default: all')
+  .option('--min-severity <level>', 'Minimum severity to show: critical|high|medium|low|info. Default: medium')
+  .option('--exclude-test-fixtures', 'Exclude test fixture duplication (beforeAll/afterAll)')
+  .option('--exclude-templates', 'Exclude template file duplication')
   .option('--include-tests', 'Include test files in analysis (excluded by default)')
   .option('--max-results <number>', 'Maximum number of results to show in console output. Default: 10')
   .option(
@@ -53,7 +56,9 @@ program
       streamResults: true,
       include: undefined,
       exclude: undefined,
-      severity: 'all',
+      minSeverity: 'medium' as Severity,
+      excludeTestFixtures: false,
+      excludeTemplates: false,
       includeTests: false,
       maxResults: 10,
     };
@@ -73,7 +78,9 @@ program
       streamResults: options.streamResults !== false && mergedConfig.streamResults,
       include: options.include?.split(',') || mergedConfig.include,
       exclude: options.exclude?.split(',') || mergedConfig.exclude,
-      severity: options.severity || mergedConfig.severity,
+      minSeverity: (options.minSeverity || mergedConfig.minSeverity) as Severity,
+      excludeTestFixtures: options.excludeTestFixtures || mergedConfig.excludeTestFixtures,
+      excludeTemplates: options.excludeTemplates || mergedConfig.excludeTemplates,
       includeTests: options.includeTests || mergedConfig.includeTests,
       maxResults: options.maxResults ? parseInt(options.maxResults) : mergedConfig.maxResults,
     };
@@ -95,7 +102,23 @@ program
 
     const { results, duplicates: rawDuplicates, files } = await analyzePatterns(finalOptions);
 
-
+    // Apply severity filtering
+    let filteredDuplicates = rawDuplicates;
+    
+    // Filter by minimum severity
+    if (finalOptions.minSeverity) {
+      filteredDuplicates = filterBySeverity(filteredDuplicates, finalOptions.minSeverity);
+    }
+    
+    // Filter out test fixtures if requested
+    if (finalOptions.excludeTestFixtures) {
+      filteredDuplicates = filteredDuplicates.filter(d => d.matchedRule !== 'test-fixtures');
+    }
+    
+    // Filter out templates if requested
+    if (finalOptions.excludeTemplates) {
+      filteredDuplicates = filteredDuplicates.filter(d => d.matchedRule !== 'templates');
+    }
 
     const elapsedTime = ((Date.now() - startTime) / 1000).toFixed(2);
     const summary = generateSummary(results);
@@ -188,35 +211,48 @@ program
       console.log(chalk.bold.white('  TOP DUPLICATE PATTERNS'));
       console.log(chalk.cyan(divider) + '\n');
 
-      // Filter duplicates by severity if specified
-      let filteredDuplicates = rawDuplicates;
-      if (finalOptions.severity !== 'all') {
-        const severityThresholds = {
-          critical: 0.95,
-          high: 0.9,
-          medium: 0.4,
-        };
-        const threshold = severityThresholds[finalOptions.severity as keyof typeof severityThresholds] || 0.4;
-        filteredDuplicates = rawDuplicates.filter(dup => dup.similarity >= threshold);
-      }
+      // Sort by severity (critical first), then similarity
+      const severityOrder: Record<Severity, number> = {
+        critical: 5,
+        high: 4,
+        medium: 3,
+        low: 2,
+        info: 1,
+      };
 
-      // Sort by similarity (highest first) and take top N
       const topDuplicates = filteredDuplicates
-        .sort((a, b) => b.similarity - a.similarity)
+        .sort((a, b) => {
+          const severityDiff = severityOrder[b.severity] - severityOrder[a.severity];
+          if (severityDiff !== 0) return severityDiff;
+          return b.similarity - a.similarity;
+        })
         .slice(0, finalOptions.maxResults);
 
       topDuplicates.forEach((dup, idx) => {
-        const severity = dup.similarity > 0.95 ? 'CRITICAL' : dup.similarity > 0.9 ? 'HIGH' : 'MEDIUM';
-        const severityIcon = dup.similarity > 0.95 ? '🔴' : dup.similarity > 0.9 ? '🟡' : '🔵';
+        const severityBadge = getSeverityBadge(dup.severity);
 
         // Get relative file names for cleaner display
         const file1Name = dup.file1.split('/').pop() || dup.file1;
         const file2Name = dup.file2.split('/').pop() || dup.file2;
 
-        console.log(`${severityIcon} ${severity}: ${chalk.bold(file1Name)} ↔ ${chalk.bold(file2Name)}`);
-        console.log(`   Similarity: ${chalk.bold(Math.round(dup.similarity * 100) + '%')} | Wasted: ${chalk.bold(dup.tokenCost.toLocaleString())} tokens each`);
-        console.log(`   Location: lines ${chalk.cyan(dup.line1 + '-' + dup.endLine1)} ↔ lines ${chalk.cyan(dup.line2 + '-' + dup.endLine2)}\n`);
+        console.log(`${severityBadge} ${chalk.bold(file1Name)} ↔ ${chalk.bold(file2Name)}`);
+        console.log(`   Similarity: ${chalk.bold(Math.round(dup.similarity * 100) + '%')} | Pattern: ${dup.patternType} | Tokens: ${chalk.bold(dup.tokenCost.toLocaleString())}`);
+        console.log(`   ${chalk.gray(dup.file1)}:${chalk.cyan(dup.line1 + '-' + dup.endLine1)}`);
+        console.log(`   ${chalk.gray(dup.file2)}:${chalk.cyan(dup.line2 + '-' + dup.endLine2)}`);
+        
+        if (dup.reason) {
+          console.log(`   ${chalk.italic.gray(dup.reason)}`);
+        }
+        if (dup.suggestion) {
+          console.log(`   ${chalk.cyan('→')} ${chalk.italic(dup.suggestion)}`);
+        }
+        console.log();
       });
+      
+      // Show count of filtered duplicates
+      if (filteredDuplicates.length > topDuplicates.length) {
+        console.log(chalk.gray(`   ... and ${filteredDuplicates.length - topDuplicates.length} more duplicates`));
+      }
     }
 
     // Show detailed issues for critical ones
@@ -376,3 +412,18 @@ function generateHTMLReport(
 }
 
 program.parse();
+
+/**
+ * Get colored severity badge for console output
+ */
+function getSeverityBadge(severity: Severity): string {
+  const badges: Record<Severity, string> = {
+    critical: chalk.bgRed.white.bold(' CRITICAL '),
+    high: chalk.bgYellow.black.bold(' HIGH '),
+    medium: chalk.bgBlue.white.bold(' MEDIUM '),
+    low: chalk.bgGray.white(' LOW '),
+    info: chalk.bgCyan.black(' INFO '),
+  };
+  return badges[severity] || badges.info;
+}
+
