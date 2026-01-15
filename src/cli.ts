@@ -45,7 +45,7 @@ program
       };
 
       // Load and merge config with CLI options
-      const baseOptions = loadMergedConfig(directory, defaults, {
+      const baseOptions = await loadMergedConfig(directory, defaults, {
         tools: options.tools ? options.tools.split(',').map((t: string) => t.trim()) as ('patterns' | 'context' | 'consistency')[] : undefined,
         include: options.include?.split(','),
         exclude: options.exclude?.split(','),
@@ -148,7 +148,7 @@ program
         cliOptions.minSharedTokens = parseInt(options.minSharedTokens);
       }
 
-      const finalOptions = loadMergedConfig(directory, defaults, cliOptions);
+      const finalOptions = await loadMergedConfig(directory, defaults, cliOptions);
 
       const { analyzePatterns, generateSummary } = await import('@aiready/pattern-detect');
 
@@ -260,7 +260,7 @@ program
       };
 
       // Load and merge config with CLI options
-      let baseOptions = loadMergedConfig(directory, defaults, {
+      let baseOptions = await loadMergedConfig(directory, defaults, {
         maxDepth: options.maxDepth ? parseInt(options.maxDepth) : undefined,
         maxContextBudget: options.maxContext ? parseInt(options.maxContext) : undefined,
         include: options.include?.split(','),
@@ -423,7 +423,7 @@ program
         };
 
         // Load and merge config with CLI options
-        const finalOptions = loadMergedConfig(directory, defaults, {
+        const finalOptions = await loadMergedConfig(directory, defaults, {
           checkNaming: options.naming !== false,
           checkPatterns: options.patterns !== false,
           minSeverity: options.minSeverity,
