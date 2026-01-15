@@ -26,6 +26,42 @@ export interface UnifiedAnalysisResult {
   };
 }
 
+// Severity ordering (higher number = more severe)
+const severityOrder: Record<string, number> = {
+  critical: 4,
+  major: 3,
+  minor: 2,
+  info: 1,
+};
+
+function sortBySeverity(results: AnalysisResult[]): AnalysisResult[] {
+  return results
+    .map((file) => {
+      // Sort issues within each file by severity (most severe first)
+      const sortedIssues = [...file.issues].sort((a, b) => {
+        const severityDiff = (severityOrder[b.severity] || 0) - (severityOrder[a.severity] || 0);
+        if (severityDiff !== 0) return severityDiff;
+        // If same severity, sort by line number
+        return (a.location?.line || 0) - (b.location?.line || 0);
+      });
+      return { ...file, issues: sortedIssues };
+    })
+    .sort((a, b) => {
+      // Sort files by most severe issue first
+      const aMaxSeverity = Math.max(...a.issues.map((i) => severityOrder[i.severity] || 0), 0);
+      const bMaxSeverity = Math.max(...b.issues.map((i) => severityOrder[i.severity] || 0), 0);
+      if (aMaxSeverity !== bMaxSeverity) {
+        return bMaxSeverity - aMaxSeverity;
+      }
+      // If same max severity, sort by number of issues
+      if (a.issues.length !== b.issues.length) {
+        return b.issues.length - a.issues.length;
+      }
+      // Finally, sort alphabetically by filename
+      return a.fileName.localeCompare(b.fileName);
+    });
+}
+
 export async function analyzeUnified(
   options: UnifiedAnalysisOptions
 ): Promise<UnifiedAnalysisResult> {
@@ -42,13 +78,27 @@ export async function analyzeUnified(
   // Run pattern detection
   if (tools.includes('patterns')) {
     const patternResult = await analyzePatterns(options);
-    result.patterns = patternResult.results;
-    result.summary.totalIssues += patternResult.results.length;
+    // Sort results by severity
+    result.patterns = sortBySeverity(patternResult.results);
+    // Count actual issues, not file count
+    result.summary.totalIssues += patternResult.results.reduce(
+      (sum, file) => sum + file.issues.length,
+      0
+    );
   }
 
   // Run context analysis
   if (tools.includes('context')) {
-    result.context = await analyzeContext(options);
+    const contextResults = await analyzeContext(options);
+    // Sort context results by severity (most severe first)
+    result.context = contextResults.sort((a, b) => {
+      const severityDiff = (severityOrder[b.severity] || 0) - (severityOrder[a.severity] || 0);
+      if (severityDiff !== 0) return severityDiff;
+      // If same severity, sort by token cost (higher cost first)
+      if (a.tokenCost !== b.tokenCost) return b.tokenCost - a.tokenCost;
+      // Finally, sort by fragmentation score (higher fragmentation first)
+      return b.fragmentationScore - a.fragmentationScore;
+    });
     result.summary.totalIssues += result.context?.length || 0;
   }
 
@@ -62,6 +112,10 @@ export async function analyzeUnified(
       checkPatterns: true,
       minSeverity: 'info',
     });
+    // Sort consistency results by severity
+    if (report.results) {
+      report.results = sortBySeverity(report.results);
+    }
     result.consistency = report;
     result.summary.totalIssues += report.summary.totalIssues;
   }
