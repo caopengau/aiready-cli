@@ -195,3 +195,7 @@ For programmatic usage, see the individual packages:
 - [@aiready/pattern-detect](https://www.npmjs.com/package/@aiready/pattern-detect)
 - [@aiready/context-analyzer](https://www.npmjs.com/package/@aiready/context-analyzer)
 - [@aiready/consistency](https://www.npmjs.com/package/@aiready/consistency)
+
+## 🌐 Visit Our Website
+
+**Try AIReady tools online and learn more:** [getaiready.dev](https://getaiready.dev)
