@@ -33,5 +33,13 @@
     "ai-readiness",
     "code-analysis"
   ],
-  "license": "MIT"
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/caopengau/aiready-cli.git"
+  },
+  "homepage": "https://github.com/caopengau/aiready-cli",
+  "bugs": {
+    "url": "https://github.com/caopengau/aiready-cli/issues"
+  }
 }
