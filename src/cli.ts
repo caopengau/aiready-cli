@@ -21,7 +21,7 @@ program
 program
   .command('scan')
   .description('Run unified analysis on a codebase')
-  .argument('<directory>', 'Directory to analyze')
+  .argument('[directory]', 'Directory to analyze', '.')
   .option('-t, --tools <tools>', 'Tools to run (comma-separated: patterns,context,consistency)', 'patterns,context,consistency')
   .option('--include <patterns>', 'File patterns to include (comma-separated)')
   .option('--exclude <patterns>', 'File patterns to exclude (comma-separated)')
@@ -95,7 +95,7 @@ program
 program
   .command('patterns')
   .description('Run pattern detection analysis')
-  .argument('<directory>', 'Directory to analyze')
+  .argument('[directory]', 'Directory to analyze', '.')
   .option('-s, --similarity <number>', 'Minimum similarity score (0-1)', '0.40')
   .option('-l, --min-lines <number>', 'Minimum lines to consider', '5')
   .option('--max-candidates <number>', 'Maximum candidates per block (performance tuning)')
@@ -234,7 +234,7 @@ program
 program
   .command('context')
   .description('Run context window cost analysis')
-  .argument('<directory>', 'Directory to analyze')
+  .argument('[directory]', 'Directory to analyze', '.')
   .option('--max-depth <number>', 'Maximum acceptable import depth', '5')
   .option('--max-context <number>', 'Maximum acceptable context budget (tokens)', '10000')
   .option('--include <patterns>', 'File patterns to include (comma-separated)')
@@ -393,7 +393,7 @@ program
   program
     .command('consistency')
     .description('Check naming, patterns, and architecture consistency')
-    .argument('<directory>', 'Directory to analyze')
+    .argument('[directory]', 'Directory to analyze', '.')
     .option('--naming', 'Check naming conventions (default: true)')
     .option('--no-naming', 'Skip naming analysis')
     .option('--patterns', 'Check code patterns (default: true)')
