@@ -5,7 +5,20 @@ import { analyzeUnified, generateUnifiedSummary } from './index';
 import chalk from 'chalk';
 import { writeFileSync } from 'fs';
 import { join } from 'path';
-import { loadMergedConfig, handleJSONOutput, handleCLIError, getElapsedTime, resolveOutputPath } from '@aiready/core';
+import { 
+  loadMergedConfig, 
+  handleJSONOutput, 
+  handleCLIError, 
+  getElapsedTime, 
+  resolveOutputPath,
+  calculateOverallScore,
+  formatScore,
+  formatToolScore,
+  getRatingDisplay,
+  parseWeightString,
+  type AIReadyConfig,
+  type ToolScoringOutput,
+} from '@aiready/core';
 import { readFileSync } from 'fs';
 
 const packageJson = JSON.parse(readFileSync(join(__dirname, '../package.json'), 'utf8'));
@@ -27,6 +40,9 @@ program
   .option('--exclude <patterns>', 'File patterns to exclude (comma-separated)')
   .option('-o, --output <format>', 'Output format: console, json', 'console')
   .option('--output-file <path>', 'Output file path (for json)')
+  .option('--score', 'Calculate and display AI Readiness Score (0-100)')
+  .option('--weights <weights>', 'Override tool weights for scoring (e.g., "patterns:50,context:30,consistency:20")')
+  .option('--threshold <score>', 'Minimum passing score for CI/CD (exits with code 1 if below)')
   .action(async (directory, options) => {
     console.log(chalk.blue('🚀 Starting AIReady unified analysis...\n'));
 
@@ -63,6 +79,60 @@ program
 
       const elapsedTime = getElapsedTime(startTime);
 
+      // Calculate score if requested
+      let scoringResult: ReturnType<typeof calculateOverallScore> | undefined;
+      if (options.score || finalOptions.scoring?.showBreakdown) {
+        const toolScores: Map<string, ToolScoringOutput> = new Map();
+        
+        // Collect scores from each tool that was run
+        if (results.patterns && baseOptions.tools.includes('patterns')) {
+          const { calculatePatternScore } = await import('@aiready/pattern-detect');
+          const duplicates = results.patterns
+            .flatMap(r => r.issues)
+            .filter(i => i.type === 'duplicate-pattern');
+          const score = calculatePatternScore(duplicates as any, results.patterns.length);
+          toolScores.set('pattern-detect', score);
+        }
+        
+        if (results.context && baseOptions.tools.includes('context')) {
+          const { calculateContextScore } = await import('@aiready/context-analyzer');
+          // Calculate summary from context results
+          const summary = {
+            avgContextBudget: results.context.reduce((sum, r) => sum + r.contextBudget, 0) / results.context.length,
+            maxContextBudget: Math.max(...results.context.map(r => r.contextBudget)),
+            avgImportDepth: results.context.reduce((sum, r) => sum + r.importDepth, 0) / results.context.length,
+            maxImportDepth: Math.max(...results.context.map(r => r.importDepth)),
+            avgFragmentation: results.context.reduce((sum, r) => sum + r.fragmentationScore, 0) / results.context.length,
+            criticalIssues: results.context.filter(r => r.severity === 'critical').length,
+            majorIssues: results.context.filter(r => r.severity === 'major').length,
+          };
+          const score = calculateContextScore(summary as any);
+          toolScores.set('context-analyzer', score);
+        }
+        
+        if (results.consistency && baseOptions.tools.includes('consistency')) {
+          const { calculateConsistencyScore } = await import('@aiready/consistency');
+          const issues = results.consistency.results?.flatMap((r: any) => r.issues) || [];
+          const score = calculateConsistencyScore(issues, results.consistency.summary.filesAnalyzed);
+          toolScores.set('consistency', score);
+        }
+        
+        // Parse weight overrides from CLI
+        const cliWeights = options.weights ? parseWeightString(options.weights) : undefined;
+        
+        // Calculate overall score
+        scoringResult = calculateOverallScore(toolScores, finalOptions as AIReadyConfig, cliWeights);
+        
+        // Check threshold
+        if (options.threshold) {
+          const threshold = parseFloat(options.threshold);
+          if (scoringResult.overall < threshold) {
+            console.error(chalk.red(`\n❌ Score ${scoringResult.overall} is below threshold ${threshold}\n`));
+            process.exit(1);
+          }
+        }
+      }
+
       const outputFormat = options.output || finalOptions.output?.format || 'console';
       const userOutputFile = options.outputFile || finalOptions.output?.file;
 
@@ -73,6 +143,7 @@ program
             ...results.summary,
             executionTime: parseFloat(elapsedTime),
           },
+          ...(scoringResult && { scoring: scoringResult }),
         };
 
         const outputPath = resolveOutputPath(
@@ -85,6 +156,56 @@ program
       } else {
         // Console output
         console.log(generateUnifiedSummary(results));
+        
+        // Display score if calculated
+        if (scoringResult) {
+          const terminalWidth = process.stdout.columns || 80;
+          const dividerWidth = Math.min(60, terminalWidth - 2);
+          const divider = '━'.repeat(dividerWidth);
+          
+          console.log(chalk.cyan('\n' + divider));
+          console.log(chalk.bold.white('  AI READINESS SCORE'));
+          console.log(chalk.cyan(divider) + '\n');
+          
+          const { emoji, color } = getRatingDisplay(scoringResult.rating);
+          const scoreColor = color === 'green' ? chalk.green : 
+                            color === 'blue' ? chalk.blue : 
+                            color === 'yellow' ? chalk.yellow : chalk.red;
+          
+          console.log(`  ${emoji} Overall Score: ${scoreColor.bold(scoringResult.overall + '/100')} (${chalk.bold(scoringResult.rating)})`);          console.log(`  ${chalk.dim('Timestamp:')} ${new Date(scoringResult.timestamp).toLocaleString()}\n`);
+          
+          // Show breakdown by tool
+          if (scoringResult.breakdown.length > 0) {
+            console.log(chalk.bold('  Component Scores:\n'));
+            scoringResult.breakdown.forEach(tool => {
+              const toolEmoji = tool.toolName === 'pattern-detect' ? '🔍' :
+                              tool.toolName === 'context-analyzer' ? '🧠' : '🏷️';
+              const weight = scoringResult.calculation.weights[tool.toolName];
+              console.log(`  ${toolEmoji} ${chalk.white(tool.toolName.padEnd(20))} ${scoreColor(tool.score + '/100')} ${chalk.dim(`(weight: ${weight})`)}`);
+            });
+            console.log();
+          }
+          
+          // Show calculation
+          console.log(chalk.dim(`  Weighted Formula: ${scoringResult.calculation.formula}`));
+          console.log(chalk.dim(`  Normalized Score: ${scoringResult.calculation.normalized}\n`));
+          
+          // Show top recommendations across all tools
+          const allRecommendations = scoringResult.breakdown
+            .flatMap(tool => tool.recommendations || [])
+            .sort((a, b) => b.estimatedImpact - a.estimatedImpact)
+            .slice(0, 5);
+          
+          if (allRecommendations.length > 0) {
+            console.log(chalk.bold('  Top Recommendations:\n'));
+            allRecommendations.forEach((rec, i) => {
+              const priorityIcon = rec.priority === 'high' ? '🔴' : 
+                                 rec.priority === 'medium' ? '🟡' : '🔵';
+              console.log(`  ${i + 1}. ${priorityIcon} ${rec.action}`);
+              console.log(`     ${chalk.dim(`Impact: +${rec.estimatedImpact} points`)}\n`);
+            });
+          }
+        }
       }
     } catch (error) {
       handleCLIError(error, 'Analysis');
@@ -105,6 +226,7 @@ program
   .option('--exclude <patterns>', 'File patterns to exclude (comma-separated)')
   .option('-o, --output <format>', 'Output format: console, json', 'console')
   .option('--output-file <path>', 'Output file path (for json)')
+  .option('--score', 'Calculate and display AI Readiness Score for patterns (0-100)')
   .action(async (directory, options) => {
     console.log(chalk.blue('🔍 Analyzing patterns...\n'));
 
@@ -150,12 +272,18 @@ program
 
       const finalOptions = await loadMergedConfig(directory, defaults, cliOptions);
 
-      const { analyzePatterns, generateSummary } = await import('@aiready/pattern-detect');
+      const { analyzePatterns, generateSummary, calculatePatternScore } = await import('@aiready/pattern-detect');
 
       const { results, duplicates } = await analyzePatterns(finalOptions);
 
       const elapsedTime = getElapsedTime(startTime);
       const summary = generateSummary(results);
+      
+      // Calculate score if requested
+      let patternScore: ToolScoringOutput | undefined;
+      if (options.score) {
+        patternScore = calculatePatternScore(duplicates, results.length);
+      }
 
       const outputFormat = options.output || finalOptions.output?.format || 'console';
       const userOutputFile = options.outputFile || finalOptions.output?.file;
@@ -164,6 +292,7 @@ program
         const outputData = {
           results,
           summary: { ...summary, executionTime: parseFloat(elapsedTime) },
+          ...(patternScore && { scoring: patternScore }),
         };
 
         const outputPath = resolveOutputPath(
@@ -225,6 +354,15 @@ program
         } else {
           console.log(chalk.green('\n✨ Great! No duplicate patterns detected.\n'));
         }
+        
+        // Display score if calculated
+        if (patternScore) {
+          console.log(chalk.cyan(divider));
+          console.log(chalk.bold.white('  AI READINESS SCORE (Patterns)'));
+          console.log(chalk.cyan(divider) + '\n');
+          console.log(formatToolScore(patternScore));
+          console.log();
+        }
       }
     } catch (error) {
       handleCLIError(error, 'Pattern analysis');
@@ -241,6 +379,7 @@ program
   .option('--exclude <patterns>', 'File patterns to exclude (comma-separated)')
   .option('-o, --output <format>', 'Output format: console, json', 'console')
   .option('--output-file <path>', 'Output file path (for json)')
+  .option('--score', 'Calculate and display AI Readiness Score for context (0-100)')
   .action(async (directory, options) => {
     console.log(chalk.blue('🧠 Analyzing context costs...\n'));
 
@@ -282,12 +421,18 @@ program
       console.log(`   Analysis focus: ${finalOptions.focus}`);
       console.log('');
 
-      const { analyzeContext, generateSummary } = await import('@aiready/context-analyzer');
+      const { analyzeContext, generateSummary, calculateContextScore } = await import('@aiready/context-analyzer');
 
       const results = await analyzeContext(finalOptions);
 
       const elapsedTime = getElapsedTime(startTime);
       const summary = generateSummary(results);
+      
+      // Calculate score if requested
+      let contextScore: ToolScoringOutput | undefined;
+      if (options.score) {
+        contextScore = calculateContextScore(summary as any);
+      }
 
       const outputFormat = options.output || finalOptions.output?.format || 'console';
       const userOutputFile = options.outputFile || finalOptions.output?.file;
@@ -296,6 +441,7 @@ program
         const outputData = {
           results,
           summary: { ...summary, executionTime: parseFloat(elapsedTime) },
+          ...(contextScore && { scoring: contextScore }),
         };
 
         const outputPath = resolveOutputPath(
@@ -384,6 +530,15 @@ program
           });
           console.log();
         }
+        
+        // Display score if calculated
+        if (contextScore) {
+          console.log(chalk.cyan(divider));
+          console.log(chalk.bold.white('  AI READINESS SCORE (Context)'));
+          console.log(chalk.cyan(divider) + '\n');
+          console.log(formatToolScore(contextScore));
+          console.log();
+        }
       }
     } catch (error) {
       handleCLIError(error, 'Context analysis');
@@ -403,6 +558,7 @@ program
     .option('--exclude <patterns>', 'File patterns to exclude (comma-separated)')
     .option('-o, --output <format>', 'Output format: console, json, markdown', 'console')
     .option('--output-file <path>', 'Output file path (for json/markdown)')
+    .option('--score', 'Calculate and display AI Readiness Score for consistency (0-100)')
     .action(async (directory, options) => {
       console.log(chalk.blue('🔍 Analyzing consistency...\n'));
 
@@ -431,11 +587,18 @@ program
           exclude: options.exclude?.split(','),
         });
 
-        const { analyzeConsistency } = await import('@aiready/consistency');
+        const { analyzeConsistency, calculateConsistencyScore } = await import('@aiready/consistency');
 
         const report = await analyzeConsistency(finalOptions);
 
         const elapsedTime = getElapsedTime(startTime);
+        
+        // Calculate score if requested
+        let consistencyScore: ToolScoringOutput | undefined;
+        if (options.score) {
+          const issues = report.results?.flatMap((r: any) => r.issues) || [];
+          consistencyScore = calculateConsistencyScore(issues, report.summary.filesAnalyzed);
+        }
 
         const outputFormat = options.output || finalOptions.output?.format || 'console';
         const userOutputFile = options.outputFile || finalOptions.output?.file;
@@ -447,6 +610,7 @@ program
               ...report.summary,
               executionTime: parseFloat(elapsedTime),
             },
+            ...(consistencyScore && { scoring: consistencyScore }),
           };
 
           const outputPath = resolveOutputPath(
@@ -544,6 +708,13 @@ program
               });
               console.log();
             }
+          }
+          
+          // Display score if calculated
+          if (consistencyScore) {
+            console.log(chalk.bold('\n📊 AI Readiness Score (Consistency)\n'));
+            console.log(formatToolScore(consistencyScore));
+            console.log();
           }
         }
       } catch (error) {
