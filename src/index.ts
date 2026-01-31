@@ -6,6 +6,8 @@ import type { ContextAnalysisResult } from '@aiready/context-analyzer';
 import type { PatternDetectOptions, DuplicatePattern } from '@aiready/pattern-detect';
 import type { ConsistencyReport } from '@aiready/consistency';
 
+import type { ConsistencyOptions } from '@aiready/consistency';
+
 export interface UnifiedAnalysisOptions extends ScanOptions {
   tools?: ('patterns' | 'context' | 'consistency')[];
   minSimilarity?: number;
@@ -13,6 +15,8 @@ export interface UnifiedAnalysisOptions extends ScanOptions {
   maxCandidatesPerBlock?: number;
   minSharedTokens?: number;
   useSmartDefaults?: boolean;
+  consistency?: Partial<ConsistencyOptions>;
+  progressCallback?: (event: { tool: string; data: any }) => void;
 }
 
 export interface UnifiedAnalysisResult {
@@ -68,6 +72,7 @@ export async function analyzeUnified(
 ): Promise<UnifiedAnalysisResult> {
   const startTime = Date.now();
   const tools = options.tools || ['patterns', 'context', 'consistency'];
+  // Tools requested and effective options are used from `options`
   const result: UnifiedAnalysisResult = {
     summary: {
       totalIssues: 0,
@@ -79,6 +84,10 @@ export async function analyzeUnified(
   // Run pattern detection
   if (tools.includes('patterns')) {
     const patternResult = await analyzePatterns(options);
+    // Emit progress for patterns
+    if (options.progressCallback) {
+      options.progressCallback({ tool: 'patterns', data: patternResult });
+    }
     // Sort results by severity
     result.patterns = sortBySeverity(patternResult.results);
     // Store duplicates for scoring
@@ -93,6 +102,9 @@ export async function analyzeUnified(
   // Run context analysis
   if (tools.includes('context')) {
     const contextResults = await analyzeContext(options);
+    if (options.progressCallback) {
+      options.progressCallback({ tool: 'context', data: contextResults });
+    }
     // Sort context results by severity (most severe first)
     result.context = contextResults.sort((a, b) => {
       const severityDiff = (severityOrder[b.severity] || 0) - (severityOrder[a.severity] || 0);
@@ -107,14 +119,17 @@ export async function analyzeUnified(
 
   // Run consistency analysis
   if (tools.includes('consistency')) {
-    const report = await analyzeConsistency({
+    // Use config fields if present, fallback to defaults
+    const consistencyOptions = {
       rootDir: options.rootDir,
       include: options.include,
       exclude: options.exclude,
-      checkNaming: true,
-      checkPatterns: true,
-      minSeverity: 'info',
-    });
+      ...(options.consistency || {}),
+    };
+    const report = await analyzeConsistency(consistencyOptions);
+    if (options.progressCallback) {
+      options.progressCallback({ tool: 'consistency', data: report });
+    }
     // Sort consistency results by severity
     if (report.results) {
       report.results = sortBySeverity(report.results);
@@ -135,11 +150,11 @@ export function generateUnifiedSummary(result: UnifiedAnalysisResult): string {
   output += `   Total issues found: ${summary.totalIssues}\n`;
   output += `   Execution time: ${(summary.executionTime / 1000).toFixed(2)}s\n\n`;
 
-  if (result.patterns?.length) {
+  if (result.patterns) {
     output += `🔍 Pattern Analysis: ${result.patterns.length} issues\n`;
   }
 
-  if (result.context?.length) {
+  if (result.context) {
     output += `🧠 Context Analysis: ${result.context.length} issues\n`;
   }
 

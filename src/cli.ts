@@ -14,6 +14,7 @@ import {
   calculateOverallScore,
   formatScore,
   formatToolScore,
+  getRating,
   getRatingDisplay,
   parseWeightString,
   type AIReadyConfig,
@@ -67,142 +68,270 @@ program
         exclude: options.exclude?.split(','),
       }) as any;
 
+
       // Apply smart defaults for pattern detection if patterns tool is enabled
       let finalOptions = { ...baseOptions };
       if (baseOptions.tools.includes('patterns')) {
         const { getSmartDefaults } = await import('@aiready/pattern-detect');
         const patternSmartDefaults = await getSmartDefaults(directory, baseOptions);
-        finalOptions = { ...patternSmartDefaults, ...finalOptions };
+        // Merge deeply to preserve nested config
+        finalOptions = { ...patternSmartDefaults, ...finalOptions, ...baseOptions };
       }
 
-      const results = await analyzeUnified(finalOptions);
+      // Print pre-run summary with expanded settings (truncate long arrays)
+      console.log(chalk.cyan('\n=== AIReady Run Preview ==='));
+      console.log(chalk.white('Tools to run:'), (finalOptions.tools || ['patterns', 'context', 'consistency']).join(', '));
+      console.log(chalk.white('Will use settings from config and defaults.'));
+
+      const truncate = (arr: any[] | undefined, cap = 8) => {
+        if (!Array.isArray(arr)) return '';
+        const shown = arr.slice(0, cap).map((v) => String(v));
+        const more = arr.length - shown.length;
+        return shown.join(', ') + (more > 0 ? `, ... (+${more} more)` : '');
+      };
+
+      // Common top-level settings
+      console.log(chalk.white('\nGeneral settings:'));
+      if (finalOptions.rootDir) console.log(`  rootDir: ${chalk.bold(String(finalOptions.rootDir))}`);
+      if (finalOptions.include) console.log(`  include: ${chalk.bold(truncate(finalOptions.include, 6))}`);
+      if (finalOptions.exclude) console.log(`  exclude: ${chalk.bold(truncate(finalOptions.exclude, 6))}`);
+
+      if (finalOptions['pattern-detect'] || finalOptions.minSimilarity) {
+        const pd = finalOptions['pattern-detect'] || {
+          minSimilarity: finalOptions.minSimilarity,
+          minLines: finalOptions.minLines,
+          approx: finalOptions.approx,
+          minSharedTokens: finalOptions.minSharedTokens,
+          maxCandidatesPerBlock: finalOptions.maxCandidatesPerBlock,
+          batchSize: finalOptions.batchSize,
+          streamResults: finalOptions.streamResults,
+          severity: (finalOptions as any).severity,
+          includeTests: (finalOptions as any).includeTests,
+        };
+        console.log(chalk.white('\nPattern-detect settings:'));
+        console.log(`  minSimilarity: ${chalk.bold(pd.minSimilarity ?? 'default')}`);
+        console.log(`  minLines: ${chalk.bold(pd.minLines ?? 'default')}`);
+        if (pd.approx !== undefined) console.log(`  approx: ${chalk.bold(String(pd.approx))}`);
+        if (pd.minSharedTokens !== undefined) console.log(`  minSharedTokens: ${chalk.bold(String(pd.minSharedTokens))}`);
+        if (pd.maxCandidatesPerBlock !== undefined) console.log(`  maxCandidatesPerBlock: ${chalk.bold(String(pd.maxCandidatesPerBlock))}`);
+        if (pd.batchSize !== undefined) console.log(`  batchSize: ${chalk.bold(String(pd.batchSize))}`);
+        if (pd.streamResults !== undefined) console.log(`  streamResults: ${chalk.bold(String(pd.streamResults))}`);
+        if (pd.severity !== undefined) console.log(`  severity: ${chalk.bold(String(pd.severity))}`);
+        if (pd.includeTests !== undefined) console.log(`  includeTests: ${chalk.bold(String(pd.includeTests))}`);
+      }
+
+      if (finalOptions['context-analyzer'] || finalOptions.maxDepth) {
+        const ca = finalOptions['context-analyzer'] || {
+          maxDepth: finalOptions.maxDepth,
+          maxContextBudget: finalOptions.maxContextBudget,
+          minCohesion: (finalOptions as any).minCohesion,
+          maxFragmentation: (finalOptions as any).maxFragmentation,
+          includeNodeModules: (finalOptions as any).includeNodeModules,
+        };
+        console.log(chalk.white('\nContext-analyzer settings:'));
+        console.log(`  maxDepth: ${chalk.bold(ca.maxDepth ?? 'default')}`);
+        console.log(`  maxContextBudget: ${chalk.bold(ca.maxContextBudget ?? 'default')}`);
+        if (ca.minCohesion !== undefined) console.log(`  minCohesion: ${chalk.bold(String(ca.minCohesion))}`);
+        if (ca.maxFragmentation !== undefined) console.log(`  maxFragmentation: ${chalk.bold(String(ca.maxFragmentation))}`);
+        if (ca.includeNodeModules !== undefined) console.log(`  includeNodeModules: ${chalk.bold(String(ca.includeNodeModules))}`);
+      }
+
+      if (finalOptions.consistency) {
+        const c = finalOptions.consistency;
+        console.log(chalk.white('\nConsistency settings:'));
+        console.log(`  checkNaming: ${chalk.bold(String(c.checkNaming ?? true))}`);
+        console.log(`  checkPatterns: ${chalk.bold(String(c.checkPatterns ?? true))}`);
+        console.log(`  checkArchitecture: ${chalk.bold(String(c.checkArchitecture ?? false))}`);
+        if (c.minSeverity) console.log(`  minSeverity: ${chalk.bold(c.minSeverity)}`);
+        if (c.acceptedAbbreviations) console.log(`  acceptedAbbreviations: ${chalk.bold(truncate(c.acceptedAbbreviations, 8))}`);
+        if (c.shortWords) console.log(`  shortWords: ${chalk.bold(truncate(c.shortWords, 8))}`);
+      }
+
+      console.log(chalk.white('\nStarting analysis...'));
+
+      // Progress callback to surface per-tool output as each tool finishes
+      const progressCallback = (event: { tool: string; data: any }) => {
+        console.log(chalk.cyan(`\n--- ${event.tool.toUpperCase()} RESULTS ---`));
+        try {
+          if (event.tool === 'patterns') {
+            const pr = event.data as any;
+            console.log(`  Duplicate patterns: ${chalk.bold(String(pr.duplicates?.length || 0))}`);
+            console.log(`  Files with pattern issues: ${chalk.bold(String(pr.results?.length || 0))}`);
+            // show top duplicate summaries
+            if (pr.duplicates && pr.duplicates.length > 0) {
+              pr.duplicates.slice(0, 5).forEach((d: any, i: number) => {
+                console.log(`   ${i + 1}. ${d.file1.split('/').pop()} ↔ ${d.file2.split('/').pop()} (sim=${(d.similarity * 100).toFixed(1)}%)`);
+              });
+            }
+
+            // show top files with pattern issues (sorted by issue count desc)
+            if (pr.results && pr.results.length > 0) {
+              console.log(`  Top files with pattern issues:`);
+              const sortedByIssues = [...pr.results].sort((a: any, b: any) => (b.issues?.length || 0) - (a.issues?.length || 0));
+              sortedByIssues.slice(0, 5).forEach((r: any, i: number) => {
+                console.log(`   ${i + 1}. ${r.fileName.split('/').pop()} - ${r.issues.length} issue(s)`);
+              });
+            }
+
+            // Grouping and clusters summary (if available) — show after detailed findings
+            if (pr.groups && pr.groups.length >= 0) {
+              console.log(`  ✅ Grouped ${chalk.bold(String(pr.duplicates?.length || 0))} duplicates into ${chalk.bold(String(pr.groups.length))} file pairs`);
+            }
+            if (pr.clusters && pr.clusters.length >= 0) {
+              console.log(`  ✅ Created ${chalk.bold(String(pr.clusters.length))} refactor clusters`);
+              // show brief cluster summaries
+              pr.clusters.slice(0, 3).forEach((cl: any, idx: number) => {
+                const files = (cl.files || []).map((f: any) => f.path.split('/').pop()).join(', ');
+                console.log(`   ${idx + 1}. ${files} (${cl.tokenCost || 'n/a'} tokens)`);
+              });
+            }
+          } else if (event.tool === 'context') {
+            const cr = event.data as any[];
+            console.log(`  Context issues found: ${chalk.bold(String(cr.length || 0))}`);
+            cr.slice(0, 5).forEach((c: any, i: number) => {
+              const msg = c.message ? ` - ${c.message}` : '';
+              console.log(`   ${i + 1}. ${c.file} (${c.severity || 'n/a'})${msg}`);
+            });
+          } else if (event.tool === 'consistency') {
+            const rep = event.data as any;
+            console.log(`  Consistency totalIssues: ${chalk.bold(String(rep.summary?.totalIssues || 0))}`);
+
+            if (rep.results && rep.results.length > 0) {
+              // Group issues by file
+              const fileMap = new Map<string, any[]>();
+              rep.results.forEach((r: any) => {
+                (r.issues || []).forEach((issue: any) => {
+                  const file = issue.location?.file || r.file || 'unknown';
+                  if (!fileMap.has(file)) fileMap.set(file, []);
+                  fileMap.get(file)!.push(issue);
+                });
+              });
+
+              // Sort files by number of issues desc
+              const files = Array.from(fileMap.entries()).sort((a, b) => b[1].length - a[1].length);
+              const topFiles = files.slice(0, 10);
+
+              topFiles.forEach(([file, issues], idx) => {
+                // Count severities
+                const counts = issues.reduce((acc: any, it: any) => {
+                  const s = (it.severity || 'info').toLowerCase();
+                  acc[s] = (acc[s] || 0) + 1;
+                  return acc;
+                }, {} as Record<string, number>);
+
+                const sample = issues.find((it: any) => it.severity === 'critical' || it.severity === 'major') || issues[0];
+                const sampleMsg = sample ? ` — ${sample.message}` : '';
+
+                console.log(`   ${idx + 1}. ${file} — ${issues.length} issue(s) (critical:${counts.critical||0} major:${counts.major||0} minor:${counts.minor||0} info:${counts.info||0})${sampleMsg}`);
+              });
+
+              const remaining = files.length - topFiles.length;
+              if (remaining > 0) {
+                console.log(chalk.dim(`   ... and ${remaining} more files with issues (use --output json for full details)`));
+              }
+            }
+          }
+        } catch (err) {
+          // don't crash the run for progress printing errors
+        }
+      };
+
+      const results = await analyzeUnified({ ...finalOptions, progressCallback, suppressToolConfig: true });
+
+      // Summarize tools and results to console
+      console.log(chalk.cyan('\n=== AIReady Run Summary ==='));
+      console.log(chalk.white('Tools run:'), (finalOptions.tools || ['patterns', 'context', 'consistency']).join(', '));
+
+      // Results summary
+      console.log(chalk.cyan('\nResults summary:'));
+      console.log(`  Total issues (all tools): ${chalk.bold(String(results.summary.totalIssues || 0))}`);
+      if (results.duplicates) console.log(`  Duplicate patterns found: ${chalk.bold(String(results.duplicates.length || 0))}`);
+      if (results.patterns) console.log(`  Pattern files with issues: ${chalk.bold(String(results.patterns.length || 0))}`);
+      if (results.context) console.log(`  Context issues: ${chalk.bold(String(results.context.length || 0))}`);
+      if (results.consistency) console.log(`  Consistency issues: ${chalk.bold(String(results.consistency.summary.totalIssues || 0))}`);
+      console.log(chalk.cyan('===========================\n'));
 
       const elapsedTime = getElapsedTime(startTime);
 
-      // Calculate score if requested
+      // Calculate score if requested: assemble per-tool scoring outputs
       let scoringResult: ReturnType<typeof calculateOverallScore> | undefined;
       if (options.score || finalOptions.scoring?.showBreakdown) {
         const toolScores: Map<string, ToolScoringOutput> = new Map();
-        
-        // Collect scores from each tool that was run
-        if (results.patterns && baseOptions.tools.includes('patterns')) {
+
+        // Patterns score
+        if (results.duplicates) {
           const { calculatePatternScore } = await import('@aiready/pattern-detect');
-          // Use the actual duplicates array which has tokenCost field
-          const duplicates = results.duplicates || [];
-          const score = calculatePatternScore(duplicates, results.patterns.length);
-          toolScores.set('pattern-detect', score);
-        }
-        
-        if (results.context && baseOptions.tools.includes('context')) {
-          const { calculateContextScore } = await import('@aiready/context-analyzer');
-          // Calculate summary from context results
-          const summary = {
-            avgContextBudget: results.context.reduce((sum, r) => sum + r.contextBudget, 0) / results.context.length,
-            maxContextBudget: Math.max(...results.context.map(r => r.contextBudget)),
-            avgImportDepth: results.context.reduce((sum, r) => sum + r.importDepth, 0) / results.context.length,
-            maxImportDepth: Math.max(...results.context.map(r => r.importDepth)),
-            avgFragmentation: results.context.reduce((sum, r) => sum + r.fragmentationScore, 0) / results.context.length,
-            criticalIssues: results.context.filter(r => r.severity === 'critical').length,
-            majorIssues: results.context.filter(r => r.severity === 'major').length,
-          };
-          const score = calculateContextScore(summary as any);
-          toolScores.set('context-analyzer', score);
-        }
-        
-        if (results.consistency && baseOptions.tools.includes('consistency')) {
-          const { calculateConsistencyScore } = await import('@aiready/consistency');
-          const issues = results.consistency.results?.flatMap((r: any) => r.issues) || [];
-          const score = calculateConsistencyScore(issues, results.consistency.summary.filesAnalyzed);
-          toolScores.set('consistency', score);
-        }
-        
-        // Parse weight overrides from CLI
-        const cliWeights = options.weights ? parseWeightString(options.weights) : undefined;
-        
-        // Calculate overall score
-        scoringResult = calculateOverallScore(toolScores, finalOptions as AIReadyConfig, cliWeights);
-        
-        // Check threshold
-        if (options.threshold) {
-          const threshold = parseFloat(options.threshold);
-          if (scoringResult.overall < threshold) {
-            console.error(chalk.red(`\n❌ Score ${scoringResult.overall} is below threshold ${threshold}\n`));
-            process.exit(1);
+          try {
+            const patternScore = calculatePatternScore(results.duplicates, results.patterns?.length || 0);
+            toolScores.set('pattern-detect', patternScore);
+          } catch (err) {
+            // ignore scoring failures for a single tool
           }
         }
-      }
 
-      const outputFormat = options.output || finalOptions.output?.format || 'console';
-      const userOutputFile = options.outputFile || finalOptions.output?.file;
+        // Context score
+        if (results.context) {
+          const { generateSummary: genContextSummary, calculateContextScore } = await import('@aiready/context-analyzer');
+          try {
+            const ctxSummary = genContextSummary(results.context);
+            const contextScore = calculateContextScore(ctxSummary);
+            toolScores.set('context-analyzer', contextScore);
+          } catch (err) {
+            // ignore
+          }
+        }
 
-      if (outputFormat === 'json') {
-        const outputData = {
-          ...results,
-          summary: {
-            ...results.summary,
-            executionTime: parseFloat(elapsedTime),
-          },
-          ...(scoringResult && { scoring: scoringResult }),
-        };
+        // Consistency score
+        if (results.consistency) {
+          const { calculateConsistencyScore } = await import('@aiready/consistency');
+          try {
+            const issues = results.consistency.results?.flatMap((r: any) => r.issues) || [];
+            const totalFiles = results.consistency.summary?.filesAnalyzed || 0;
+            const consistencyScore = calculateConsistencyScore(issues, totalFiles);
+            toolScores.set('consistency', consistencyScore);
+          } catch (err) {
+            // ignore
+          }
+        }
 
-        const outputPath = resolveOutputPath(
-          userOutputFile,
-          `aiready-scan-${new Date().toISOString().split('T')[0]}.json`,
-          directory
-        );
-        
-        handleJSONOutput(outputData, outputPath, `✅ Results saved to ${outputPath}`);
-      } else {
-        // Console output
-        console.log(generateUnifiedSummary(results));
-        
-        // Display score if calculated
-        if (scoringResult) {
-          const terminalWidth = process.stdout.columns || 80;
-          const dividerWidth = Math.min(60, terminalWidth - 2);
-          const divider = '━'.repeat(dividerWidth);
-          
-          console.log(chalk.cyan('\n' + divider));
-          console.log(chalk.bold.white('  AI READINESS SCORE'));
-          console.log(chalk.cyan(divider) + '\n');
-          
-          const { emoji, color } = getRatingDisplay(scoringResult.rating);
-          const scoreColor = color === 'green' ? chalk.green : 
-                            color === 'blue' ? chalk.blue : 
-                            color === 'yellow' ? chalk.yellow : chalk.red;
-          
-          console.log(`  ${emoji} Overall Score: ${scoreColor.bold(scoringResult.overall + '/100')} (${chalk.bold(scoringResult.rating)})`);          console.log(`  ${chalk.dim('Timestamp:')} ${new Date(scoringResult.timestamp).toLocaleString()}\n`);
-          
-          // Show breakdown by tool
-          if (scoringResult.breakdown.length > 0) {
-            console.log(chalk.bold('  Component Scores:\n'));
-            scoringResult.breakdown.forEach(tool => {
-              const toolEmoji = tool.toolName === 'pattern-detect' ? '🔍' :
-                              tool.toolName === 'context-analyzer' ? '🧠' : '🏷️';
-              const weight = scoringResult.calculation.weights[tool.toolName];
-              console.log(`  ${toolEmoji} ${chalk.white(tool.toolName.padEnd(20))} ${scoreColor(tool.score + '/100')} ${chalk.dim(`(weight: ${weight})`)}`);
+        // Parse CLI weight overrides (if any)
+        const cliWeights = parseWeightString((options as any).weights);
+
+        // Only calculate overall score if we have at least one tool score
+        if (toolScores.size > 0) {
+          scoringResult = calculateOverallScore(toolScores, finalOptions, cliWeights.size ? cliWeights : undefined);
+
+          console.log(chalk.bold('\n📊 AI Readiness Overall Score'));
+          console.log(`  ${formatScore(scoringResult)}`);
+
+          // Show concise breakdown; detailed breakdown only if config requests it
+          if (scoringResult.breakdown && scoringResult.breakdown.length > 0) {
+            console.log(chalk.bold('\nTool breakdown:'));
+            scoringResult.breakdown.forEach((tool) => {
+              const rating = getRating(tool.score);
+              const rd = getRatingDisplay(rating);
+              console.log(`  - ${tool.toolName}: ${tool.score}/100 (${rating}) ${rd.emoji}`);
             });
             console.log();
+
+            if (finalOptions.scoring?.showBreakdown) {
+              console.log(chalk.bold('Detailed tool breakdown:'));
+              scoringResult.breakdown.forEach((tool) => {
+                console.log(formatToolScore(tool));
+              });
+              console.log();
+            }
           }
-          
-          // Show calculation
-          console.log(chalk.dim(`  Weighted Formula: ${scoringResult.calculation.formula}`));
-          console.log(chalk.dim(`  Normalized Score: ${scoringResult.calculation.normalized}\n`));
-          
-          // Show top recommendations across all tools
-          const allRecommendations = scoringResult.breakdown
-            .flatMap(tool => tool.recommendations || [])
-            .sort((a, b) => b.estimatedImpact - a.estimatedImpact)
-            .slice(0, 5);
-          
-          if (allRecommendations.length > 0) {
-            console.log(chalk.bold('  Top Recommendations:\n'));
-            allRecommendations.forEach((rec, i) => {
-              const priorityIcon = rec.priority === 'high' ? '🔴' : 
-                                 rec.priority === 'medium' ? '🟡' : '🔵';
-              console.log(`  ${i + 1}. ${priorityIcon} ${rec.action}`);
-              console.log(`     ${chalk.dim(`Impact: +${rec.estimatedImpact} points`)}\n`);
-            });
+
+          // Persist JSON summary by default when output is json or when config directory present
+          const outputFormat = options.output || finalOptions.output?.format || 'console';
+          const userOutputFile = options.outputFile || finalOptions.output?.file;
+          if (outputFormat === 'json') {
+            const dateStr = new Date().toISOString().split('T')[0];
+            const defaultFilename = `aiready-scan-${dateStr}.json`;
+            const outputPath = resolveOutputPath(userOutputFile, defaultFilename, directory);
+            const outputData = { ...results, scoring: scoringResult };
+            handleJSONOutput(outputData, outputPath, `✅ Summary saved to ${outputPath}`);
           }
         }
       }
