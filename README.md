@@ -4,7 +4,28 @@
 
 The CLI provides both unified analysis (scan multiple tools at once) and individual tool access for pattern detection, context analysis, and consistency checking.
 
-## 🌍 Language Support
+## �️ Architecture
+
+```
+                           🎯 USER
+                             │
+                             ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                   🎛️  CLI (@aiready/cli) ⬅ YOU ARE HERE        │
+│                Unified Interface & Orchestration                │
+└─────────────────┬───────────────────────────────────────────────┘
+                  │
+                  ▼
+             🏢 HUB (core)
+                  │
+      ┌───────────┼───────────┬───────────┐
+      ▼           ▼           ▼           ▼
+  📊 PATTERN  📦 CONTEXT  🔧 CONSIST  📚 DOC
+   DETECT      ANALYZER    ENCY        DRIFT
+   ✅ Ready    ✅ Ready    ✅ Ready    🔜 Soon
+```
+
+## �🌍 Language Support
 
 **Currently Supported (64% market coverage):**
 - ✅ **TypeScript** (`.ts`, `.tsx`)
