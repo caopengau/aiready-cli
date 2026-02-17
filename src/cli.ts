@@ -93,6 +93,8 @@ EXAMPLES:
     console.log(chalk.blue('🚀 Starting AIReady unified analysis...\n'));
 
     const startTime = Date.now();
+    // Resolve directory to absolute path to ensure .aiready/ is created in the right location
+    const resolvedDir = resolvePath(process.cwd(), directory || '.');
 
     try {
       // Define defaults
@@ -107,7 +109,7 @@ EXAMPLES:
       };
 
       // Load and merge config with CLI options
-      const baseOptions = await loadMergedConfig(directory, defaults, {
+      const baseOptions = await loadMergedConfig(resolvedDir, defaults, {
         tools: options.tools ? options.tools.split(',').map((t: string) => t.trim()) as ('patterns' | 'context' | 'consistency')[] : undefined,
         include: options.include?.split(','),
         exclude: options.exclude?.split(','),
@@ -118,7 +120,7 @@ EXAMPLES:
       let finalOptions = { ...baseOptions };
       if (baseOptions.tools.includes('patterns')) {
         const { getSmartDefaults } = await import('@aiready/pattern-detect');
-        const patternSmartDefaults = await getSmartDefaults(directory, baseOptions);
+        const patternSmartDefaults = await getSmartDefaults(resolvedDir, baseOptions);
         // Merge deeply to preserve nested config
         finalOptions = { ...patternSmartDefaults, ...finalOptions, ...baseOptions };
       }
@@ -367,18 +369,18 @@ EXAMPLES:
               console.log();
             }
           }
-
-          // Persist JSON summary by default when output is json or when config directory present
-          const outputFormat = options.output || finalOptions.output?.format || 'console';
-          const userOutputFile = options.outputFile || finalOptions.output?.file;
-          if (outputFormat === 'json') {
-            const dateStr = new Date().toISOString().split('T')[0];
-            const defaultFilename = `aiready-scan-${dateStr}.json`;
-            const outputPath = resolveOutputPath(userOutputFile, defaultFilename, directory);
-            const outputData = { ...results, scoring: scoringResult };
-            handleJSONOutput(outputData, outputPath, `✅ Summary saved to ${outputPath}`);
-          }
         }
+      }
+
+      // Persist JSON summary when output format is json
+      const outputFormat = options.output || finalOptions.output?.format || 'console';
+      const userOutputFile = options.outputFile || finalOptions.output?.file;
+      if (outputFormat === 'json') {
+        const timestamp = getReportTimestamp();
+        const defaultFilename = `aiready-report-${timestamp}.json`;
+        const outputPath = resolveOutputPath(userOutputFile, defaultFilename, resolvedDir);
+        const outputData = { ...results, scoring: scoringResult };
+        handleJSONOutput(outputData, outputPath, `✅ Report saved to ${outputPath}`);
       }
     } catch (error) {
       handleCLIError(error, 'Analysis');
@@ -410,6 +412,7 @@ EXAMPLES:
     console.log(chalk.blue('🔍 Analyzing patterns...\n'));
 
     const startTime = Date.now();
+    const resolvedDir = resolvePath(process.cwd(), directory || '.');
 
     try {
       // Determine if smart defaults should be used
@@ -449,7 +452,7 @@ EXAMPLES:
         cliOptions.minSharedTokens = parseInt(options.minSharedTokens);
       }
 
-      const finalOptions = await loadMergedConfig(directory, defaults, cliOptions);
+      const finalOptions = await loadMergedConfig(resolvedDir, defaults, cliOptions);
 
       const { analyzePatterns, generateSummary, calculatePatternScore } = await import('@aiready/pattern-detect');
 
@@ -476,8 +479,8 @@ EXAMPLES:
 
         const outputPath = resolveOutputPath(
           userOutputFile,
-          `pattern-report-${new Date().toISOString().split('T')[0]}.json`,
-          directory
+          `aiready-report-${getReportTimestamp()}.json`,
+          resolvedDir
         );
         
         handleJSONOutput(outputData, outputPath, `✅ Results saved to ${outputPath}`);
@@ -563,6 +566,7 @@ program
     console.log(chalk.blue('🧠 Analyzing context costs...\n'));
 
     const startTime = Date.now();
+    const resolvedDir = resolvePath(process.cwd(), directory || '.');
 
     try {
       // Define defaults
@@ -578,7 +582,7 @@ program
       };
 
       // Load and merge config with CLI options
-      let baseOptions = await loadMergedConfig(directory, defaults, {
+      let baseOptions = await loadMergedConfig(resolvedDir, defaults, {
         maxDepth: options.maxDepth ? parseInt(options.maxDepth) : undefined,
         maxContextBudget: options.maxContext ? parseInt(options.maxContext) : undefined,
         include: options.include?.split(','),
@@ -588,7 +592,7 @@ program
       // Apply smart defaults for context analysis (always for individual context command)
       let finalOptions: any = { ...baseOptions };
       const { getSmartDefaults } = await import('@aiready/context-analyzer');
-      const contextSmartDefaults = await getSmartDefaults(directory, baseOptions);
+      const contextSmartDefaults = await getSmartDefaults(resolvedDir, baseOptions);
       finalOptions = { ...contextSmartDefaults, ...finalOptions };
       
       // Display configuration
@@ -625,8 +629,8 @@ program
 
         const outputPath = resolveOutputPath(
           userOutputFile,
-          `context-report-${new Date().toISOString().split('T')[0]}.json`,
-          directory
+          `aiready-report-${getReportTimestamp()}.json`,
+          resolvedDir
         );
         
         handleJSONOutput(outputData, outputPath, `✅ Results saved to ${outputPath}`);
@@ -742,6 +746,7 @@ program
       console.log(chalk.blue('🔍 Analyzing consistency...\n'));
 
       const startTime = Date.now();
+      const resolvedDir = resolvePath(process.cwd(), directory || '.');
 
       try {
         // Define defaults
@@ -758,7 +763,7 @@ program
         };
 
         // Load and merge config with CLI options
-        const finalOptions = await loadMergedConfig(directory, defaults, {
+        const finalOptions = await loadMergedConfig(resolvedDir, defaults, {
           checkNaming: options.naming !== false,
           checkPatterns: options.patterns !== false,
           minSeverity: options.minSeverity,
@@ -794,8 +799,8 @@ program
 
           const outputPath = resolveOutputPath(
             userOutputFile,
-            `consistency-report-${new Date().toISOString().split('T')[0]}.json`,
-            directory
+            `aiready-report-${getReportTimestamp()}.json`,
+            resolvedDir
           );
           
           handleJSONOutput(outputData, outputPath, `✅ Results saved to ${outputPath}`);
@@ -804,8 +809,8 @@ program
           const markdown = generateMarkdownReport(report, elapsedTime);
           const outputPath = resolveOutputPath(
             userOutputFile,
-            `consistency-report-${new Date().toISOString().split('T')[0]}.md`,
-            directory
+            `aiready-report-${getReportTimestamp()}.md`,
+            resolvedDir
           );
           writeFileSync(outputPath, markdown);
           console.log(chalk.green(`✅ Report saved to ${outputPath}`));
@@ -1088,7 +1093,18 @@ program
   }
 
   /**
-   * Find the latest aiready scan report in the .aiready directory
+   * Generate timestamp for report filenames (YYYYMMDD-HHMMSS)
+   * Provides better granularity than date-only filenames
+   */
+  function getReportTimestamp(): string {
+    const now = new Date();
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+  }
+
+  /**
+   * Find the latest aiready report in the .aiready directory
+   * Searches for both new format (aiready-report-*) and legacy format (aiready-scan-*)
    */
   function findLatestScanReport(dirPath: string): string | null {
     const aireadyDir = resolvePath(dirPath, '.aiready');
@@ -1097,7 +1113,11 @@ program
     }
     
     const { readdirSync, statSync } = require('fs');
-    const files = readdirSync(aireadyDir).filter(f => f.startsWith('aiready-scan-') && f.endsWith('.json'));
+    // Search for new format first, then legacy format
+    let files = readdirSync(aireadyDir).filter(f => f.startsWith('aiready-report-') && f.endsWith('.json'));
+    if (files.length === 0) {
+      files = readdirSync(aireadyDir).filter(f => f.startsWith('aiready-scan-') && f.endsWith('.json'));
+    }
     
     if (files.length === 0) {
       return null;
@@ -1114,17 +1134,17 @@ program
   async function handleVisualize(directory: string | undefined, options: any) {
     try {
       const dirPath = resolvePath(process.cwd(), directory || '.');
-      let reportPath = resolvePath(dirPath, options.report || 'aiready-improvement-report.json');
+      let reportPath = options.report ? resolvePath(dirPath, options.report) : null;
       
-      // If report not found, try to find latest scan report
-      if (!existsSync(reportPath)) {
+      // If report not provided or not found, try to find latest scan report
+      if (!reportPath || !existsSync(reportPath)) {
         const latestScan = findLatestScanReport(dirPath);
         if (latestScan) {
-          console.log(`Using latest scan report: ${latestScan}`);
           reportPath = latestScan;
+          console.log(chalk.dim(`Found latest report: ${latestScan.split('/').pop()}`));
         } else {
-          console.error('Report not found at', reportPath);
-          console.log('Run `aiready scan --output json` to generate the report, or pass --report');
+          console.error(chalk.red('❌ No AI readiness report found'));
+          console.log(chalk.dim(`\nGenerate a report with:\n  aiready scan --output json\n\nOr specify a custom report:\n  aiready visualise --report <path-to-report.json>`));
           return;
         }
       }
@@ -1222,14 +1242,15 @@ program
   .command('visualise')
   .description('Alias for visualize (British spelling)')
   .argument('[directory]', 'Directory to analyze', '.')
-  .option('--report <path>', 'Report path (relative to directory)', 'aiready-improvement-report.json')
+  .option('--report <path>', 'Report path (auto-detects latest .aiready/aiready-report-*.json if not provided)')
   .option('-o, --output <path>', 'Output HTML path (relative to directory)', 'packages/visualizer/visualization.html')
   .option('--open', 'Open generated HTML in default browser')
   .option('--serve [port]', 'Start a local static server to serve the visualization (optional port number)', false)
   .option('--dev', 'Start Vite dev server (live reload) for interactive development', true)
   .addHelpText('after', `
 EXAMPLES:
-  $ aiready visualise . --report aiready-improvement-report.json
+  $ aiready visualise .  # Auto-detects latest report
+  $ aiready visualise . --report .aiready/aiready-report-20260217-143022.json
   $ aiready visualise . --report report.json --dev
   $ aiready visualise . --report report.json --serve 8080
 
@@ -1242,14 +1263,15 @@ program
   .command('visualize')
   .description('Generate interactive visualization from an AIReady report')
   .argument('[directory]', 'Directory to analyze', '.')
-  .option('--report <path>', 'Report path (relative to directory)', 'aiready-improvement-report.json')
+  .option('--report <path>', 'Report path (auto-detects latest .aiready/aiready-report-*.json if not provided)')
   .option('-o, --output <path>', 'Output HTML path (relative to directory)', 'packages/visualizer/visualization.html')
   .option('--open', 'Open generated HTML in default browser')
   .option('--serve [port]', 'Start a local static server to serve the visualization (optional port number)', false)
   .option('--dev', 'Start Vite dev server (live reload) for interactive development', false)
   .addHelpText('after', `
 EXAMPLES:
-  $ aiready visualize . --report aiready-improvement-report.json
+  $ aiready visualize .  # Auto-detects latest report
+  $ aiready visualize . --report .aiready/aiready-report-20260217-143022.json
   $ aiready visualize . --report report.json -o out/visualization.html --open
   $ aiready visualize . --report report.json --serve
   $ aiready visualize . --report report.json --serve 8080
