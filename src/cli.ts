@@ -79,7 +79,7 @@ program
   .option('--exclude <patterns>', 'File patterns to exclude (comma-separated)')
   .option('-o, --output <format>', 'Output format: console, json', 'json')
   .option('--output-file <path>', 'Output file path (for json)')
-  .option('--score', 'Calculate and display AI Readiness Score (0-100) with breakdown')
+  .option('--no-score', 'Disable calculating AI Readiness Score (enabled by default)')
   .option('--weights <weights>', 'Custom scoring weights (patterns:40,context:35,consistency:25)')
   .option('--threshold <score>', 'Fail CI/CD if score below threshold (0-100)')
   .addHelpText('after', `
