@@ -1305,7 +1305,7 @@ program
 
       if (options.serve) {
         try {
-          const port = Number(options.serve) || 5173;
+          const port = typeof options.serve === 'number' ? options.serve : 5173;
           const http = await import('http');
           const fsp = await import('fs/promises');
           const { exec } = await import('child_process');
