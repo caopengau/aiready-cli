@@ -3,14 +3,14 @@
  */
 
 import chalk from 'chalk';
-import { writeFileSync } from 'fs';
+import { writeFileSync, readFileSync } from 'fs';
 import { join } from 'path';
 import { resolve as resolvePath } from 'path';
-import { 
-  loadMergedConfig, 
-  handleJSONOutput, 
-  handleCLIError, 
-  getElapsedTime, 
+import {
+  loadMergedConfig,
+  handleJSONOutput,
+  handleCLIError,
+  getElapsedTime,
   resolveOutputPath,
   calculateOverallScore,
   formatScore,
@@ -25,6 +25,8 @@ import { getReportTimestamp, warnIfGraphCapExceeded, truncateArray } from '../ut
 
 interface ScanOptions {
   tools?: string;
+  profile?: string;
+  compareTo?: string;
   include?: string;
   exclude?: string;
   output?: string;
@@ -47,7 +49,7 @@ export async function scanAction(directory: string, options: ScanOptions) {
   try {
     // Define defaults
     const defaults = {
-      tools: ['patterns', 'context', 'consistency'],
+      tools: ['patterns', 'context', 'consistency', 'hallucination', 'grounding', 'testability'],
       include: undefined,
       exclude: undefined,
       output: {
@@ -56,9 +58,29 @@ export async function scanAction(directory: string, options: ScanOptions) {
       },
     };
 
+    let profileTools = options.tools ? options.tools.split(',').map((t: string) => t.trim()) : undefined;
+    if (options.profile) {
+      switch (options.profile.toLowerCase()) {
+        case 'agentic':
+          profileTools = ['hallucination', 'grounding', 'testability'];
+          break;
+        case 'cost':
+          profileTools = ['patterns', 'context'];
+          break;
+        case 'security':
+          profileTools = ['consistency', 'testability'];
+          break;
+        case 'onboarding':
+          profileTools = ['context', 'consistency', 'grounding'];
+          break;
+        default:
+          console.log(chalk.yellow(`\n⚠️  Unknown profile '${options.profile}'. Using specified tools or defaults.`));
+      }
+    }
+
     // Load and merge config with CLI options
     const baseOptions = await loadMergedConfig(resolvedDir, defaults, {
-      tools: options.tools ? options.tools.split(',').map((t: string) => t.trim()) as ('patterns' | 'context' | 'consistency')[] : undefined,
+      tools: profileTools as any,
       include: options.include?.split(','),
       exclude: options.exclude?.split(','),
     }) as any;
@@ -210,7 +232,7 @@ export async function scanAction(directory: string, options: ScanOptions) {
               const sample = issues.find((it: any) => it.severity === 'critical' || it.severity === 'major') || issues[0];
               const sampleMsg = sample ? ` — ${sample.message}` : '';
 
-              console.log(`   ${idx + 1}. ${file} — ${issues.length} issue(s) (critical:${counts.critical||0} major:${counts.major||0} minor:${counts.minor||0} info:${counts.info||0})${sampleMsg}`);
+              console.log(`   ${idx + 1}. ${file} — ${issues.length} issue(s) (critical:${counts.critical || 0} major:${counts.major || 0} minor:${counts.minor || 0} info:${counts.info || 0})${sampleMsg}`);
             });
 
             const remaining = files.length - topFiles.length;
@@ -282,6 +304,39 @@ export async function scanAction(directory: string, options: ScanOptions) {
         }
       }
 
+      // Hallucination risk score
+      if (finalOptions.tools.includes('hallucination') || finalOptions.tools.includes('hallucination-risk')) {
+        try {
+          const { hallucinationRiskAction } = await import('./hallucination-risk');
+          const hrScore = await hallucinationRiskAction(resolvedDir, { ...finalOptions, output: 'json' });
+          if (hrScore) toolScores.set('hallucination-risk', hrScore);
+        } catch (err) {
+          // ignore if spoke not installed yet
+        }
+      }
+
+      // Agent grounding score
+      if (finalOptions.tools.includes('grounding') || finalOptions.tools.includes('agent-grounding')) {
+        try {
+          const { agentGroundingAction } = await import('./agent-grounding');
+          const agScore = await agentGroundingAction(resolvedDir, { ...finalOptions, output: 'json' });
+          if (agScore) toolScores.set('agent-grounding', agScore);
+        } catch (err) {
+          // ignore if spoke not installed yet
+        }
+      }
+
+      // Testability score
+      if (finalOptions.tools.includes('testability')) {
+        try {
+          const { testabilityAction } = await import('./testability');
+          const tbScore = await testabilityAction(resolvedDir, { ...finalOptions, output: 'json' });
+          if (tbScore) toolScores.set('testability', tbScore);
+        } catch (err) {
+          // ignore if spoke not installed yet
+        }
+      }
+
       // Parse CLI weight overrides (if any)
       const cliWeights = parseWeightString((options as any).weights);
 
@@ -291,6 +346,40 @@ export async function scanAction(directory: string, options: ScanOptions) {
 
         console.log(chalk.bold('\n📊 AI Readiness Overall Score'));
         console.log(`  ${formatScore(scoringResult)}`);
+
+        // Check if we need to compare to a previous report
+        if (options.compareTo) {
+          try {
+            const prevReportStr = readFileSync(resolvePath(process.cwd(), options.compareTo), 'utf8');
+            const prevReport = JSON.parse(prevReportStr);
+            const prevScore = prevReport.scoring?.score || prevReport.scoring?.overallScore;
+
+            if (typeof prevScore === 'number') {
+              const diff = scoringResult.overall - prevScore;
+              const diffStr = diff > 0 ? `+${diff}` : String(diff);
+              console.log();
+              if (diff > 0) {
+                console.log(chalk.green(`  📈 Trend: ${diffStr} compared to ${options.compareTo} (${prevScore} → ${scoringResult.overall})`));
+              } else if (diff < 0) {
+                console.log(chalk.red(`  📉 Trend: ${diffStr} compared to ${options.compareTo} (${prevScore} → ${scoringResult.overall})`));
+                // Trend gating: if we regressed and CI is on or threshold is present, we could lower the threshold effectively,
+                // but for now, we just highlight the regression.
+              } else {
+                console.log(chalk.blue(`  ➖ Trend: No change compared to ${options.compareTo} (${prevScore} → ${scoringResult.overall})`));
+              }
+
+              // Add trend info to scoringResult for programmatic use
+              (scoringResult as any).trend = {
+                previousScore: prevScore,
+                difference: diff
+              };
+            } else {
+              console.log(chalk.yellow(`\n  ⚠️  Previous report at ${options.compareTo} does not contain an overall score.`));
+            }
+          } catch (e) {
+            console.log(chalk.yellow(`\n  ⚠️  Could not read or parse previous report at ${options.compareTo}.`));
+          }
+        }
 
         // Show concise breakdown; detailed breakdown only if config requests it
         if (scoringResult.breakdown && scoringResult.breakdown.length > 0) {
@@ -322,7 +411,7 @@ export async function scanAction(directory: string, options: ScanOptions) {
       const outputPath = resolveOutputPath(userOutputFile, defaultFilename, resolvedDir);
       const outputData = { ...results, scoring: scoringResult };
       handleJSONOutput(outputData, outputPath, `✅ Report saved to ${outputPath}`);
-      
+
       // Warn if graph caps may be exceeded
       warnIfGraphCapExceeded(outputData, resolvedDir);
     }
@@ -332,28 +421,28 @@ export async function scanAction(directory: string, options: ScanOptions) {
     if (isCI && scoringResult) {
       const threshold = options.threshold ? parseInt(options.threshold) : undefined;
       const failOnLevel = options.failOn || 'critical';
-      
+
       // Output GitHub Actions annotations
       if (process.env.GITHUB_ACTIONS === 'true') {
         console.log(`\n::group::AI Readiness Score`);
-        console.log(`score=${scoringResult.overallScore}`);
+        console.log(`score=${scoringResult.overall}`);
         if (scoringResult.breakdown) {
           scoringResult.breakdown.forEach(tool => {
             console.log(`${tool.toolName}=${tool.score}`);
           });
         }
         console.log('::endgroup::');
-        
+
         // Output annotation for score
-        if (threshold && scoringResult.overallScore < threshold) {
-          console.log(`::error::AI Readiness Score ${scoringResult.overallScore} is below threshold ${threshold}`);
+        if (threshold && scoringResult.overall < threshold) {
+          console.log(`::error::AI Readiness Score ${scoringResult.overall} is below threshold ${threshold}`);
         } else if (threshold) {
-          console.log(`::notice::AI Readiness Score: ${scoringResult.overallScore}/100 (threshold: ${threshold})`);
+          console.log(`::notice::AI Readiness Score: ${scoringResult.overall}/100 (threshold: ${threshold})`);
         }
-        
+
         // Output annotations for critical issues
         if (results.patterns) {
-          const criticalPatterns = results.patterns.flatMap((p: any) => 
+          const criticalPatterns = results.patterns.flatMap((p: any) =>
             p.issues.filter((i: any) => i.severity === 'critical')
           );
           criticalPatterns.slice(0, 10).forEach((issue: any) => {
@@ -365,21 +454,21 @@ export async function scanAction(directory: string, options: ScanOptions) {
       // Determine if we should fail
       let shouldFail = false;
       let failReason = '';
-      
+
       // Check threshold
-      if (threshold && scoringResult.overallScore < threshold) {
+      if (threshold && scoringResult.overall < threshold) {
         shouldFail = true;
-        failReason = `AI Readiness Score ${scoringResult.overallScore} is below threshold ${threshold}`;
+        failReason = `AI Readiness Score ${scoringResult.overall} is below threshold ${threshold}`;
       }
-      
+
       // Check fail-on severity
       if (failOnLevel !== 'none') {
         const severityLevels = { critical: 4, major: 3, minor: 2, any: 1 };
         const minSeverity = severityLevels[failOnLevel as keyof typeof severityLevels] || 4;
-        
+
         let criticalCount = 0;
         let majorCount = 0;
-        
+
         if (results.patterns) {
           results.patterns.forEach((p: any) => {
             p.issues.forEach((i: any) => {
@@ -402,7 +491,7 @@ export async function scanAction(directory: string, options: ScanOptions) {
             });
           });
         }
-        
+
         if (minSeverity >= 4 && criticalCount > 0) {
           shouldFail = true;
           failReason = `Found ${criticalCount} critical issues`;
@@ -411,7 +500,7 @@ export async function scanAction(directory: string, options: ScanOptions) {
           failReason = `Found ${criticalCount} critical and ${majorCount} major issues`;
         }
       }
-      
+
       // Output result
       if (shouldFail) {
         console.log(chalk.red('\n🚫 PR BLOCKED: AI Readiness Check Failed'));
@@ -424,7 +513,7 @@ export async function scanAction(directory: string, options: ScanOptions) {
       } else {
         console.log(chalk.green('\n✅ PR PASSED: AI Readiness Check'));
         if (threshold) {
-          console.log(chalk.green(`   Score: ${scoringResult.overallScore}/100 (threshold: ${threshold})`));
+          console.log(chalk.green(`   Score: ${scoringResult.overall}/100 (threshold: ${threshold})`));
         }
         console.log(chalk.dim('\n   💡 Track historical trends: https://getaiready.dev — Team plan $99/mo'));
       }
@@ -438,10 +527,19 @@ export const scanHelpText = `
 EXAMPLES:
   $ aiready scan                                    # Analyze all tools
   $ aiready scan --tools patterns,context           # Skip consistency
+  $ aiready scan --profile agentic                  # Optimize for AI agent execution
+  $ aiready scan --profile security                 # Optimize for secure coding (testability)
+  $ aiready scan --compare-to prev-report.json      # Compare trends against previous run
   $ aiready scan --score --threshold 75             # CI/CD with threshold
   $ aiready scan --ci --threshold 70                # GitHub Actions gatekeeper
   $ aiready scan --ci --fail-on major               # Fail on major+ issues
   $ aiready scan --output json --output-file report.json
+
+PROFILES:
+  agentic:      hallucination, grounding, testability
+  cost:         patterns, context
+  security:     consistency, testability
+  onboarding:   context, consistency, grounding
 
 CI/CD INTEGRATION (Gatekeeper Mode):
   Use --ci for GitHub Actions integration:

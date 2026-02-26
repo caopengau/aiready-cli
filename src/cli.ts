@@ -2,7 +2,8 @@
 
 import { Command } from 'commander';
 import { readFileSync } from 'fs';
-import { join } from 'path';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
 
 import {
   scanAction,
@@ -16,7 +17,12 @@ import {
   visualiseHelpText,
 } from './commands';
 
-const packageJson = JSON.parse(readFileSync(join(__dirname, '../package.json'), 'utf8'));
+const getDirname = () => {
+  if (typeof __dirname !== 'undefined') return __dirname;
+  return dirname(fileURLToPath(import.meta.url));
+};
+
+const packageJson = JSON.parse(readFileSync(join(getDirname(), '../package.json'), 'utf8'));
 
 const program = new Command();
 
@@ -66,13 +72,15 @@ program
   .command('scan')
   .description('Run comprehensive AI-readiness analysis (patterns + context + consistency)')
   .argument('[directory]', 'Directory to analyze', '.')
-  .option('-t, --tools <tools>', 'Tools to run (comma-separated: patterns,context,consistency)', 'patterns,context,consistency')
+  .option('-t, --tools <tools>', 'Tools to run (comma-separated: patterns,context,consistency,hallucination,grounding,testability)')
+  .option('--profile <type>', 'Scan profile to use (agentic, cost, security, onboarding)')
+  .option('--compare-to <path>', 'Compare results against a previous AIReady report JSON')
   .option('--include <patterns>', 'File patterns to include (comma-separated)')
   .option('--exclude <patterns>', 'File patterns to exclude (comma-separated)')
   .option('-o, --output <format>', 'Output format: console, json', 'json')
   .option('--output-file <path>', 'Output file path (for json)')
   .option('--no-score', 'Disable calculating AI Readiness Score (enabled by default)')
-  .option('--weights <weights>', 'Custom scoring weights (patterns:40,context:35,consistency:25)')
+  .option('--weights <weights>', 'Custom scoring weights')
   .option('--threshold <score>', 'Fail CI/CD if score below threshold (0-100)')
   .option('--ci', 'CI mode: GitHub Actions annotations, no colors, fail on threshold')
   .option('--fail-on <level>', 'Fail on issues: critical, major, any', 'critical')
