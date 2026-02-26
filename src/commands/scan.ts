@@ -49,7 +49,7 @@ export async function scanAction(directory: string, options: ScanOptions) {
   try {
     // Define defaults
     const defaults = {
-      tools: ['patterns', 'context', 'consistency', 'hallucination', 'grounding', 'testability'],
+      tools: ['patterns', 'context', 'consistency', 'hallucination', 'grounding', 'testability', 'doc-drift', 'deps-health'],
       include: undefined,
       exclude: undefined,
       output: {
@@ -332,6 +332,28 @@ export async function scanAction(directory: string, options: ScanOptions) {
           const { testabilityAction } = await import('./testability');
           const tbScore = await testabilityAction(resolvedDir, { ...finalOptions, output: 'json' });
           if (tbScore) toolScores.set('testability', tbScore);
+        } catch (err) {
+          // ignore if spoke not installed yet
+        }
+      }
+
+      // Documentation Drift score
+      if (finalOptions.tools.includes('doc-drift')) {
+        try {
+          const { docDriftAction } = await import('./doc-drift');
+          const ddScore = await docDriftAction(resolvedDir, { ...finalOptions, output: 'json' });
+          if (ddScore) toolScores.set('doc-drift', ddScore);
+        } catch (err) {
+          // ignore if spoke not installed yet
+        }
+      }
+
+      // Dependency Health score
+      if (finalOptions.tools.includes('deps-health')) {
+        try {
+          const { depsHealthAction } = await import('./deps-health');
+          const dhScore = await depsHealthAction(resolvedDir, { ...finalOptions, output: 'json' });
+          if (dhScore) toolScores.set('dependency-health', dhScore);
         } catch (err) {
           // ignore if spoke not installed yet
         }
