@@ -9,7 +9,7 @@ import type { ConsistencyReport } from '@aiready/consistency';
 import type { ConsistencyOptions } from '@aiready/consistency';
 
 export interface UnifiedAnalysisOptions extends ScanOptions {
-  tools?: ('patterns' | 'context' | 'consistency')[];
+  tools?: ('patterns' | 'context' | 'consistency' | 'doc-drift' | 'deps-health')[];
   minSimilarity?: number;
   minLines?: number;
   maxCandidatesPerBlock?: number;
@@ -24,6 +24,8 @@ export interface UnifiedAnalysisResult {
   duplicates?: DuplicatePattern[]; // Store actual duplicates for scoring
   context?: ContextAnalysisResult[];
   consistency?: ConsistencyReport;
+  docDrift?: any;
+  deps?: any;
   summary: {
     totalIssues: number;
     toolsRun: string[];
@@ -138,6 +140,36 @@ export async function analyzeUnified(
     result.summary.totalIssues += report.summary.totalIssues;
   }
 
+  // Run Documentation Drift analysis
+  if (tools.includes('doc-drift')) {
+    const { analyzeDocDrift } = await import('@aiready/doc-drift');
+    const report = await analyzeDocDrift({
+      rootDir: options.rootDir,
+      include: options.include,
+      exclude: options.exclude,
+    });
+    if (options.progressCallback) {
+      options.progressCallback({ tool: 'doc-drift', data: report });
+    }
+    result.docDrift = report;
+    result.summary.totalIssues += report.issues?.length || 0;
+  }
+
+  // Run Dependency Health analysis
+  if (tools.includes('deps-health')) {
+    const { analyzeDeps } = await import('@aiready/deps');
+    const report = await analyzeDeps({
+      rootDir: options.rootDir,
+      include: options.include,
+      exclude: options.exclude,
+    });
+    if (options.progressCallback) {
+      options.progressCallback({ tool: 'deps-health', data: report });
+    }
+    result.deps = report;
+    result.summary.totalIssues += report.issues?.length || 0;
+  }
+
   result.summary.executionTime = Date.now() - startTime;
   return result;
 }
@@ -160,6 +192,14 @@ export function generateUnifiedSummary(result: UnifiedAnalysisResult): string {
 
   if (result.consistency) {
     output += `🏷️ Consistency Analysis: ${result.consistency.summary.totalIssues} issues\n`;
+  }
+
+  if (result.docDrift) {
+    output += `📝 Doc Drift Analysis: ${result.docDrift.issues?.length || 0} issues\n`;
+  }
+
+  if (result.deps) {
+    output += `📦 Dependency Health: ${result.deps.issues?.length || 0} issues\n`;
   }
 
   return output;

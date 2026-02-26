@@ -240,6 +240,20 @@ export async function scanAction(directory: string, options: ScanOptions) {
               console.log(chalk.dim(`   ... and ${remaining} more files with issues (use --output json for full details)`));
             }
           }
+        } else if (event.tool === 'doc-drift') {
+          const dr = event.data as any;
+          console.log(`  Issues found: ${chalk.bold(String(dr.issues?.length || 0))}`);
+          if (dr.rawData) {
+            console.log(`  Signature Mismatches: ${chalk.bold(dr.rawData.outdatedComments || 0)}`);
+            console.log(`  Undocumented Complexity: ${chalk.bold(dr.rawData.undocumentedComplexity || 0)}`);
+          }
+        } else if (event.tool === 'deps-health') {
+          const dr = event.data as any;
+          console.log(`  Packages Analyzed: ${chalk.bold(String(dr.summary?.packagesAnalyzed || 0))}`);
+          if (dr.rawData) {
+            console.log(`  Deprecated Packages: ${chalk.bold(dr.rawData.deprecatedPackages || 0)}`);
+            console.log(`  AI Cutoff Skew Score: ${chalk.bold(dr.rawData.trainingCutoffSkew?.toFixed(1) || 0)}`);
+          }
         }
       } catch (err) {
         // don't crash the run for progress printing errors
@@ -338,25 +352,25 @@ export async function scanAction(directory: string, options: ScanOptions) {
       }
 
       // Documentation Drift score
-      if (finalOptions.tools.includes('doc-drift')) {
-        try {
-          const { docDriftAction } = await import('./doc-drift');
-          const ddScore = await docDriftAction(resolvedDir, { ...finalOptions, output: 'json' });
-          if (ddScore) toolScores.set('doc-drift', ddScore);
-        } catch (err) {
-          // ignore if spoke not installed yet
-        }
+      if (results.docDrift) {
+        toolScores.set('doc-drift', {
+          toolName: 'doc-drift',
+          score: results.docDrift.summary.score,
+          rawMetrics: results.docDrift.rawData,
+          factors: [],
+          recommendations: results.docDrift.recommendations.map((action: string) => ({ action, estimatedImpact: 5, priority: 'medium' }))
+        });
       }
 
       // Dependency Health score
-      if (finalOptions.tools.includes('deps-health')) {
-        try {
-          const { depsHealthAction } = await import('./deps-health');
-          const dhScore = await depsHealthAction(resolvedDir, { ...finalOptions, output: 'json' });
-          if (dhScore) toolScores.set('dependency-health', dhScore);
-        } catch (err) {
-          // ignore if spoke not installed yet
-        }
+      if (results.deps) {
+        toolScores.set('dependency-health', {
+          toolName: 'dependency-health',
+          score: results.deps.summary.score,
+          rawMetrics: results.deps.rawData,
+          factors: [],
+          recommendations: results.deps.recommendations.map((action: string) => ({ action, estimatedImpact: 5, priority: 'medium' }))
+        });
       }
 
       // Parse CLI weight overrides (if any)
