@@ -352,10 +352,17 @@ export async function detectDuplicatePatterns(
     'undefined',
     'this',
   ]);
-  const tokenize = (norm: string): string[] =>
-    norm
-      .split(/[\s(){}\[\];,\.]+/)
+  const tokenize = (norm: string): string[] => {
+    // Replace common punctuation with space without relying on escape-heavy regexes
+    const punctuation = '(){}[];.,';
+    const cleaned = norm
+      .split('')
+      .map((ch) => (punctuation.includes(ch) ? ' ' : ch))
+      .join('');
+    return cleaned
+      .split(/\s+/)
       .filter((t) => t && t.length >= 3 && !stopwords.has(t.toLowerCase()));
+  };
 
   const blockTokens: string[][] = allBlocks.map((b) => tokenize(b.normalized));
 

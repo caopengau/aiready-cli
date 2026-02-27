@@ -152,7 +152,7 @@ async function getSmartDefaults(
   // severity: focus on high-impact issues in very large repos
   const severity = estimatedBlocks > 5000 ? 'high' : 'all';
 
-  let defaults: PatternDetectOptions = {
+  const defaults: PatternDetectOptions = {
     rootDir: directory,
     minSimilarity,
     minLines,
