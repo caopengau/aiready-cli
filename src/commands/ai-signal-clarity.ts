@@ -10,7 +10,7 @@ export async function aiSignalClarityAction(
   directory: string,
   options: any
 ): Promise<ToolScoringOutput | undefined> {
-  const { analyzeAiSignalClarity, calculateHallucinationScore } =
+  const { analyzeAiSignalClarity, calculateAiSignalClarityScore } =
     await import('@aiready/ai-signal-clarity');
 
   const config = await loadConfig(directory);
@@ -25,7 +25,7 @@ export async function aiSignalClarityAction(
     exclude: options.exclude,
   });
 
-  const scoring = calculateHallucinationScore(report);
+  const scoring = calculateAiSignalClarityScore(report);
 
   if (options.output === 'json') {
     return scoring;

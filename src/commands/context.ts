@@ -36,7 +36,7 @@ export async function contextAction(
 
   try {
     // Define defaults
-    const defaults = {
+    const defaults: any = {
       maxDepth: 5,
       maxContextBudget: 10000,
       include: undefined,

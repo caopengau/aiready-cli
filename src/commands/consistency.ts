@@ -38,7 +38,7 @@ export async function consistencyAction(
 
   try {
     // Define defaults
-    const defaults = {
+    const defaults: any = {
       checkNaming: true,
       checkPatterns: true,
       minSeverity: 'info' as const,
