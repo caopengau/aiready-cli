@@ -49,11 +49,11 @@ export async function scanAction(directory: string, options: ScanOptions) {
   try {
     // Define defaults
     const defaults = {
-      tools: ['patterns', 'context', 'consistency', 'aiSignalClarity', 'grounding', 'testability', 'doc-drift', 'deps-health'],
+      tools: ['patterns', 'context', 'consistency', 'aiSignalClarity', 'grounding', 'testability', 'doc-drift', 'deps-health', 'changeAmplification'],
       include: undefined,
       exclude: undefined,
       output: {
-        format: 'json',
+        format: 'console',
         file: undefined,
       },
     };
@@ -83,11 +83,15 @@ export async function scanAction(directory: string, options: ScanOptions) {
     }
 
     // Load and merge config with CLI options
-    const baseOptions = await loadMergedConfig(resolvedDir, defaults, {
-      tools: profileTools as any,
+    const cliOverrides: any = {
       include: options.include?.split(','),
       exclude: options.exclude?.split(','),
-    }) as any;
+    };
+    if (profileTools) {
+      cliOverrides.tools = profileTools;
+    }
+
+    const baseOptions = await loadMergedConfig(resolvedDir, defaults, cliOverrides) as any;
 
 
     // Apply smart defaults for pattern detection if patterns tool is enabled
@@ -258,6 +262,12 @@ export async function scanAction(directory: string, options: ScanOptions) {
             console.log(`  Deprecated Packages: ${chalk.bold(dr.rawData.deprecatedPackages || 0)}`);
             console.log(`  AI Cutoff Skew Score: ${chalk.bold(dr.rawData.trainingCutoffSkew?.toFixed(1) || 0)}`);
           }
+        } else if (event.tool === 'change-amplification' || event.tool === 'changeAmplification') {
+          const dr = event.data as any;
+          console.log(`  Coupling issues: ${chalk.bold(String(dr.issues?.length || 0))}`);
+          if (dr.summary) {
+            console.log(`  Complexity Score: ${chalk.bold(dr.summary.score || 0)}/100`);
+          }
         }
       } catch (err) {
         // don't crash the run for progress printing errors
@@ -276,7 +286,8 @@ export async function scanAction(directory: string, options: ScanOptions) {
     if (results.duplicates) console.log(`  Duplicate patterns found: ${chalk.bold(String(results.duplicates.length || 0))}`);
     if (results.patterns) console.log(`  Pattern files with issues: ${chalk.bold(String(results.patterns.length || 0))}`);
     if (results.context) console.log(`  Context issues: ${chalk.bold(String(results.context.length || 0))}`);
-    if (results.consistency) console.log(`  Consistency issues: ${chalk.bold(String(results.consistency.summary.totalIssues || 0))}`);
+    console.log(`  Consistency issues: ${chalk.bold(String(results.consistency?.summary?.totalIssues || 0))}`);
+    if (results.changeAmplification) console.log(`  Change amplification: ${chalk.bold(String(results.changeAmplification.summary?.score || 0))}/100`);
     console.log(chalk.cyan('===========================\n'));
 
     const elapsedTime = getElapsedTime(startTime);
@@ -324,9 +335,9 @@ export async function scanAction(directory: string, options: ScanOptions) {
 
       // AI signal clarity score
       if (results.aiSignalClarity) {
-        const { calculateHallucinationScore } = await import('@aiready/ai-signal-clarity');
+        const { calculateAiSignalClarityScore } = await import('@aiready/ai-signal-clarity');
         try {
-          const hrScore = calculateHallucinationScore(results.aiSignalClarity);
+          const hrScore = calculateAiSignalClarityScore(results.aiSignalClarity);
           toolScores.set('ai-signal-clarity', hrScore);
         } catch (err) {
           // ignore
@@ -362,7 +373,7 @@ export async function scanAction(directory: string, options: ScanOptions) {
           score: results.docDrift.summary.score,
           rawMetrics: results.docDrift.rawData,
           factors: [],
-          recommendations: results.docDrift.recommendations.map((action: string) => ({ action, estimatedImpact: 5, priority: 'medium' }))
+          recommendations: (results.docDrift.recommendations || []).map((action: string) => ({ action, estimatedImpact: 5, priority: 'medium' }))
         });
       }
 
@@ -373,9 +384,21 @@ export async function scanAction(directory: string, options: ScanOptions) {
           score: results.deps.summary.score,
           rawMetrics: results.deps.rawData,
           factors: [],
-          recommendations: results.deps.recommendations.map((action: string) => ({ action, estimatedImpact: 5, priority: 'medium' }))
+          recommendations: (results.deps.recommendations || []).map((action: string) => ({ action, estimatedImpact: 5, priority: 'medium' }))
         });
       }
+
+      // Change Amplification score
+      if (results.changeAmplification) {
+        toolScores.set('change-amplification', {
+          toolName: 'change-amplification',
+          score: results.changeAmplification.summary.score,
+          rawMetrics: results.changeAmplification.rawData,
+          factors: [],
+          recommendations: (results.changeAmplification.recommendations || []).map((action: string) => ({ action, estimatedImpact: 5, priority: 'medium' }))
+        });
+      }
+
 
       // Parse CLI weight overrides (if any)
       const cliWeights = parseWeightString((options as any).weights);
@@ -454,6 +477,21 @@ export async function scanAction(directory: string, options: ScanOptions) {
 
       // Warn if graph caps may be exceeded
       warnIfGraphCapExceeded(outputData, resolvedDir);
+    } else {
+      // Auto-persist report even in console mode for downstream tools
+      const timestamp = getReportTimestamp();
+      const defaultFilename = `aiready-report-${timestamp}.json`;
+      const outputPath = resolveOutputPath(userOutputFile, defaultFilename, resolvedDir);
+      const outputData = { ...results, scoring: scoringResult };
+
+      try {
+        writeFileSync(outputPath, JSON.stringify(outputData, null, 2));
+        console.log(chalk.dim(`✅ Report auto-persisted to ${outputPath}`));
+        // Warn if graph caps may be exceeded
+        warnIfGraphCapExceeded(outputData, resolvedDir);
+      } catch (err) {
+        // failed to save report, but don't fail the command
+      }
     }
 
     // CI/CD Gatekeeper Mode

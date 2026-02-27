@@ -37,11 +37,11 @@ AI READINESS SCORING:
   Use --score flag with any analysis command for detailed breakdown.
 
 EXAMPLES:
-  $ aiready scan                          # Quick analysis of current directory
+  $ aiready scan                          # Comprehensive analysis of current directory
   $ aiready scan --score                  # Get AI Readiness Score (0-100)
   $ aiready scan --tools patterns         # Run only pattern detection
-  $ aiready patterns --similarity 0.6     # Custom similarity threshold
-  $ aiready scan --output json --output-file results.json
+  $ npx @aiready/cli scan                 # Industry standard way to run standard scan
+  $ aiready scan --output json            # Output raw JSON for piping
 
 GETTING STARTED:
   1. Run 'aiready scan' to analyze your codebase
@@ -78,7 +78,7 @@ program
   .option('--compare-to <path>', 'Compare results against a previous AIReady report JSON')
   .option('--include <patterns>', 'File patterns to include (comma-separated)')
   .option('--exclude <patterns>', 'File patterns to exclude (comma-separated)')
-  .option('-o, --output <format>', 'Output format: console, json', 'json')
+  .option('-o, --output <format>', 'Output format: console, json', 'console')
   .option('--output-file <path>', 'Output file path (for json)')
   .option('--no-score', 'Disable calculating AI Readiness Score (enabled by default)')
   .option('--weights <weights>', 'Custom scoring weights')
