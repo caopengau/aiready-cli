@@ -169,6 +169,7 @@ export async function analyzeUnified(
       rootDir: options.rootDir,
       include: options.include,
       exclude: options.exclude,
+      onProgress: options.onProgress,
     });
     if (options.progressCallback) {
       options.progressCallback({ tool: 'doc-drift', data: report });
@@ -184,6 +185,7 @@ export async function analyzeUnified(
       rootDir: options.rootDir,
       include: options.include,
       exclude: options.exclude,
+      onProgress: options.onProgress,
     });
     if (options.progressCallback) {
       options.progressCallback({ tool: 'deps-health', data: report });
@@ -200,6 +202,7 @@ export async function analyzeUnified(
       rootDir: options.rootDir,
       include: options.include,
       exclude: options.exclude,
+      onProgress: options.onProgress,
     });
     if (options.progressCallback) {
       options.progressCallback({ tool: 'aiSignalClarity', data: report });
@@ -219,6 +222,7 @@ export async function analyzeUnified(
       rootDir: options.rootDir,
       include: options.include,
       exclude: options.exclude,
+      onProgress: options.onProgress,
     });
     if (options.progressCallback) {
       options.progressCallback({ tool: 'grounding', data: report });
@@ -234,6 +238,7 @@ export async function analyzeUnified(
       rootDir: options.rootDir,
       include: options.include,
       exclude: options.exclude,
+      onProgress: options.onProgress,
     });
     if (options.progressCallback) {
       options.progressCallback({ tool: 'testability', data: report });
@@ -250,6 +255,7 @@ export async function analyzeUnified(
       rootDir: options.rootDir,
       include: options.include,
       exclude: options.exclude,
+      onProgress: options.onProgress,
     });
     if (options.progressCallback) {
       options.progressCallback({ tool: 'changeAmplification', data: report });

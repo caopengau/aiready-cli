@@ -424,8 +424,20 @@ export async function scanAction(directory: string, options: ScanOptions) {
     const results = await analyzeUnified({
       ...finalOptions,
       progressCallback,
+      onProgress: (processed: number, total: number, message: string) => {
+        // Clear line and print progress
+        process.stdout.write(
+          `\r\x1b[K   [${processed}/${total}] ${message}...`
+        );
+        if (processed === total) {
+          process.stdout.write('\n'); // Move to next line when done
+        }
+      },
       suppressToolConfig: true,
     });
+
+    // Determine if we need to print a trailing newline because the last tool didn't finish normally or had 0 files
+    // But progressCallback already outputs `\n--- TOOL RESULTS ---` so it's fine.
 
     // Summarize tools and results to console
     console.log(chalk.cyan('\n=== AIReady Run Summary ==='));
