@@ -8,7 +8,7 @@ import type { ToolScoringOutput } from '@aiready/core';
 
 export async function docDriftAction(
   directory: string,
-  options: any,
+  options: any
 ): Promise<ToolScoringOutput | undefined> {
   const { analyzeDocDrift } = await import('@aiready/doc-drift');
 
@@ -29,7 +29,11 @@ export async function docDriftAction(
     score: report.summary.score,
     rawMetrics: report.rawData,
     factors: [],
-    recommendations: report.recommendations.map((action: string) => ({ action, estimatedImpact: 5, priority: 'medium' }))
+    recommendations: report.recommendations.map((action: string) => ({
+      action,
+      estimatedImpact: 5,
+      priority: 'medium',
+    })),
   };
 
   if (options.output === 'json') {
@@ -37,7 +41,7 @@ export async function docDriftAction(
   }
 
   const { summary } = report;
-  const ratingColors: Record<string, Function> = {
+  const ratingColors: Record<string, (s: string) => string> = {
     minimal: chalk.green,
     low: chalk.cyan,
     moderate: chalk.yellow,
@@ -45,7 +49,9 @@ export async function docDriftAction(
     severe: chalk.bgRed.white,
   };
   const color = ratingColors[summary.rating] ?? chalk.white;
-  console.log(`  📝 Documentation Drift:  ${chalk.bold(100 - scoring.score + '/100 health')} (${color(summary.rating)} risk)`);
+  console.log(
+    `  📝 Documentation Drift:  ${chalk.bold(100 - scoring.score + '/100 health')} (${color(summary.rating)} risk)`
+  );
   if (report.issues.length > 0) {
     console.log(chalk.dim(`     Found ${report.issues.length} drift issues.`));
   } else {

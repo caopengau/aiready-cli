@@ -3,13 +3,23 @@ import { analyzeContext } from '@aiready/context-analyzer';
 import { analyzeConsistency } from '@aiready/consistency';
 import type { AnalysisResult, ScanOptions } from '@aiready/core';
 import type { ContextAnalysisResult } from '@aiready/context-analyzer';
-import type { PatternDetectOptions, DuplicatePattern } from '@aiready/pattern-detect';
+import type { DuplicatePattern } from '@aiready/pattern-detect';
 import type { ConsistencyReport } from '@aiready/consistency';
 
 import type { ConsistencyOptions } from '@aiready/consistency';
 
 export interface UnifiedAnalysisOptions extends ScanOptions {
-  tools?: ('patterns' | 'context' | 'consistency' | 'doc-drift' | 'deps-health' | 'aiSignalClarity' | 'grounding' | 'testability' | 'changeAmplification')[];
+  tools?: (
+    | 'patterns'
+    | 'context'
+    | 'consistency'
+    | 'doc-drift'
+    | 'deps-health'
+    | 'aiSignalClarity'
+    | 'grounding'
+    | 'testability'
+    | 'changeAmplification'
+  )[];
   minSimilarity?: number;
   minLines?: number;
   maxCandidatesPerBlock?: number;
@@ -50,7 +60,8 @@ function sortBySeverity(results: AnalysisResult[]): AnalysisResult[] {
     .map((file) => {
       // Sort issues within each file by severity (most severe first)
       const sortedIssues = [...file.issues].sort((a, b) => {
-        const severityDiff = (severityOrder[b.severity] || 0) - (severityOrder[a.severity] || 0);
+        const severityDiff =
+          (severityOrder[b.severity] || 0) - (severityOrder[a.severity] || 0);
         if (severityDiff !== 0) return severityDiff;
         // If same severity, sort by line number
         return (a.location?.line || 0) - (b.location?.line || 0);
@@ -59,8 +70,14 @@ function sortBySeverity(results: AnalysisResult[]): AnalysisResult[] {
     })
     .sort((a, b) => {
       // Sort files by most severe issue first
-      const aMaxSeverity = Math.max(...a.issues.map((i) => severityOrder[i.severity] || 0), 0);
-      const bMaxSeverity = Math.max(...b.issues.map((i) => severityOrder[i.severity] || 0), 0);
+      const aMaxSeverity = Math.max(
+        ...a.issues.map((i) => severityOrder[i.severity] || 0),
+        0
+      );
+      const bMaxSeverity = Math.max(
+        ...b.issues.map((i) => severityOrder[i.severity] || 0),
+        0
+      );
       if (aMaxSeverity !== bMaxSeverity) {
         return bMaxSeverity - aMaxSeverity;
       }
@@ -113,7 +130,8 @@ export async function analyzeUnified(
     }
     // Sort context results by severity (most severe first)
     result.context = contextResults.sort((a, b) => {
-      const severityDiff = (severityOrder[b.severity] || 0) - (severityOrder[a.severity] || 0);
+      const severityDiff =
+        (severityOrder[b.severity] || 0) - (severityOrder[a.severity] || 0);
       if (severityDiff !== 0) return severityDiff;
       // If same severity, sort by token cost (higher cost first)
       if (a.tokenCost !== b.tokenCost) return b.tokenCost - a.tokenCost;
@@ -176,7 +194,8 @@ export async function analyzeUnified(
 
   // Run AI Signal Clarity analysis
   if (tools.includes('aiSignalClarity')) {
-    const { analyzeAiSignalClarity } = await import('@aiready/ai-signal-clarity');
+    const { analyzeAiSignalClarity } =
+      await import('@aiready/ai-signal-clarity');
     const report = await analyzeAiSignalClarity({
       rootDir: options.rootDir,
       include: options.include,
@@ -186,7 +205,11 @@ export async function analyzeUnified(
       options.progressCallback({ tool: 'aiSignalClarity', data: report });
     }
     result.aiSignalClarity = report;
-    result.summary.totalIssues += report.results?.reduce((sum: number, r: any) => sum + (r.issues?.length || 0), 0) || 0;
+    result.summary.totalIssues +=
+      report.results?.reduce(
+        (sum: number, r: any) => sum + (r.issues?.length || 0),
+        0
+      ) || 0;
   }
 
   // Run Agent Grounding analysis
@@ -221,7 +244,8 @@ export async function analyzeUnified(
 
   // Run Change Amplification analysis
   if (tools.includes('changeAmplification')) {
-    const { analyzeChangeAmplification } = await import('@aiready/change-amplification');
+    const { analyzeChangeAmplification } =
+      await import('@aiready/change-amplification');
     const report = await analyzeChangeAmplification({
       rootDir: options.rootDir,
       include: options.include,

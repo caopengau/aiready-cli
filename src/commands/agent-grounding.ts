@@ -8,9 +8,10 @@ import type { ToolScoringOutput } from '@aiready/core';
 
 export async function agentGroundingAction(
   directory: string,
-  options: any,
+  options: any
 ): Promise<ToolScoringOutput | undefined> {
-  const { analyzeAgentGrounding, calculateGroundingScore } = await import('@aiready/agent-grounding');
+  const { analyzeAgentGrounding, calculateGroundingScore } =
+    await import('@aiready/agent-grounding');
 
   const config = await loadConfig(directory);
   const merged = mergeConfigWithDefaults(config, {
@@ -33,14 +34,28 @@ export async function agentGroundingAction(
   }
 
   const scoreColor = (s: number) =>
-    s >= 85 ? chalk.green : s >= 70 ? chalk.cyan : s >= 50 ? chalk.yellow : chalk.red;
+    s >= 85
+      ? chalk.green
+      : s >= 70
+        ? chalk.cyan
+        : s >= 50
+          ? chalk.yellow
+          : chalk.red;
+  void scoreColor;
 
-  console.log(`  🧭 Agent Grounding:     ${chalk.bold(scoring.score + '/100')} (${report.summary.rating})`);
+  console.log(
+    `  🧭 Agent Grounding:     ${chalk.bold(scoring.score + '/100')} (${report.summary.rating})`
+  );
   const dims = report.summary.dimensions;
   const worstDim = Object.entries(dims).sort(([, a], [, b]) => a - b)[0];
   if (worstDim && worstDim[1] < 70) {
-    const name = worstDim[0].replace(/([A-Z])/g, ' $1').replace('Score', '').trim();
-    console.log(chalk.dim(`     Weakest dimension: ${name} (${worstDim[1]}/100)`));
+    const name = worstDim[0]
+      .replace(/([A-Z])/g, ' $1')
+      .replace('Score', '')
+      .trim();
+    console.log(
+      chalk.dim(`     Weakest dimension: ${name} (${worstDim[1]}/100)`)
+    );
   }
 
   return scoring;

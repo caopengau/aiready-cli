@@ -18,20 +18,31 @@ interface VisualizeOptions {
   dev?: boolean;
 }
 
-export async function visualizeAction(directory: string, options: VisualizeOptions) {
+export async function visualizeAction(
+  directory: string,
+  options: VisualizeOptions
+) {
   try {
     const dirPath = resolvePath(process.cwd(), directory || '.');
-    let reportPath = options.report ? resolvePath(dirPath, options.report) : null;
-    
+    let reportPath = options.report
+      ? resolvePath(dirPath, options.report)
+      : null;
+
     // If report not provided or not found, try to find latest scan report
     if (!reportPath || !existsSync(reportPath)) {
       const latestScan = findLatestScanReport(dirPath);
       if (latestScan) {
         reportPath = latestScan;
-        console.log(chalk.dim(`Found latest report: ${latestScan.split('/').pop()}`));
+        console.log(
+          chalk.dim(`Found latest report: ${latestScan.split('/').pop()}`)
+        );
       } else {
         console.error(chalk.red('❌ No AI readiness report found'));
-        console.log(chalk.dim(`\nGenerate a report with:\n  aiready scan --output json\n\nOr specify a custom report:\n  aiready visualise --report <path-to-report.json>`));
+        console.log(
+          chalk.dim(
+            `\nGenerate a report with:\n  aiready scan --output json\n\nOr specify a custom report:\n  aiready visualise --report <path-to-report.json>`
+          )
+        );
         return;
       }
     }
@@ -42,39 +53,42 @@ export async function visualizeAction(directory: string, options: VisualizeOptio
     // Load config to extract graph caps
     const configPath = resolvePath(dirPath, 'aiready.json');
     let graphConfig = { maxNodes: 400, maxEdges: 600 };
-    
+
     if (existsSync(configPath)) {
       try {
         const rawConfig = JSON.parse(readFileSync(configPath, 'utf8'));
         if (rawConfig.visualizer?.graph) {
           graphConfig = {
-            maxNodes: rawConfig.visualizer.graph.maxNodes ?? graphConfig.maxNodes,
-            maxEdges: rawConfig.visualizer.graph.maxEdges ?? graphConfig.maxEdges,
+            maxNodes:
+              rawConfig.visualizer.graph.maxNodes ?? graphConfig.maxNodes,
+            maxEdges:
+              rawConfig.visualizer.graph.maxEdges ?? graphConfig.maxEdges,
           };
         }
       } catch (e) {
+        void e;
         // Silently ignore parse errors and use defaults
       }
     }
-    
+
     // Store config in env for vite middleware to pass to client
     const envVisualizerConfig = JSON.stringify(graphConfig);
     process.env.AIREADY_VISUALIZER_CONFIG = envVisualizerConfig;
 
-    console.log("Building graph from report...");
+    console.log('Building graph from report...');
     const { GraphBuilder } = await import('@aiready/visualizer/graph');
     const graph = GraphBuilder.buildFromReport(report, dirPath);
 
     // Check if --dev mode is requested and available
     let useDevMode = options.dev || false;
     let devServerStarted = false;
-    
+
     if (useDevMode) {
       try {
         const monorepoWebDir = resolvePath(dirPath, 'packages/visualizer');
         let webDir = '';
         let visualizerAvailable = false;
-        
+
         if (existsSync(monorepoWebDir)) {
           webDir = monorepoWebDir;
           visualizerAvailable = true;
@@ -82,41 +96,54 @@ export async function visualizeAction(directory: string, options: VisualizeOptio
           // Try to resolve installed @aiready/visualizer package from node_modules
           const nodemodulesLocations: string[] = [
             resolvePath(dirPath, 'node_modules', '@aiready', 'visualizer'),
-            resolvePath(process.cwd(), 'node_modules', '@aiready', 'visualizer'),
+            resolvePath(
+              process.cwd(),
+              'node_modules',
+              '@aiready',
+              'visualizer'
+            ),
           ];
-          
+
           // Walk up directory tree to find node_modules in parent directories
           let currentDir = dirPath;
           while (currentDir !== '/' && currentDir !== '.') {
-            nodemodulesLocations.push(resolvePath(currentDir, 'node_modules', '@aiready', 'visualizer'));
+            nodemodulesLocations.push(
+              resolvePath(currentDir, 'node_modules', '@aiready', 'visualizer')
+            );
             const parent = resolvePath(currentDir, '..');
             if (parent === currentDir) break;
             currentDir = parent;
           }
-          
+
           for (const location of nodemodulesLocations) {
-            if (existsSync(location) && existsSync(resolvePath(location, 'package.json'))) {
+            if (
+              existsSync(location) &&
+              existsSync(resolvePath(location, 'package.json'))
+            ) {
               webDir = location;
               visualizerAvailable = true;
               break;
             }
           }
-          
+
           // Fallback: try require.resolve
           if (!visualizerAvailable) {
             try {
-              const vizPkgPath = require.resolve('@aiready/visualizer/package.json');
+              const vizPkgPath =
+                require.resolve('@aiready/visualizer/package.json');
               webDir = resolvePath(vizPkgPath, '..');
               visualizerAvailable = true;
-            } catch (e) {
+            } catch (err) {
+              void err;
               // Visualizer not found
             }
           }
         }
-        
+
         // Check if web directory with vite config exists (required for dev mode)
-        const webViteConfigExists = webDir && existsSync(resolvePath(webDir, 'web', 'vite.config.ts'));
-        
+        const webViteConfigExists =
+          webDir && existsSync(resolvePath(webDir, 'web', 'vite.config.ts'));
+
         if (visualizerAvailable && webViteConfigExists) {
           // Dev mode is available - start Vite dev server
           const spawnCwd = webDir!;
@@ -132,10 +159,10 @@ export async function visualizeAction(directory: string, options: VisualizeOptio
               console.error('Failed to sync report:', e);
             }
           };
-          
+
           // Initial copy
           copyReportToViz();
-          
+
           // Watch source report for changes
           let watchTimeout: NodeJS.Timeout | null = null;
           const reportWatcher = watch(reportPath, () => {
@@ -143,45 +170,71 @@ export async function visualizeAction(directory: string, options: VisualizeOptio
             watchTimeout = setTimeout(copyReportToViz, 100);
           });
 
-          const envForSpawn = { 
-            ...process.env, 
+          const envForSpawn = {
+            ...process.env,
             AIREADY_REPORT_PATH: reportPath,
-            AIREADY_VISUALIZER_CONFIG: envVisualizerConfig 
+            AIREADY_VISUALIZER_CONFIG: envVisualizerConfig,
           };
-          const vite = spawn("pnpm", ["run", "dev:web"], { cwd: spawnCwd, stdio: "inherit", shell: true, env: envForSpawn });
+          const vite = spawn('pnpm', ['run', 'dev:web'], {
+            cwd: spawnCwd,
+            stdio: 'inherit',
+            shell: true,
+            env: envForSpawn,
+          });
           const onExit = () => {
-            try { reportWatcher.close(); } catch (e) {}
-            try { vite.kill(); } catch (e) {}
+            try {
+              reportWatcher.close();
+            } catch (err) {
+              void err;
+            }
+            try {
+              vite.kill();
+            } catch (err) {
+              void err;
+            }
             process.exit(0);
           };
-          process.on("SIGINT", onExit);
-          process.on("SIGTERM", onExit);
+          process.on('SIGINT', onExit);
+          process.on('SIGTERM', onExit);
           devServerStarted = true;
+          void devServerStarted;
           return;
         } else {
-          console.log(chalk.yellow('⚠️  Dev server not available (requires local @aiready/visualizer with web assets).'));
-          console.log(chalk.cyan('   Falling back to static HTML generation...\n'));
+          console.log(
+            chalk.yellow(
+              '⚠️  Dev server not available (requires local @aiready/visualizer with web assets).'
+            )
+          );
+          console.log(
+            chalk.cyan('   Falling back to static HTML generation...\n')
+          );
           useDevMode = false;
         }
       } catch (err) {
-        console.error("Failed to start dev server:", err);
-        console.log(chalk.cyan('   Falling back to static HTML generation...\n'));
+        console.error('Failed to start dev server:', err);
+        console.log(
+          chalk.cyan('   Falling back to static HTML generation...\n')
+        );
         useDevMode = false;
       }
     }
 
     // Generate static HTML (default behavior or fallback from failed --dev)
-    console.log("Generating HTML...");
+    console.log('Generating HTML...');
     const html = generateHTML(graph);
     const defaultOutput = 'visualization.html';
     const outPath = resolvePath(dirPath, options.output || defaultOutput);
     writeFileSync(outPath, html, 'utf8');
     console.log(chalk.green(`✅ Visualization written to: ${outPath}`));
-    
 
     if (options.open || options.serve) {
-      const opener = process.platform === 'darwin' ? 'open' : process.platform === 'win32' ? 'start' : 'xdg-open';
-      
+      const opener =
+        process.platform === 'darwin'
+          ? 'open'
+          : process.platform === 'win32'
+            ? 'start'
+            : 'xdg-open';
+
       if (options.serve) {
         try {
           const port = typeof options.serve === 'number' ? options.serve : 5173;
@@ -193,13 +246,16 @@ export async function visualizeAction(directory: string, options: VisualizeOptio
               const urlPath = req.url || '/';
               if (urlPath === '/' || urlPath === '/index.html') {
                 const content = await fsp.readFile(outPath, 'utf8');
-                res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+                res.writeHead(200, {
+                  'Content-Type': 'text/html; charset=utf-8',
+                });
                 res.end(content);
                 return;
               }
               res.writeHead(404, { 'Content-Type': 'text/plain' });
               res.end('Not found');
             } catch (e: any) {
+              void e;
               res.writeHead(500, { 'Content-Type': 'text/plain' });
               res.end('Server error');
             }
@@ -207,7 +263,9 @@ export async function visualizeAction(directory: string, options: VisualizeOptio
 
           server.listen(port, () => {
             const addr = `http://localhost:${port}/`;
-            console.log(chalk.cyan(`🌐 Local visualization server running at ${addr}`));
+            console.log(
+              chalk.cyan(`🌐 Local visualization server running at ${addr}`)
+            );
             spawn(opener, [`"${addr}"`], { shell: true });
           });
 
@@ -222,7 +280,6 @@ export async function visualizeAction(directory: string, options: VisualizeOptio
         spawn(opener, [`"${outPath}"`], { shell: true });
       }
     }
-
   } catch (err: any) {
     handleCLIError(err, 'Visualization');
   }

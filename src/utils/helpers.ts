@@ -3,7 +3,7 @@
  */
 
 import { resolve as resolvePath } from 'path';
-import { existsSync, readdirSync, statSync, readFileSync, copyFileSync } from 'fs';
+import { existsSync, readdirSync, statSync, readFileSync } from 'fs';
 import chalk from 'chalk';
 
 /**
@@ -25,35 +25,45 @@ export function findLatestScanReport(dirPath: string): string | null {
   if (!existsSync(aireadyDir)) {
     return null;
   }
-  
+
   // Search for new format first, then legacy format
-  let files = readdirSync(aireadyDir).filter(f => f.startsWith('aiready-report-') && f.endsWith('.json'));
+  let files = readdirSync(aireadyDir).filter(
+    (f) => f.startsWith('aiready-report-') && f.endsWith('.json')
+  );
   if (files.length === 0) {
-    files = readdirSync(aireadyDir).filter(f => f.startsWith('aiready-scan-') && f.endsWith('.json'));
+    files = readdirSync(aireadyDir).filter(
+      (f) => f.startsWith('aiready-scan-') && f.endsWith('.json')
+    );
   }
-  
+
   if (files.length === 0) {
     return null;
   }
-  
+
   // Sort by modification time, most recent first
   const sortedFiles = files
-    .map(f => ({ name: f, path: resolvePath(aireadyDir, f), mtime: statSync(resolvePath(aireadyDir, f)).mtime }))
+    .map((f) => ({
+      name: f,
+      path: resolvePath(aireadyDir, f),
+      mtime: statSync(resolvePath(aireadyDir, f)).mtime,
+    }))
     .sort((a, b) => b.mtime.getTime() - a.mtime.getTime());
-  
+
   return sortedFiles[0].path;
 }
 
 /**
  * Warn if graph caps may be exceeded
  */
-export function warnIfGraphCapExceeded(report: any, dirPath: string) {
+export async function warnIfGraphCapExceeded(report: any, dirPath: string) {
   try {
     // Use dynamic import and loadConfig to get the raw visualizer config
-    const { loadConfig } = require('@aiready/core');
-    
+    // Use dynamic import instead of require
+    const { loadConfig } = await import('@aiready/core');
+    void loadConfig;
+
     let graphConfig = { maxNodes: 400, maxEdges: 600 };
-    
+
     // Try to read aiready.json synchronously
     const configPath = resolvePath(dirPath, 'aiready.json');
     if (existsSync(configPath)) {
@@ -61,47 +71,62 @@ export function warnIfGraphCapExceeded(report: any, dirPath: string) {
         const rawConfig = JSON.parse(readFileSync(configPath, 'utf8'));
         if (rawConfig.visualizer?.graph) {
           graphConfig = {
-            maxNodes: rawConfig.visualizer.graph.maxNodes ?? graphConfig.maxNodes,
-            maxEdges: rawConfig.visualizer.graph.maxEdges ?? graphConfig.maxEdges,
+            maxNodes:
+              rawConfig.visualizer.graph.maxNodes ?? graphConfig.maxNodes,
+            maxEdges:
+              rawConfig.visualizer.graph.maxEdges ?? graphConfig.maxEdges,
           };
         }
-      } catch (e) {
-        // Silently ignore parse errors and use defaults
+      } catch (err) {
+        void err;
       }
     }
-    
-    const nodeCount = (report.context?.length || 0) + (report.patterns?.length || 0);
-    const edgeCount = report.context?.reduce((sum: number, ctx: any) => {
-      const relCount = ctx.relatedFiles?.length || 0;
-      const depCount = ctx.dependencies?.length || 0;
-      return sum + relCount + depCount;
-    }, 0) || 0;
-    
+
+    const nodeCount =
+      (report.context?.length || 0) + (report.patterns?.length || 0);
+    const edgeCount =
+      report.context?.reduce((sum: number, ctx: any) => {
+        const relCount = ctx.relatedFiles?.length || 0;
+        const depCount = ctx.dependencies?.length || 0;
+        return sum + relCount + depCount;
+      }, 0) || 0;
+
     if (nodeCount > graphConfig.maxNodes || edgeCount > graphConfig.maxEdges) {
       console.log('');
-      console.log(chalk.yellow(`⚠️  Graph may be truncated at visualization time:`));
+      console.log(
+        chalk.yellow(`⚠️  Graph may be truncated at visualization time:`)
+      );
       if (nodeCount > graphConfig.maxNodes) {
-        console.log(chalk.dim(`   • Nodes: ${nodeCount} > limit ${graphConfig.maxNodes}`));
+        console.log(
+          chalk.dim(`   • Nodes: ${nodeCount} > limit ${graphConfig.maxNodes}`)
+        );
       }
       if (edgeCount > graphConfig.maxEdges) {
-        console.log(chalk.dim(`   • Edges: ${edgeCount} > limit ${graphConfig.maxEdges}`));
+        console.log(
+          chalk.dim(`   • Edges: ${edgeCount} > limit ${graphConfig.maxEdges}`)
+        );
       }
       console.log(chalk.dim(`   To increase limits, add to aiready.json:`));
       console.log(chalk.dim(`   {`));
       console.log(chalk.dim(`     "visualizer": {`));
-      console.log(chalk.dim(`       "graph": { "maxNodes": 2000, "maxEdges": 5000 }`));
+      console.log(
+        chalk.dim(`       "graph": { "maxNodes": 2000, "maxEdges": 5000 }`)
+      );
       console.log(chalk.dim(`     }`));
       console.log(chalk.dim(`   }`));
     }
-  } catch (e) {
-    // Silently fail on config read errors
+  } catch (err) {
+    void err;
   }
 }
 
 /**
  * Generate markdown report for consistency command
  */
-export function generateMarkdownReport(report: any, elapsedTime: string): string {
+export function generateMarkdownReport(
+  report: any,
+  elapsedTime: string
+): string {
   let markdown = `# Consistency Analysis Report\n\n`;
   markdown += `**Generated:** ${new Date().toISOString()}\n`;
   markdown += `**Analysis Time:** ${elapsedTime}s\n\n`;

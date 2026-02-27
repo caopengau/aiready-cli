@@ -5,11 +5,11 @@
 import chalk from 'chalk';
 import { writeFileSync } from 'fs';
 import { resolve as resolvePath } from 'path';
-import { 
-  loadMergedConfig, 
-  handleJSONOutput, 
-  handleCLIError, 
-  getElapsedTime, 
+import {
+  loadMergedConfig,
+  handleJSONOutput,
+  handleCLIError,
+  getElapsedTime,
   resolveOutputPath,
   formatToolScore,
 } from '@aiready/core';
@@ -27,7 +27,10 @@ interface ConsistencyOptions {
   score?: boolean;
 }
 
-export async function consistencyAction(directory: string, options: ConsistencyOptions) {
+export async function consistencyAction(
+  directory: string,
+  options: ConsistencyOptions
+) {
   console.log(chalk.blue('🔍 Analyzing consistency...\n'));
 
   const startTime = Date.now();
@@ -56,20 +59,25 @@ export async function consistencyAction(directory: string, options: ConsistencyO
       exclude: options.exclude?.split(','),
     });
 
-    const { analyzeConsistency, calculateConsistencyScore } = await import('@aiready/consistency');
+    const { analyzeConsistency, calculateConsistencyScore } =
+      await import('@aiready/consistency');
 
     const report = await analyzeConsistency(finalOptions);
 
     const elapsedTime = getElapsedTime(startTime);
-    
+
     // Calculate score if requested
     let consistencyScore: ToolScoringOutput | undefined;
     if (options.score) {
       const issues = report.results?.flatMap((r: any) => r.issues) || [];
-      consistencyScore = calculateConsistencyScore(issues, report.summary.filesAnalyzed);
+      consistencyScore = calculateConsistencyScore(
+        issues,
+        report.summary.filesAnalyzed
+      );
     }
 
-    const outputFormat = options.output || finalOptions.output?.format || 'console';
+    const outputFormat =
+      options.output || finalOptions.output?.format || 'console';
     const userOutputFile = options.outputFile || finalOptions.output?.file;
 
     if (outputFormat === 'json') {
@@ -87,8 +95,12 @@ export async function consistencyAction(directory: string, options: ConsistencyO
         `aiready-report-${getReportTimestamp()}.json`,
         resolvedDir
       );
-      
-      handleJSONOutput(outputData, outputPath, `✅ Results saved to ${outputPath}`);
+
+      handleJSONOutput(
+        outputData,
+        outputPath,
+        `✅ Results saved to ${outputPath}`
+      );
     } else if (outputFormat === 'markdown') {
       // Markdown output
       const markdown = generateMarkdownReport(report, elapsedTime);
@@ -102,15 +114,23 @@ export async function consistencyAction(directory: string, options: ConsistencyO
     } else {
       // Console output - format to match standalone CLI
       console.log(chalk.bold('\n📊 Summary\n'));
-      console.log(`Files Analyzed: ${chalk.cyan(report.summary.filesAnalyzed)}`);
+      console.log(
+        `Files Analyzed: ${chalk.cyan(report.summary.filesAnalyzed)}`
+      );
       console.log(`Total Issues: ${chalk.yellow(report.summary.totalIssues)}`);
       console.log(`  Naming: ${chalk.yellow(report.summary.namingIssues)}`);
       console.log(`  Patterns: ${chalk.yellow(report.summary.patternIssues)}`);
-      console.log(`  Architecture: ${chalk.yellow(report.summary.architectureIssues || 0)}`);
+      console.log(
+        `  Architecture: ${chalk.yellow(report.summary.architectureIssues || 0)}`
+      );
       console.log(`Analysis Time: ${chalk.gray(elapsedTime + 's')}\n`);
 
       if (report.summary.totalIssues === 0) {
-        console.log(chalk.green('✨ No consistency issues found! Your codebase is well-maintained.\n'));
+        console.log(
+          chalk.green(
+            '✨ No consistency issues found! Your codebase is well-maintained.\n'
+          )
+        );
       } else {
         // Group and display issues by category
         const namingResults = report.results.filter((r: any) =>
@@ -127,19 +147,29 @@ export async function consistencyAction(directory: string, options: ConsistencyO
             if (shown >= 5) break;
             for (const issue of result.issues) {
               if (shown >= 5) break;
-              const severityColor = issue.severity === 'critical' ? chalk.red :
-                issue.severity === 'major' ? chalk.yellow :
-                issue.severity === 'minor' ? chalk.blue : chalk.gray;
-              console.log(`${severityColor(issue.severity.toUpperCase())} ${chalk.dim(`${issue.location.file}:${issue.location.line}`)}`);
+              const severityColor =
+                issue.severity === 'critical'
+                  ? chalk.red
+                  : issue.severity === 'major'
+                    ? chalk.yellow
+                    : issue.severity === 'minor'
+                      ? chalk.blue
+                      : chalk.gray;
+              console.log(
+                `${severityColor(issue.severity.toUpperCase())} ${chalk.dim(`${issue.location.file}:${issue.location.line}`)}`
+              );
               console.log(`  ${issue.message}`);
               if (issue.suggestion) {
-                console.log(`  ${chalk.dim('→')} ${chalk.italic(issue.suggestion)}`);
+                console.log(
+                  `  ${chalk.dim('→')} ${chalk.italic(issue.suggestion)}`
+                );
               }
               console.log();
               shown++;
             }
           }
-          const remaining = namingResults.reduce((sum, r) => sum + r.issues.length, 0) - shown;
+          const remaining =
+            namingResults.reduce((sum, r) => sum + r.issues.length, 0) - shown;
           if (remaining > 0) {
             console.log(chalk.dim(`  ... and ${remaining} more issues\n`));
           }
@@ -152,19 +182,29 @@ export async function consistencyAction(directory: string, options: ConsistencyO
             if (shown >= 5) break;
             for (const issue of result.issues) {
               if (shown >= 5) break;
-              const severityColor = issue.severity === 'critical' ? chalk.red :
-                issue.severity === 'major' ? chalk.yellow :
-                issue.severity === 'minor' ? chalk.blue : chalk.gray;
-              console.log(`${severityColor(issue.severity.toUpperCase())} ${chalk.dim(`${issue.location.file}:${issue.location.line}`)}`);
+              const severityColor =
+                issue.severity === 'critical'
+                  ? chalk.red
+                  : issue.severity === 'major'
+                    ? chalk.yellow
+                    : issue.severity === 'minor'
+                      ? chalk.blue
+                      : chalk.gray;
+              console.log(
+                `${severityColor(issue.severity.toUpperCase())} ${chalk.dim(`${issue.location.file}:${issue.location.line}`)}`
+              );
               console.log(`  ${issue.message}`);
               if (issue.suggestion) {
-                console.log(`  ${chalk.dim('→')} ${chalk.italic(issue.suggestion)}`);
+                console.log(
+                  `  ${chalk.dim('→')} ${chalk.italic(issue.suggestion)}`
+                );
               }
               console.log();
               shown++;
             }
           }
-          const remaining = patternResults.reduce((sum, r) => sum + r.issues.length, 0) - shown;
+          const remaining =
+            patternResults.reduce((sum, r) => sum + r.issues.length, 0) - shown;
           if (remaining > 0) {
             console.log(chalk.dim(`  ... and ${remaining} more issues\n`));
           }
@@ -178,7 +218,7 @@ export async function consistencyAction(directory: string, options: ConsistencyO
           console.log();
         }
       }
-      
+
       // Display score if calculated
       if (consistencyScore) {
         console.log(chalk.bold('\n📊 AI Readiness Score (Consistency)\n'));

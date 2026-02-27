@@ -8,7 +8,7 @@ import type { ToolScoringOutput } from '@aiready/core';
 
 export async function depsHealthAction(
   directory: string,
-  options: any,
+  options: any
 ): Promise<ToolScoringOutput | undefined> {
   const { analyzeDeps } = await import('@aiready/deps');
 
@@ -21,7 +21,8 @@ export async function depsHealthAction(
     rootDir: directory,
     include: options.include,
     exclude: options.exclude,
-    trainingCutoffYear: options.trainingCutoffYear ?? merged.trainingCutoffYear ?? 2023,
+    trainingCutoffYear:
+      options.trainingCutoffYear ?? merged.trainingCutoffYear ?? 2023,
   });
 
   const scoring: ToolScoringOutput = {
@@ -29,7 +30,11 @@ export async function depsHealthAction(
     score: report.summary.score,
     rawMetrics: report.rawData,
     factors: [],
-    recommendations: report.recommendations.map((action: string) => ({ action, estimatedImpact: 5, priority: 'medium' }))
+    recommendations: report.recommendations.map((action: string) => ({
+      action,
+      estimatedImpact: 5,
+      priority: 'medium',
+    })),
   };
 
   if (options.output === 'json') {
@@ -37,7 +42,7 @@ export async function depsHealthAction(
   }
 
   const { summary } = report;
-  const ratingColors: Record<string, Function> = {
+  const ratingColors: Record<string, (s: string) => string> = {
     excellent: chalk.green,
     good: chalk.blueBright,
     moderate: chalk.yellow,
@@ -45,9 +50,13 @@ export async function depsHealthAction(
     hazardous: chalk.bgRed.white,
   };
   const color = ratingColors[summary.rating] ?? chalk.white;
-  console.log(`  📦 Dependency Health:  ${chalk.bold(scoring.score + '/100 health')} (${color(summary.rating)})`);
+  console.log(
+    `  📦 Dependency Health:  ${chalk.bold(scoring.score + '/100 health')} (${color(summary.rating)})`
+  );
   if (report.issues.length > 0) {
-    console.log(chalk.dim(`     Found ${report.issues.length} dependency issues.`));
+    console.log(
+      chalk.dim(`     Found ${report.issues.length} dependency issues.`)
+    );
   } else {
     console.log(chalk.dim(`     Dependencies look healthy for AI assistance.`));
   }

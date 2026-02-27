@@ -3,16 +3,15 @@
  */
 
 import chalk from 'chalk';
-import { writeFileSync } from 'fs';
-import { join } from 'path';
-import { resolveOutputPath, loadConfig, mergeConfigWithDefaults } from '@aiready/core';
+import { loadConfig, mergeConfigWithDefaults } from '@aiready/core';
 import type { ToolScoringOutput } from '@aiready/core';
 
 export async function aiSignalClarityAction(
   directory: string,
-  options: any,
+  options: any
 ): Promise<ToolScoringOutput | undefined> {
-  const { analyzeAiSignalClarity, calculateHallucinationScore } = await import('@aiready/ai-signal-clarity');
+  const { analyzeAiSignalClarity, calculateHallucinationScore } =
+    await import('@aiready/ai-signal-clarity');
 
   const config = await loadConfig(directory);
   const merged = mergeConfigWithDefaults(config, {
@@ -33,7 +32,7 @@ export async function aiSignalClarityAction(
   }
 
   const { summary } = report;
-  const ratingColors: Record<string, Function> = {
+  const ratingColors: Record<string, (s: string) => string> = {
     minimal: chalk.green,
     low: chalk.cyan,
     moderate: chalk.yellow,
@@ -41,10 +40,16 @@ export async function aiSignalClarityAction(
     severe: chalk.bgRed.white,
   };
   const color = ratingColors[summary.rating] ?? chalk.white;
-  console.log(`  🧠 AI Signal Clarity:  ${chalk.bold(scoring.score + '/100')} (${color(summary.rating)})`);
+  console.log(
+    `  🧠 AI Signal Clarity:  ${chalk.bold(scoring.score + '/100')} (${color(summary.rating)})`
+  );
   console.log(`     Top Risk: ${chalk.italic(summary.topRisk)}`);
   if (summary.totalSignals > 0) {
-    console.log(chalk.dim(`     ${summary.criticalSignals} critical  ${summary.majorSignals} major  ${summary.minorSignals} minor signals`));
+    console.log(
+      chalk.dim(
+        `     ${summary.criticalSignals} critical  ${summary.majorSignals} major  ${summary.minorSignals} minor signals`
+      )
+    );
   }
 
   return scoring;

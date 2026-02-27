@@ -5,6 +5,7 @@ Thank you for your interest in contributing to AIReady CLI! We welcome bug repor
 ## 🎯 What is the CLI?
 
 The CLI is the **unified interface** for all AIReady analysis tools. It provides:
+
 - **Unified scanning**: Run multiple tools (patterns, context, consistency) with one command
 - **Individual tool access**: Use each tool directly for focused analysis
 - **Consistent output**: Unified reporting across all tools
@@ -41,6 +42,7 @@ The CLI follows a **hub-and-spoke** pattern:
 ## 🐛 Reporting Issues
 
 Found a bug or have a feature request? [Open an issue](https://github.com/caopengau/aiready-cli/issues) with:
+
 - Clear description of the problem or feature
 - Steps to reproduce (for bugs)
 - Expected vs actual behavior
@@ -69,6 +71,7 @@ pnpm link
 ## 📝 Making Changes
 
 1. **Fork the repository** and create a new branch:
+
    ```bash
    git checkout -b fix/cli-output-format
    # or
@@ -82,15 +85,17 @@ pnpm link
    - Keep commands modular and focused
 
 3. **Test your changes**:
+
    ```bash
    pnpm build
    pnpm test
-   
+
    # Test CLI locally
    ./dist/cli.js scan /path/to/project
    ```
 
 4. **Commit using conventional commits**:
+
    ```bash
    git commit -m "fix: correct output format for JSON"
    git commit -m "feat: add new tool integration"
@@ -121,6 +126,7 @@ We use [Conventional Commits](https://www.conventionalcommits.org/):
 - Test edge cases (missing arguments, invalid paths)
 
 Example test:
+
 ```typescript
 test('scan command runs all tools by default', async () => {
   const result = await runCli(['scan', './test-project']);
@@ -157,10 +163,11 @@ src/
 ### Adding a New Command
 
 1. Create `src/commands/your-command.ts`:
+
    ```typescript
    import { Command } from 'commander';
    import { globalOptions } from '../options/global';
-   
+
    export const yourCommand = new Command('your-command')
      .description('Description of your command')
      .argument('<directory>', 'Directory to analyze')
@@ -187,6 +194,7 @@ src/
 ## 🎯 Areas for Contribution
 
 Great places to start:
+
 - **New commands**: Add new CLI commands
 - **Tool integration**: Integrate new analysis tools
 - **Output formats**: Add new output options (XML, CSV, HTML)
@@ -211,6 +219,7 @@ Great places to start:
 ## 💡 Feature Ideas
 
 Looking for inspiration? Consider:
+
 - Interactive mode with guided analysis
 - Watch mode for file changes
 - IDE plugins integration

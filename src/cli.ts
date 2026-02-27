@@ -23,7 +23,9 @@ const getDirname = () => {
   return dirname(fileURLToPath(import.meta.url));
 };
 
-const packageJson = JSON.parse(readFileSync(join(getDirname(), '../package.json'), 'utf8'));
+const packageJson = JSON.parse(
+  readFileSync(join(getDirname(), '../package.json'), 'utf8')
+);
 
 const program = new Command();
 
@@ -31,7 +33,9 @@ program
   .name('aiready')
   .description('AIReady - Assess and improve AI-readiness of codebases')
   .version(packageJson.version)
-  .addHelpText('after', `
+  .addHelpText(
+    'after',
+    `
 AI READINESS SCORING:
   Get a 0-100 score indicating how AI-ready your codebase is.
   Use --score flag with any analysis command for detailed breakdown.
@@ -66,25 +70,47 @@ CONFIGURATION:
 VERSION: ${packageJson.version}
 DOCUMENTATION: https://aiready.dev/docs/cli
 GITHUB: https://github.com/caopengau/aiready-cli
-LANDING: https://github.com/caopengau/aiready-landing`);
+LANDING: https://github.com/caopengau/aiready-landing`
+  );
 
 // Scan command - Run comprehensive AI-readiness analysis
 program
   .command('scan')
-  .description('Run comprehensive AI-readiness analysis (patterns + context + consistency)')
+  .description(
+    'Run comprehensive AI-readiness analysis (patterns + context + consistency)'
+  )
   .argument('[directory]', 'Directory to analyze', '.')
-  .option('-t, --tools <tools>', 'Tools to run (comma-separated: patterns,context,consistency,doc-drift,deps-health,aiSignalClarity,grounding,testability,changeAmplification)')
-  .option('--profile <type>', 'Scan profile to use (agentic, cost, security, onboarding)')
-  .option('--compare-to <path>', 'Compare results against a previous AIReady report JSON')
+  .option(
+    '-t, --tools <tools>',
+    'Tools to run (comma-separated: patterns,context,consistency,doc-drift,deps-health,aiSignalClarity,grounding,testability,changeAmplification)'
+  )
+  .option(
+    '--profile <type>',
+    'Scan profile to use (agentic, cost, security, onboarding)'
+  )
+  .option(
+    '--compare-to <path>',
+    'Compare results against a previous AIReady report JSON'
+  )
   .option('--include <patterns>', 'File patterns to include (comma-separated)')
   .option('--exclude <patterns>', 'File patterns to exclude (comma-separated)')
   .option('-o, --output <format>', 'Output format: console, json', 'console')
   .option('--output-file <path>', 'Output file path (for json)')
-  .option('--no-score', 'Disable calculating AI Readiness Score (enabled by default)')
+  .option(
+    '--no-score',
+    'Disable calculating AI Readiness Score (enabled by default)'
+  )
   .option('--weights <weights>', 'Custom scoring weights')
   .option('--threshold <score>', 'Fail CI/CD if score below threshold (0-100)')
-  .option('--ci', 'CI mode: GitHub Actions annotations, no colors, fail on threshold')
-  .option('--fail-on <level>', 'Fail on issues: critical, major, any', 'critical')
+  .option(
+    '--ci',
+    'CI mode: GitHub Actions annotations, no colors, fail on threshold'
+  )
+  .option(
+    '--fail-on <level>',
+    'Fail on issues: critical, major, any',
+    'critical'
+  )
   .addHelpText('after', scanHelpText)
   .action(async (directory, options) => {
     await scanAction(directory, options);
@@ -97,14 +123,26 @@ program
   .argument('[directory]', 'Directory to analyze', '.')
   .option('-s, --similarity <number>', 'Minimum similarity score (0-1)', '0.40')
   .option('-l, --min-lines <number>', 'Minimum lines to consider', '5')
-  .option('--max-candidates <number>', 'Maximum candidates per block (performance tuning)')
-  .option('--min-shared-tokens <number>', 'Minimum shared tokens for candidates (performance tuning)')
-  .option('--full-scan', 'Disable smart defaults for comprehensive analysis (slower)')
+  .option(
+    '--max-candidates <number>',
+    'Maximum candidates per block (performance tuning)'
+  )
+  .option(
+    '--min-shared-tokens <number>',
+    'Minimum shared tokens for candidates (performance tuning)'
+  )
+  .option(
+    '--full-scan',
+    'Disable smart defaults for comprehensive analysis (slower)'
+  )
   .option('--include <patterns>', 'File patterns to include (comma-separated)')
   .option('--exclude <patterns>', 'File patterns to exclude (comma-separated)')
   .option('-o, --output <format>', 'Output format: console, json', 'console')
   .option('--output-file <path>', 'Output file path (for json)')
-  .option('--score', 'Calculate and display AI Readiness Score for patterns (0-100)')
+  .option(
+    '--score',
+    'Calculate and display AI Readiness Score for patterns (0-100)'
+  )
   .addHelpText('after', patternsHelpText)
   .action(async (directory, options) => {
     await patternsAction(directory, options);
@@ -116,12 +154,19 @@ program
   .description('Analyze context window costs and dependency fragmentation')
   .argument('[directory]', 'Directory to analyze', '.')
   .option('--max-depth <number>', 'Maximum acceptable import depth', '5')
-  .option('--max-context <number>', 'Maximum acceptable context budget (tokens)', '10000')
+  .option(
+    '--max-context <number>',
+    'Maximum acceptable context budget (tokens)',
+    '10000'
+  )
   .option('--include <patterns>', 'File patterns to include (comma-separated)')
   .option('--exclude <patterns>', 'File patterns to exclude (comma-separated)')
   .option('-o, --output <format>', 'Output format: console, json', 'console')
   .option('--output-file <path>', 'Output file path (for json)')
-  .option('--score', 'Calculate and display AI Readiness Score for context (0-100)')
+  .option(
+    '--score',
+    'Calculate and display AI Readiness Score for context (0-100)'
+  )
   .action(async (directory, options) => {
     await contextAction(directory, options);
   });
@@ -135,12 +180,23 @@ program
   .option('--no-naming', 'Skip naming analysis')
   .option('--patterns', 'Check code patterns (default: true)')
   .option('--no-patterns', 'Skip pattern analysis')
-  .option('--min-severity <level>', 'Minimum severity: info|minor|major|critical', 'info')
+  .option(
+    '--min-severity <level>',
+    'Minimum severity: info|minor|major|critical',
+    'info'
+  )
   .option('--include <patterns>', 'File patterns to include (comma-separated)')
   .option('--exclude <patterns>', 'File patterns to exclude (comma-separated)')
-  .option('-o, --output <format>', 'Output format: console, json, markdown', 'console')
+  .option(
+    '-o, --output <format>',
+    'Output format: console, json, markdown',
+    'console'
+  )
   .option('--output-file <path>', 'Output file path (for json/markdown)')
-  .option('--score', 'Calculate and display AI Readiness Score for consistency (0-100)')
+  .option(
+    '--score',
+    'Calculate and display AI Readiness Score for consistency (0-100)'
+  )
   .action(async (directory, options) => {
     await consistencyAction(directory, options);
   });
@@ -150,11 +206,26 @@ program
   .command('visualise')
   .description('Alias for visualize (British spelling)')
   .argument('[directory]', 'Directory to analyze', '.')
-  .option('--report <path>', 'Report path (auto-detects latest .aiready/aiready-report-*.json if not provided)')
-  .option('-o, --output <path>', 'Output HTML path (relative to directory)', 'packages/visualizer/visualization.html')
+  .option(
+    '--report <path>',
+    'Report path (auto-detects latest .aiready/aiready-report-*.json if not provided)'
+  )
+  .option(
+    '-o, --output <path>',
+    'Output HTML path (relative to directory)',
+    'packages/visualizer/visualization.html'
+  )
   .option('--open', 'Open generated HTML in default browser')
-  .option('--serve [port]', 'Start a local static server to serve the visualization (optional port number)', false)
-  .option('--dev', 'Start Vite dev server (live reload) for interactive development', true)
+  .option(
+    '--serve [port]',
+    'Start a local static server to serve the visualization (optional port number)',
+    false
+  )
+  .option(
+    '--dev',
+    'Start Vite dev server (live reload) for interactive development',
+    true
+  )
   .addHelpText('after', visualiseHelpText)
   .action(async (directory, options) => {
     await visualizeAction(directory, options);
@@ -165,11 +236,26 @@ program
   .command('visualize')
   .description('Generate interactive visualization from an AIReady report')
   .argument('[directory]', 'Directory to analyze', '.')
-  .option('--report <path>', 'Report path (auto-detects latest .aiready/aiready-report-*.json if not provided)')
-  .option('-o, --output <path>', 'Output HTML path (relative to directory)', 'packages/visualizer/visualization.html')
+  .option(
+    '--report <path>',
+    'Report path (auto-detects latest .aiready/aiready-report-*.json if not provided)'
+  )
+  .option(
+    '-o, --output <path>',
+    'Output HTML path (relative to directory)',
+    'packages/visualizer/visualization.html'
+  )
   .option('--open', 'Open generated HTML in default browser')
-  .option('--serve [port]', 'Start a local static server to serve the visualization (optional port number)', false)
-  .option('--dev', 'Start Vite dev server (live reload) for interactive development', false)
+  .option(
+    '--serve [port]',
+    'Start a local static server to serve the visualization (optional port number)',
+    false
+  )
+  .option(
+    '--dev',
+    'Start Vite dev server (live reload) for interactive development',
+    false
+  )
   .addHelpText('after', visualizeHelpText)
   .action(async (directory, options) => {
     await visualizeAction(directory, options);
