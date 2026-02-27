@@ -9,7 +9,7 @@ import type { ConsistencyReport } from '@aiready/consistency';
 import type { ConsistencyOptions } from '@aiready/consistency';
 
 export interface UnifiedAnalysisOptions extends ScanOptions {
-  tools?: ('patterns' | 'context' | 'consistency' | 'doc-drift' | 'deps-health' | 'hallucination' | 'grounding' | 'testability')[];
+  tools?: ('patterns' | 'context' | 'consistency' | 'doc-drift' | 'deps-health' | 'aiSignalClarity' | 'grounding' | 'testability' | 'changeAmplification')[];
   minSimilarity?: number;
   minLines?: number;
   maxCandidatesPerBlock?: number;
@@ -26,9 +26,10 @@ export interface UnifiedAnalysisResult {
   consistency?: ConsistencyReport;
   docDrift?: any;
   deps?: any;
-  hallucination?: any;
+  aiSignalClarity?: any;
   grounding?: any;
   testability?: any;
+  changeAmplification?: any;
   summary: {
     totalIssues: number;
     toolsRun: string[];
@@ -173,18 +174,18 @@ export async function analyzeUnified(
     result.summary.totalIssues += report.issues?.length || 0;
   }
 
-  // Run Hallucination Risk analysis
-  if (tools.includes('hallucination')) {
-    const { analyzeHallucinationRisk } = await import('@aiready/hallucination-risk');
-    const report = await analyzeHallucinationRisk({
+  // Run AI Signal Clarity analysis
+  if (tools.includes('aiSignalClarity')) {
+    const { analyzeAiSignalClarity } = await import('@aiready/ai-signal-clarity');
+    const report = await analyzeAiSignalClarity({
       rootDir: options.rootDir,
       include: options.include,
       exclude: options.exclude,
     });
     if (options.progressCallback) {
-      options.progressCallback({ tool: 'hallucination', data: report });
+      options.progressCallback({ tool: 'aiSignalClarity', data: report });
     }
-    result.hallucination = report;
+    result.aiSignalClarity = report;
     result.summary.totalIssues += report.results?.reduce((sum: number, r: any) => sum + (r.issues?.length || 0), 0) || 0;
   }
 
@@ -216,6 +217,21 @@ export async function analyzeUnified(
     }
     result.testability = report;
     result.summary.totalIssues += report.issues?.length || 0;
+  }
+
+  // Run Change Amplification analysis
+  if (tools.includes('changeAmplification')) {
+    const { analyzeChangeAmplification } = await import('@aiready/change-amplification');
+    const report = await analyzeChangeAmplification({
+      rootDir: options.rootDir,
+      include: options.include,
+      exclude: options.exclude,
+    });
+    if (options.progressCallback) {
+      options.progressCallback({ tool: 'changeAmplification', data: report });
+    }
+    result.changeAmplification = report;
+    result.summary.totalIssues += report.summary?.totalIssues || 0;
   }
 
   result.summary.executionTime = Date.now() - startTime;
@@ -250,8 +266,8 @@ export function generateUnifiedSummary(result: UnifiedAnalysisResult): string {
     output += `📦 Dependency Health: ${result.deps.issues?.length || 0} issues\n`;
   }
 
-  if (result.hallucination) {
-    output += `🧠 Hallucination Risk: ${result.hallucination.summary?.totalSignals || 0} signals\n`;
+  if (result.aiSignalClarity) {
+    output += `🧠 AI Signal Clarity: ${result.aiSignalClarity.summary?.totalSignals || 0} signals\n`;
   }
 
   if (result.grounding) {
@@ -260,6 +276,10 @@ export function generateUnifiedSummary(result: UnifiedAnalysisResult): string {
 
   if (result.testability) {
     output += `🧪 Testability Index: ${result.testability.issues?.length || 0} issues\n`;
+  }
+
+  if (result.changeAmplification) {
+    output += `💥 Change Amplification: ${result.changeAmplification.summary?.totalIssues || 0} cascading risks\n`;
   }
 
   return output;

@@ -49,7 +49,7 @@ export async function scanAction(directory: string, options: ScanOptions) {
   try {
     // Define defaults
     const defaults = {
-      tools: ['patterns', 'context', 'consistency', 'hallucination', 'grounding', 'testability', 'doc-drift', 'deps-health'],
+      tools: ['patterns', 'context', 'consistency', 'aiSignalClarity', 'grounding', 'testability', 'doc-drift', 'deps-health'],
       include: undefined,
       exclude: undefined,
       output: {
@@ -58,11 +58,15 @@ export async function scanAction(directory: string, options: ScanOptions) {
       },
     };
 
-    let profileTools = options.tools ? options.tools.split(',').map((t: string) => t.trim()) : undefined;
+    let profileTools = options.tools ? options.tools.split(',').map((t: string) => {
+      const tool = t.trim();
+      if (tool === 'hallucination' || tool === 'hallucination-risk') return 'aiSignalClarity';
+      return tool;
+    }) : undefined;
     if (options.profile) {
       switch (options.profile.toLowerCase()) {
         case 'agentic':
-          profileTools = ['hallucination', 'grounding', 'testability'];
+          profileTools = ['aiSignalClarity', 'grounding', 'testability'];
           break;
         case 'cost':
           profileTools = ['patterns', 'context'];
@@ -318,12 +322,12 @@ export async function scanAction(directory: string, options: ScanOptions) {
         }
       }
 
-      // Hallucination risk score
-      if (results.hallucination) {
-        const { calculateHallucinationScore } = await import('@aiready/hallucination-risk');
+      // AI signal clarity score
+      if (results.aiSignalClarity) {
+        const { calculateHallucinationScore } = await import('@aiready/ai-signal-clarity');
         try {
-          const hrScore = calculateHallucinationScore(results.hallucination);
-          toolScores.set('hallucination-risk', hrScore);
+          const hrScore = calculateHallucinationScore(results.aiSignalClarity);
+          toolScores.set('ai-signal-clarity', hrScore);
         } catch (err) {
           // ignore
         }
@@ -572,7 +576,7 @@ EXAMPLES:
   $ aiready scan --output json --output-file report.json
 
 PROFILES:
-  agentic:      hallucination, grounding, testability
+  agentic:      aiSignalClarity, grounding, testability
   cost:         patterns, context
   security:     consistency, testability
   onboarding:   context, consistency, grounding

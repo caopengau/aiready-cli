@@ -15,6 +15,7 @@ import {
   visualizeAction,
   visualizeHelpText,
   visualiseHelpText,
+  changeAmplificationAction,
 } from './commands';
 
 const getDirname = () => {
@@ -72,7 +73,7 @@ program
   .command('scan')
   .description('Run comprehensive AI-readiness analysis (patterns + context + consistency)')
   .argument('[directory]', 'Directory to analyze', '.')
-  .option('-t, --tools <tools>', 'Tools to run (comma-separated: patterns,context,consistency,hallucination,grounding,testability)')
+  .option('-t, --tools <tools>', 'Tools to run (comma-separated: patterns,context,consistency,doc-drift,deps-health,aiSignalClarity,grounding,testability,changeAmplification)')
   .option('--profile <type>', 'Scan profile to use (agentic, cost, security, onboarding)')
   .option('--compare-to <path>', 'Compare results against a previous AIReady report JSON')
   .option('--include <patterns>', 'File patterns to include (comma-separated)')
@@ -172,6 +173,19 @@ program
   .addHelpText('after', visualizeHelpText)
   .action(async (directory, options) => {
     await visualizeAction(directory, options);
+  });
+
+// Change Amplification command
+program
+  .command('change-amplification')
+  .description('Analyze graph metrics for change amplification')
+  .argument('[directory]', 'Directory to analyze', '.')
+  .option('--include <patterns>', 'File patterns to include (comma-separated)')
+  .option('--exclude <patterns>', 'File patterns to exclude (comma-separated)')
+  .option('-o, --output <format>', 'Output format: console, json', 'console')
+  .option('--output-file <path>', 'Output file path (for json)')
+  .action(async (directory, options) => {
+    await changeAmplificationAction(directory, options);
   });
 
 program.parse();
