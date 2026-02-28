@@ -15,6 +15,9 @@ import {
   calculateOverallScore,
   formatScore,
   formatToolScore,
+  calculateTokenBudget,
+  estimateCostFromBudget,
+  getModelPreset,
   getRating,
   getRatingDisplay,
   parseWeightString,
@@ -41,6 +44,7 @@ interface ScanOptions {
   threshold?: string;
   ci?: boolean;
   failOn?: string;
+  model?: string;
 }
 
 export async function scanAction(directory: string, options: ScanOptions) {
@@ -489,6 +493,18 @@ export async function scanAction(directory: string, options: ScanOptions) {
             results.duplicates,
             results.patterns?.length || 0
           );
+          
+          // Calculate token budget for patterns (waste = duplication)
+          const wastedTokens = results.duplicates.reduce((sum: number, d: any) => sum + (d.tokenCost || 0), 0);
+          patternScore.tokenBudget = calculateTokenBudget({
+            totalContextTokens: wastedTokens * 2, // Estimated context
+            wastedTokens: {
+              duplication: wastedTokens,
+              fragmentation: 0,
+              chattiness: 0
+            }
+          });
+          
           toolScores.set('pattern-detect', patternScore);
         } catch (err) {
           void err;
@@ -502,6 +518,17 @@ export async function scanAction(directory: string, options: ScanOptions) {
         try {
           const ctxSummary = genContextSummary(results.context);
           const contextScore = calculateContextScore(ctxSummary);
+          
+          // Calculate token budget for context (waste = fragmentation + depth overhead)
+          contextScore.tokenBudget = calculateTokenBudget({
+            totalContextTokens: ctxSummary.totalTokens,
+            wastedTokens: {
+              duplication: 0,
+              fragmentation: ctxSummary.totalPotentialSavings || 0,
+              chattiness: 0
+            }
+          });
+          
           toolScores.set('context-analyzer', contextScore);
         } catch (err) {
           void err;
@@ -686,6 +713,49 @@ export async function scanAction(directory: string, options: ScanOptions) {
               )
             );
           }
+        }
+
+        // Unified Token Budget Analysis
+        const totalWastedDuplication = Array.from(toolScores.values())
+          .reduce((sum, s) => sum + (s.tokenBudget?.wastedTokens.bySource.duplication || 0), 0);
+        const totalWastedFragmentation = Array.from(toolScores.values())
+          .reduce((sum, s) => sum + (s.tokenBudget?.wastedTokens.bySource.fragmentation || 0), 0);
+        const totalContext = Math.max(...Array.from(toolScores.values()).map(s => s.tokenBudget?.totalContextTokens || 0));
+        
+        if (totalContext > 0) {
+          const unifiedBudget = calculateTokenBudget({
+            totalContextTokens: totalContext,
+            wastedTokens: {
+              duplication: totalWastedDuplication,
+              fragmentation: totalWastedFragmentation,
+              chattiness: 0
+            }
+          });
+          
+          const targetModel = options.model || 'claude-4.6';
+          const modelPreset = getModelPreset(targetModel);
+          const costEstimate = estimateCostFromBudget(unifiedBudget, modelPreset);
+          
+          const barWidth = 20;
+          const filled = Math.round(unifiedBudget.efficiencyRatio * barWidth);
+          const bar = chalk.green('█'.repeat(filled)) + chalk.dim('░'.repeat(barWidth - filled));
+
+          console.log(chalk.bold('\n📊 AI Token Budget Analysis (v0.13)'));
+          console.log(`  Efficiency: [${bar}] ${(unifiedBudget.efficiencyRatio * 100).toFixed(0)}%`);
+          console.log(`  Total Context: ${chalk.bold(unifiedBudget.totalContextTokens.toLocaleString())} tokens`);
+          console.log(`  Wasted Tokens: ${chalk.red(unifiedBudget.wastedTokens.total.toLocaleString())} (${((unifiedBudget.wastedTokens.total / unifiedBudget.totalContextTokens) * 100).toFixed(1)}%)`);
+          console.log(`  Waste Breakdown:`);
+          console.log(`    • Duplication:   ${unifiedBudget.wastedTokens.bySource.duplication.toLocaleString()} tokens`);
+          console.log(`    • Fragmentation: ${unifiedBudget.wastedTokens.bySource.fragmentation.toLocaleString()} tokens`);
+          console.log(`  Potential Savings: ${chalk.green(unifiedBudget.potentialRetrievableTokens.toLocaleString())} tokens retrievable`);
+          console.log(`\n  Est. Monthly Cost (${modelPreset.name}): ${chalk.bold('$' + costEstimate.total)} [range: $${costEstimate.range[0]}-$${costEstimate.range[1]}]`);
+          
+          // Attach unified budget to report for JSON persistence
+          (scoringResult as any).tokenBudget = unifiedBudget;
+          (scoringResult as any).costEstimate = {
+             model: modelPreset.name,
+             ...costEstimate
+          };
         }
 
         // Show concise breakdown; detailed breakdown only if config requests it
