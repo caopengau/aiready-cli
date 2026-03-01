@@ -16,6 +16,8 @@ import {
   visualizeHelpText,
   visualiseHelpText,
   changeAmplificationAction,
+  uploadAction,
+  uploadHelpText,
 } from './commands';
 
 const getDirname = () => {
@@ -111,6 +113,9 @@ program
     'Fail on issues: critical, major, any',
     'critical'
   )
+  .option('--api-key <key>', 'Platform API key for automatic upload')
+  .option('--upload', 'Automatically upload results to the platform')
+  .option('--server <url>', 'Custom platform URL')
   .addHelpText('after', scanHelpText)
   .action(async (directory, options) => {
     await scanAction(directory, options);
@@ -272,6 +277,19 @@ program
   .option('--output-file <path>', 'Output file path (for json)')
   .action(async (directory, options) => {
     await changeAmplificationAction(directory, options);
+  });
+
+// Upload command - Upload report JSON to platform
+program
+  .command('upload')
+  .description('Upload an AIReady report JSON to the platform')
+  .argument('<file>', 'Report JSON file to upload')
+  .option('--api-key <key>', 'Platform API key')
+  .option('--repo-id <id>', 'Platform repository ID (optional)')
+  .option('--server <url>', 'Custom platform URL')
+  .addHelpText('after', uploadHelpText)
+  .action(async (file, options) => {
+    await uploadAction(file, options);
   });
 
 program.parse();

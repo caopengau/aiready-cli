@@ -15,3 +15,4 @@ export { aiSignalClarityAction } from './ai-signal-clarity';
 export { agentGroundingAction } from './agent-grounding';
 export { testabilityAction } from './testability';
 export { changeAmplificationAction } from './change-amplification';
+export { uploadAction, uploadHelpText } from './upload';

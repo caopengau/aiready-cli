@@ -21,6 +21,7 @@ import {
   getRating,
   getRatingDisplay,
   parseWeightString,
+  getRepoMetadata,
   type ToolScoringOutput,
 } from '@aiready/core';
 import { analyzeUnified } from '../index';
@@ -29,6 +30,7 @@ import {
   warnIfGraphCapExceeded,
   truncateArray,
 } from '../utils/helpers';
+import { uploadAction } from './upload';
 
 interface ScanOptions {
   tools?: string;
@@ -45,6 +47,9 @@ interface ScanOptions {
   ci?: boolean;
   failOn?: string;
   model?: string;
+  apiKey?: string;
+  upload?: boolean;
+  server?: string;
 }
 
 export async function scanAction(directory: string, options: ScanOptions) {
@@ -53,6 +58,9 @@ export async function scanAction(directory: string, options: ScanOptions) {
   const startTime = Date.now();
   // Resolve directory to absolute path to ensure .aiready/ is created in the right location
   const resolvedDir = resolvePath(process.cwd(), directory || '.');
+
+  // Extract repo metadata for linkage
+  const repoMetadata = getRepoMetadata(resolvedDir);
 
   try {
     // Define defaults
@@ -78,11 +86,11 @@ export async function scanAction(directory: string, options: ScanOptions) {
 
     let profileTools = options.tools
       ? options.tools.split(',').map((t: string) => {
-          const tool = t.trim();
-          if (tool === 'hallucination' || tool === 'hallucination-risk')
-            return 'aiSignalClarity';
-          return tool;
-        })
+        const tool = t.trim();
+        if (tool === 'hallucination' || tool === 'hallucination-risk')
+          return 'aiSignalClarity';
+        return tool;
+      })
       : undefined;
     if (options.profile) {
       switch (options.profile.toLowerCase()) {
@@ -493,7 +501,7 @@ export async function scanAction(directory: string, options: ScanOptions) {
             results.duplicates,
             results.patterns?.length || 0
           );
-          
+
           // Calculate token budget for patterns (waste = duplication)
           const wastedTokens = results.duplicates.reduce((sum: number, d: any) => sum + (d.tokenCost || 0), 0);
           patternScore.tokenBudget = calculateTokenBudget({
@@ -504,7 +512,7 @@ export async function scanAction(directory: string, options: ScanOptions) {
               chattiness: 0
             }
           });
-          
+
           toolScores.set('pattern-detect', patternScore);
         } catch (err) {
           void err;
@@ -518,7 +526,7 @@ export async function scanAction(directory: string, options: ScanOptions) {
         try {
           const ctxSummary = genContextSummary(results.context);
           const contextScore = calculateContextScore(ctxSummary);
-          
+
           // Calculate token budget for context (waste = fragmentation + depth overhead)
           contextScore.tokenBudget = calculateTokenBudget({
             totalContextTokens: ctxSummary.totalTokens,
@@ -528,7 +536,7 @@ export async function scanAction(directory: string, options: ScanOptions) {
               chattiness: 0
             }
           });
-          
+
           toolScores.set('context-analyzer', contextScore);
         } catch (err) {
           void err;
@@ -721,7 +729,7 @@ export async function scanAction(directory: string, options: ScanOptions) {
         const totalWastedFragmentation = Array.from(toolScores.values())
           .reduce((sum, s) => sum + (s.tokenBudget?.wastedTokens.bySource.fragmentation || 0), 0);
         const totalContext = Math.max(...Array.from(toolScores.values()).map(s => s.tokenBudget?.totalContextTokens || 0));
-        
+
         if (totalContext > 0) {
           const unifiedBudget = calculateTokenBudget({
             totalContextTokens: totalContext,
@@ -731,11 +739,11 @@ export async function scanAction(directory: string, options: ScanOptions) {
               chattiness: 0
             }
           });
-          
+
           const targetModel = options.model || 'claude-4.6';
           const modelPreset = getModelPreset(targetModel);
           const costEstimate = estimateCostFromBudget(unifiedBudget, modelPreset);
-          
+
           const barWidth = 20;
           const filled = Math.round(unifiedBudget.efficiencyRatio * barWidth);
           const bar = chalk.green('█'.repeat(filled)) + chalk.dim('░'.repeat(barWidth - filled));
@@ -749,12 +757,12 @@ export async function scanAction(directory: string, options: ScanOptions) {
           console.log(`    • Fragmentation: ${unifiedBudget.wastedTokens.bySource.fragmentation.toLocaleString()} tokens`);
           console.log(`  Potential Savings: ${chalk.green(unifiedBudget.potentialRetrievableTokens.toLocaleString())} tokens retrievable`);
           console.log(`\n  Est. Monthly Cost (${modelPreset.name}): ${chalk.bold('$' + costEstimate.total)} [range: $${costEstimate.range[0]}-$${costEstimate.range[1]}]`);
-          
+
           // Attach unified budget to report for JSON persistence
           (scoringResult as any).tokenBudget = unifiedBudget;
           (scoringResult as any).costEstimate = {
-             model: modelPreset.name,
-             ...costEstimate
+            model: modelPreset.name,
+            ...costEstimate
           };
         }
 
@@ -793,12 +801,25 @@ export async function scanAction(directory: string, options: ScanOptions) {
         defaultFilename,
         resolvedDir
       );
-      const outputData = { ...results, scoring: scoringResult };
+      const outputData = {
+        ...results,
+        scoring: scoringResult,
+        repository: repoMetadata,
+      };
       handleJSONOutput(
         outputData,
         outputPath,
         `✅ Report saved to ${outputPath}`
       );
+
+      // Automatic Upload
+      if (options.upload) {
+        console.log(chalk.blue('\n📤 Automatic upload triggered...'));
+        await uploadAction(outputPath, {
+          apiKey: options.apiKey,
+          server: options.server,
+        });
+      }
 
       // Warn if graph caps may be exceeded
       await warnIfGraphCapExceeded(outputData, resolvedDir);
@@ -811,11 +832,24 @@ export async function scanAction(directory: string, options: ScanOptions) {
         defaultFilename,
         resolvedDir
       );
-      const outputData = { ...results, scoring: scoringResult };
+      const outputData = {
+        ...results,
+        scoring: scoringResult,
+        repository: repoMetadata,
+      };
 
       try {
         writeFileSync(outputPath, JSON.stringify(outputData, null, 2));
         console.log(chalk.dim(`✅ Report auto-persisted to ${outputPath}`));
+
+        // Automatic Upload (from auto-persistent report)
+        if (options.upload) {
+          console.log(chalk.blue('\n📤 Automatic upload triggered...'));
+          await uploadAction(outputPath, {
+            apiKey: options.apiKey,
+            server: options.server,
+          });
+        }
         // Warn if graph caps may be exceeded
         await warnIfGraphCapExceeded(outputData, resolvedDir);
       } catch (err) {
@@ -967,6 +1001,8 @@ EXAMPLES:
   $ aiready scan --ci --threshold 70                # GitHub Actions gatekeeper
   $ aiready scan --ci --fail-on major               # Fail on major+ issues
   $ aiready scan --output json --output-file report.json
+  $ aiready scan --upload --api-key ar_...             # Automatic platform upload
+  $ aiready scan --upload --server custom-url.com      # Upload to custom platform
 
 PROFILES:
   agentic:      aiSignalClarity, grounding, testability

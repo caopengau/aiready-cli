@@ -37,7 +37,28 @@ The CLI provides both unified analysis (scan multiple tools at once) and individ
 aiready scan .
 
 # Run a specific tool
-aiready pattern-detect .
+aiready patterns . --similarity 0.6
+
+## 🌐 Platform Integration
+
+Connect your local scans to the [AIReady Dashboard](https://getaiready.dev/dashboard).
+
+### Automatic Upload
+Scan and upload results in one step:
+```bash
+aiready scan . --upload --api-key ar_...
+```
+
+### Manual Upload
+Upload an existing report JSON:
+```bash
+aiready upload .aiready/latest.json --api-key ar_...
+```
+
+### Options
+- `--upload`: Automatically upload results after scan
+- `--api-key <key>`: Your platform API key (or set `AIREADY_API_KEY`)
+- `--server <url>`: Custom platform URL (optional)
 ```
 
 ## License
