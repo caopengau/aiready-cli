@@ -1,9 +1,7 @@
 import fs from 'fs';
-import path, { resolve as resolvePath } from 'path';
+import { resolve as resolvePath } from 'path';
 import chalk from 'chalk';
-import {
-  handleCLIError,
-} from '@aiready/core';
+import { handleCLIError } from '@aiready/core';
 
 interface UploadOptions {
   apiKey?: string;
@@ -14,13 +12,22 @@ interface UploadOptions {
 export async function uploadAction(file: string, options: UploadOptions) {
   const startTime = Date.now();
   const filePath = resolvePath(process.cwd(), file);
-  const serverUrl = options.server || process.env.AIREADY_SERVER || 'https://dev.platform.getaiready.dev';
+  const serverUrl =
+    options.server ||
+    process.env.AIREADY_SERVER ||
+    'https://dev.platform.getaiready.dev';
   const apiKey = options.apiKey || process.env.AIREADY_API_KEY;
 
   if (!apiKey) {
     console.error(chalk.red('❌ API Key is required for upload.'));
-    console.log(chalk.dim('   Set AIREADY_API_KEY environment variable or use --api-key flag.'));
-    console.log(chalk.dim('   Get an API key from https://getaiready.dev/dashboard'));
+    console.log(
+      chalk.dim(
+        '   Set AIREADY_API_KEY environment variable or use --api-key flag.'
+      )
+    );
+    console.log(
+      chalk.dim('   Get an API key from https://getaiready.dev/dashboard')
+    );
     process.exit(1);
   }
 
@@ -43,7 +50,7 @@ export async function uploadAction(file: string, options: UploadOptions) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
+        Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
         data: reportData,
@@ -54,9 +61,13 @@ export async function uploadAction(file: string, options: UploadOptions) {
     const result = (await res.json()) as any;
 
     if (!res.ok) {
-      console.error(chalk.red(`❌ Upload failed: ${result.error || res.statusText}`));
+      console.error(
+        chalk.red(`❌ Upload failed: ${result.error || res.statusText}`)
+      );
       if (res.status === 401) {
-        console.log(chalk.dim('   Hint: Your API key may be invalid or expired.'));
+        console.log(
+          chalk.dim('   Hint: Your API key may be invalid or expired.')
+        );
       }
       process.exit(1);
     }
@@ -69,7 +80,6 @@ export async function uploadAction(file: string, options: UploadOptions) {
       console.log(chalk.dim(`   Analysis ID: ${result.analysis.id}`));
       console.log(chalk.dim(`   Score: ${result.analysis.aiScore}/100`));
     }
-
   } catch (error) {
     handleCLIError(error, 'Upload');
   }

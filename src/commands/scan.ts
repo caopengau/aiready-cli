@@ -86,11 +86,11 @@ export async function scanAction(directory: string, options: ScanOptions) {
 
     let profileTools = options.tools
       ? options.tools.split(',').map((t: string) => {
-        const tool = t.trim();
-        if (tool === 'hallucination' || tool === 'hallucination-risk')
-          return 'aiSignalClarity';
-        return tool;
-      })
+          const tool = t.trim();
+          if (tool === 'hallucination' || tool === 'hallucination-risk')
+            return 'aiSignalClarity';
+          return tool;
+        })
       : undefined;
     if (options.profile) {
       switch (options.profile.toLowerCase()) {
@@ -503,14 +503,17 @@ export async function scanAction(directory: string, options: ScanOptions) {
           );
 
           // Calculate token budget for patterns (waste = duplication)
-          const wastedTokens = results.duplicates.reduce((sum: number, d: any) => sum + (d.tokenCost || 0), 0);
+          const wastedTokens = results.duplicates.reduce(
+            (sum: number, d: any) => sum + (d.tokenCost || 0),
+            0
+          );
           patternScore.tokenBudget = calculateTokenBudget({
             totalContextTokens: wastedTokens * 2, // Estimated context
             wastedTokens: {
               duplication: wastedTokens,
               fragmentation: 0,
-              chattiness: 0
-            }
+              chattiness: 0,
+            },
           });
 
           toolScores.set('pattern-detect', patternScore);
@@ -533,8 +536,8 @@ export async function scanAction(directory: string, options: ScanOptions) {
             wastedTokens: {
               duplication: 0,
               fragmentation: ctxSummary.totalPotentialSavings || 0,
-              chattiness: 0
-            }
+              chattiness: 0,
+            },
           });
 
           toolScores.set('context-analyzer', contextScore);
@@ -724,11 +727,21 @@ export async function scanAction(directory: string, options: ScanOptions) {
         }
 
         // Unified Token Budget Analysis
-        const totalWastedDuplication = Array.from(toolScores.values())
-          .reduce((sum, s) => sum + (s.tokenBudget?.wastedTokens.bySource.duplication || 0), 0);
-        const totalWastedFragmentation = Array.from(toolScores.values())
-          .reduce((sum, s) => sum + (s.tokenBudget?.wastedTokens.bySource.fragmentation || 0), 0);
-        const totalContext = Math.max(...Array.from(toolScores.values()).map(s => s.tokenBudget?.totalContextTokens || 0));
+        const totalWastedDuplication = Array.from(toolScores.values()).reduce(
+          (sum, s) =>
+            sum + (s.tokenBudget?.wastedTokens.bySource.duplication || 0),
+          0
+        );
+        const totalWastedFragmentation = Array.from(toolScores.values()).reduce(
+          (sum, s) =>
+            sum + (s.tokenBudget?.wastedTokens.bySource.fragmentation || 0),
+          0
+        );
+        const totalContext = Math.max(
+          ...Array.from(toolScores.values()).map(
+            (s) => s.tokenBudget?.totalContextTokens || 0
+          )
+        );
 
         if (totalContext > 0) {
           const unifiedBudget = calculateTokenBudget({
@@ -736,33 +749,52 @@ export async function scanAction(directory: string, options: ScanOptions) {
             wastedTokens: {
               duplication: totalWastedDuplication,
               fragmentation: totalWastedFragmentation,
-              chattiness: 0
-            }
+              chattiness: 0,
+            },
           });
 
           const targetModel = options.model || 'claude-4.6';
           const modelPreset = getModelPreset(targetModel);
-          const costEstimate = estimateCostFromBudget(unifiedBudget, modelPreset);
+          const costEstimate = estimateCostFromBudget(
+            unifiedBudget,
+            modelPreset
+          );
 
           const barWidth = 20;
           const filled = Math.round(unifiedBudget.efficiencyRatio * barWidth);
-          const bar = chalk.green('█'.repeat(filled)) + chalk.dim('░'.repeat(barWidth - filled));
+          const bar =
+            chalk.green('█'.repeat(filled)) +
+            chalk.dim('░'.repeat(barWidth - filled));
 
           console.log(chalk.bold('\n📊 AI Token Budget Analysis (v0.13)'));
-          console.log(`  Efficiency: [${bar}] ${(unifiedBudget.efficiencyRatio * 100).toFixed(0)}%`);
-          console.log(`  Total Context: ${chalk.bold(unifiedBudget.totalContextTokens.toLocaleString())} tokens`);
-          console.log(`  Wasted Tokens: ${chalk.red(unifiedBudget.wastedTokens.total.toLocaleString())} (${((unifiedBudget.wastedTokens.total / unifiedBudget.totalContextTokens) * 100).toFixed(1)}%)`);
+          console.log(
+            `  Efficiency: [${bar}] ${(unifiedBudget.efficiencyRatio * 100).toFixed(0)}%`
+          );
+          console.log(
+            `  Total Context: ${chalk.bold(unifiedBudget.totalContextTokens.toLocaleString())} tokens`
+          );
+          console.log(
+            `  Wasted Tokens: ${chalk.red(unifiedBudget.wastedTokens.total.toLocaleString())} (${((unifiedBudget.wastedTokens.total / unifiedBudget.totalContextTokens) * 100).toFixed(1)}%)`
+          );
           console.log(`  Waste Breakdown:`);
-          console.log(`    • Duplication:   ${unifiedBudget.wastedTokens.bySource.duplication.toLocaleString()} tokens`);
-          console.log(`    • Fragmentation: ${unifiedBudget.wastedTokens.bySource.fragmentation.toLocaleString()} tokens`);
-          console.log(`  Potential Savings: ${chalk.green(unifiedBudget.potentialRetrievableTokens.toLocaleString())} tokens retrievable`);
-          console.log(`\n  Est. Monthly Cost (${modelPreset.name}): ${chalk.bold('$' + costEstimate.total)} [range: $${costEstimate.range[0]}-$${costEstimate.range[1]}]`);
+          console.log(
+            `    • Duplication:   ${unifiedBudget.wastedTokens.bySource.duplication.toLocaleString()} tokens`
+          );
+          console.log(
+            `    • Fragmentation: ${unifiedBudget.wastedTokens.bySource.fragmentation.toLocaleString()} tokens`
+          );
+          console.log(
+            `  Potential Savings: ${chalk.green(unifiedBudget.potentialRetrievableTokens.toLocaleString())} tokens retrievable`
+          );
+          console.log(
+            `\n  Est. Monthly Cost (${modelPreset.name}): ${chalk.bold('$' + costEstimate.total)} [range: $${costEstimate.range[0]}-$${costEstimate.range[1]}]`
+          );
 
           // Attach unified budget to report for JSON persistence
           (scoringResult as any).tokenBudget = unifiedBudget;
           (scoringResult as any).costEstimate = {
             model: modelPreset.name,
-            ...costEstimate
+            ...costEstimate,
           };
         }
 
