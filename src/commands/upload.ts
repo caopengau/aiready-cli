@@ -40,7 +40,10 @@ export async function uploadAction(file: string, options: UploadOptions) {
     console.log(chalk.blue(`🚀 Uploading report to ${serverUrl}...`));
 
     // Read the report file
-    const reportData = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+    console.log(chalk.dim(`   Reading report from ${filePath}...`));
+    const reportContent = fs.readFileSync(filePath, 'utf-8');
+    const reportData = JSON.parse(reportContent);
+    console.log(chalk.dim(`   Successfully parsed report JSON.`));
 
     // Prepare upload payload
     // Note: repoId is optional if the metadata contains it, but for now we'll require it or infer from metadata
@@ -58,12 +61,37 @@ export async function uploadAction(file: string, options: UploadOptions) {
       }),
     });
 
-    const result = (await res.json()) as any;
+    const contentType = res.headers.get('content-type');
+    let result: any = {};
+
+    if (contentType?.includes('application/json')) {
+      result = await res.json();
+    } else {
+      const text = await res.text();
+      result = { error: text || res.statusText };
+    }
 
     if (!res.ok) {
       console.error(
         chalk.red(`❌ Upload failed: ${result.error || res.statusText}`)
       );
+
+      // Special case for redirects or HTML error pages
+      if (contentType?.includes('text/html')) {
+        console.log(
+          chalk.yellow(
+            '   Note: Received an HTML response. This often indicates a redirect (e.g., to a login page) or a server error.'
+          )
+        );
+        if (result.error?.includes('Redirecting')) {
+          console.log(
+            chalk.dim(
+              '   Detected redirect. Check if the API endpoint requires authentication or has changed.'
+            )
+          );
+        }
+      }
+
       if (res.status === 401) {
         console.log(
           chalk.dim('   Hint: Your API key may be invalid or expired.')
