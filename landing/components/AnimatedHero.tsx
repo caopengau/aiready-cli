@@ -1,21 +1,36 @@
 'use client';
 
+'use client';
+
 import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import AgentPrompt from './AgentPrompt';
 import {
   Rocket,
   Package,
-  Terminal as TerminalIcon,
+  Terminal,
   Bot,
+  Code2,
   ArrowRight,
+  CheckCircle2,
+  Copy,
+  Check,
 } from 'lucide-react';
 
 const words = ['AI-Ready', 'Model-Aware', 'Agentic', 'ROI-Driven'];
 
 export default function AnimatedHero() {
   const [currentWord, setCurrentWord] = useState(0);
-  const [activeTab, setActiveTab] = useState<'terminal' | 'agent'>('agent');
+  const [activeTab, setActiveTab] = useState<'cli' | 'agent' | 'vscode'>(
+    'agent'
+  );
+  const [copied, setCopied] = useState(false);
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -35,7 +50,7 @@ export default function AnimatedHero() {
   };
 
   const itemVariants = {
-    initial: { y: 0, opacity: 1 },
+    initial: { y: 20, opacity: 0 },
     animate: {
       y: 0,
       opacity: 1,
@@ -102,160 +117,154 @@ export default function AnimatedHero() {
         </span>
       </motion.p>
 
-      {/* CTA Buttons */}
+      {/* RESTORED AND MOVED CTA SECTION (Formerly at bottom of CTA.tsx) */}
       <motion.div
         variants={itemVariants}
-        className="flex flex-col sm:flex-row gap-4 justify-center mb-12"
+        className="max-w-4xl mx-auto relative mb-20"
       >
-        <motion.a
-          href="#live-demo"
-          whileHover={{
-            scale: 1.05,
-            boxShadow: '0 20px 40px rgba(59, 130, 246, 0.3)',
-          }}
-          whileTap={{ scale: 0.95 }}
-          className="px-8 py-4 bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-bold rounded-xl shadow-xl inline-flex items-center justify-center gap-2 group"
-        >
-          See it in action
-          <motion.div
-            animate={{ x: [0, 5, 0] }}
-            transition={{ duration: 1.5, repeat: Infinity }}
-          >
-            <ArrowRight className="w-5 h-5" />
-          </motion.div>
-        </motion.a>
-        <motion.a
-          href="https://www.npmjs.com/package/@aiready/cli"
-          target="_blank"
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          className="px-8 py-4 bg-white text-slate-900 font-bold rounded-xl border-2 border-slate-200 shadow-lg inline-flex items-center justify-center gap-2 hover:border-slate-300"
-        >
-          <Package className="w-5 h-5 text-slate-400" />
-          <span>View on npm</span>
-        </motion.a>
-      </motion.div>
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-600 via-purple-600 to-cyan-600 rounded-3xl blur-2xl opacity-10 animate-pulse" />
 
-      {/* Tab Switcher */}
-      <motion.div
-        variants={itemVariants}
-        className="flex justify-center gap-2 mb-4"
-      >
-        <button
-          onClick={() => setActiveTab('terminal')}
-          className={`px-6 py-2 rounded-lg font-semibold transition-all flex items-center gap-2 ${
-            activeTab === 'terminal'
-              ? 'bg-slate-900 text-white shadow-lg'
-              : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-          }`}
-        >
-          <TerminalIcon className="w-4 h-4" />
-          Terminal
-        </button>
-        <button
-          onClick={() => setActiveTab('agent')}
-          className={`px-6 py-2 rounded-lg font-semibold transition-all flex items-center gap-2 ${
-            activeTab === 'agent'
-              ? 'bg-slate-900 text-white shadow-lg'
-              : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-          }`}
-        >
-          <Bot className="w-4 h-4" />
-          AI Agent Prompt
-        </button>
-      </motion.div>
+        <div className="relative bg-gradient-to-r from-blue-600 via-purple-600 to-cyan-600 rounded-3xl p-1 shadow-2xl">
+          <div className="bg-slate-900 rounded-[22px] p-8 md:p-12 text-center">
+            <h2 className="text-3xl md:text-4xl font-black text-white mb-6">
+              See Why AI Struggles with Your Code
+            </h2>
 
-      {/* Terminal Preview */}
-      {activeTab === 'terminal' && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -20 }}
-          transition={{ duration: 0.3 }}
-          variants={itemVariants}
-          whileHover={{ scale: 1.02 }}
-          className="bg-slate-900 rounded-2xl p-6 text-left max-w-3xl mx-auto border border-slate-800 shadow-2xl relative overflow-hidden"
-        >
-          {/* Terminal dots */}
-          <div className="flex items-center gap-2 mb-4">
-            <div className="w-3 h-3 rounded-full bg-red-500" />
-            <div className="w-3 h-3 rounded-full bg-yellow-500" />
-            <div className="w-3 h-3 rounded-full bg-green-500" />
-            <span className="ml-2 text-sm text-slate-500 font-mono">
-              terminal
-            </span>
-          </div>
-
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <span className="text-green-400 font-mono">$</span>
-              <motion.code
-                initial={{ width: 0 }}
-                animate={{ width: 'auto' }}
-                transition={{ duration: 2, delay: 1 }}
-                className="text-cyan-400 font-mono text-sm md:text-base overflow-hidden whitespace-nowrap"
+            {/* Toggle buttons */}
+            <div className="flex flex-wrap justify-center gap-2 mb-8">
+              <button
+                onClick={() => setActiveTab('cli')}
+                className={`px-4 py-2 rounded-lg font-semibold text-sm transition-all flex items-center gap-2 ${
+                  activeTab === 'cli'
+                    ? 'bg-slate-700 text-white'
+                    : 'bg-slate-800 text-slate-400 hover:text-slate-300'
+                }`}
               >
-                aiready scan
-              </motion.code>
-              <motion.span
-                animate={{ opacity: [1, 0] }}
-                transition={{ duration: 0.8, repeat: Infinity }}
-                className="text-cyan-400"
+                <Terminal className="w-4 h-4" />
+                CLI Command
+              </button>
+              <button
+                onClick={() => setActiveTab('agent')}
+                className={`px-4 py-2 rounded-lg font-semibold text-sm transition-all flex items-center gap-2 ${
+                  activeTab === 'agent'
+                    ? 'bg-slate-700 text-white'
+                    : 'bg-slate-800 text-slate-400 hover:text-slate-300'
+                }`}
               >
-                |
-              </motion.span>
+                <Bot className="w-4 h-4" />
+                AI Agent Prompt
+              </button>
+              <a
+                href="https://marketplace.visualstudio.com/items?itemName=pengcao.aiready"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-4 py-2 rounded-lg font-semibold text-sm transition-all bg-blue-600/20 text-blue-300 border border-blue-500/30 hover:bg-blue-600/30 flex items-center gap-2"
+              >
+                <Code2 className="w-4 h-4" />
+                VS Code Extension
+              </a>
             </div>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 3 }}
-              className="text-slate-400 text-xs md:text-sm font-mono space-y-1 pl-4"
-            >
-              <div>✓ Analyzing codebase...</div>
-              <div>✓ Found 42 semantic duplicates</div>
-              <div>✓ Identified 15 optimization opportunities</div>
-              <div className="text-green-400">
-                ✓ Report generated successfully!
-              </div>
-              <div className="text-slate-500 text-xs mt-2 border-t border-slate-700 pt-2">
-                Step 2:{' '}
-                <span className="text-cyan-300 font-mono">
-                  aiready visualise
+
+            {/* CLI Command */}
+            {activeTab === 'cli' && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-slate-800 rounded-2xl p-6 text-left mb-8 border border-slate-700 max-w-2xl mx-auto"
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-red-500" />
+                    <div className="w-3 h-3 rounded-full bg-yellow-500" />
+                    <div className="w-3 h-3 rounded-full bg-green-500" />
+                  </div>
+                  <button
+                    onClick={() => copyToClipboard('npx @aiready/cli scan')}
+                    className="text-slate-400 hover:text-white transition-colors flex items-center gap-1.5 text-xs font-semibold"
+                  >
+                    {copied ? (
+                      <>
+                        <Check className="w-3.5 h-3.5 text-green-400" />
+                        Copied!
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3.5 h-3.5" />
+                        Copy
+                      </>
+                    )}
+                  </button>
+                </div>
+                <code className="text-green-400 font-mono text-lg break-all">
+                  npx @aiready/cli scan
+                </code>
+              </motion.div>
+            )}
+
+            {/* Agent Prompt */}
+            {activeTab === 'agent' && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mb-8 max-w-2xl mx-auto"
+              >
+                <div className="bg-slate-800 rounded-2xl p-4 border border-slate-700">
+                  <AgentPrompt variant="basic" />
+                </div>
+              </motion.div>
+            )}
+
+            {activeTab === 'vscode' && null /* Handled by link */}
+
+            <div className="flex flex-wrap justify-center items-center gap-6 text-sm text-slate-400 mb-8">
+              <span className="flex items-center gap-1.5">
+                <CheckCircle2 className="w-4 h-4 text-green-400" /> Free forever
+              </span>
+              <span className="flex items-center gap-1.5">
+                <CheckCircle2 className="w-4 h-4 text-green-400" /> Open source
+              </span>
+              <span className="flex items-center gap-1.5">
+                <CheckCircle2 className="w-4 h-4 text-green-400" /> No credit
+                card
+              </span>
+            </div>
+
+            {/* Compatible with Section */}
+            <div className="pt-8 border-t border-slate-800">
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500 mb-6">
+                Compatible with
+              </p>
+              <div className="flex flex-wrap justify-center items-center gap-x-8 gap-y-4 opacity-50 grayscale hover:grayscale-0 transition-all duration-500">
+                <span className="text-sm font-bold text-white flex items-center gap-2">
+                  <Bot className="w-4 h-4 text-blue-400" /> Cline
                 </span>
-                <span className="text-slate-600 ml-2">
-                  — opens interactive graph in browser
+                <span className="text-sm font-bold text-white flex items-center gap-2">
+                  <Bot className="w-4 h-4 text-purple-400" /> Claude Code
+                </span>
+                <span className="text-sm font-bold text-white flex items-center gap-2">
+                  <Bot className="w-4 h-4 text-cyan-400" /> Cursor
+                </span>
+                <span className="text-sm font-bold text-white flex items-center gap-2">
+                  <Bot className="w-4 h-4 text-orange-400" /> Copilot
                 </span>
               </div>
-            </motion.div>
+            </div>
           </div>
+        </div>
 
-          {/* Animated glow effect */}
-          <motion.div
-            className="absolute inset-0 bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-cyan-500/10"
-            animate={{
-              opacity: [0.5, 0.8, 0.5],
-            }}
-            transition={{
-              duration: 3,
-              repeat: Infinity,
-              ease: 'easeInOut',
-            }}
-          />
-        </motion.div>
-      )}
-
-      {/* Agent Prompt */}
-      {activeTab === 'agent' && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -20 }}
-          transition={{ duration: 0.3 }}
-          className="max-w-3xl mx-auto"
-        >
-          <AgentPrompt variant="basic" />
-        </motion.div>
-      )}
+        {/* Audit link below the card */}
+        <div className="mt-8">
+          <p className="text-slate-500 text-sm">
+            Need help?{' '}
+            <a
+              href="#audit-form"
+              className="text-blue-500 font-semibold hover:text-blue-400 underline underline-offset-4 decoration-blue-500/30 hover:decoration-blue-500 transition-all"
+            >
+              Request a personalized audit or consulting session
+            </a>
+          </p>
+        </div>
+      </motion.div>
     </motion.div>
   );
 }
