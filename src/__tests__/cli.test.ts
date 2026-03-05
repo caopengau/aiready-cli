@@ -30,8 +30,8 @@ describe('CLI Unified Analysis', () => {
       tools: ['patterns', 'context'],
     });
 
-    expect(results).toHaveProperty('patterns');
-    expect(results).toHaveProperty('context');
+    expect(results).toHaveProperty('patternDetect');
+    expect(results).toHaveProperty('contextAnalyzer');
     expect(results).toHaveProperty('summary');
   });
 
@@ -41,8 +41,8 @@ describe('CLI Unified Analysis', () => {
       tools: ['patterns'],
     });
 
-    expect(results).toHaveProperty('patterns');
-    expect(results).not.toHaveProperty('context');
+    expect(results).toHaveProperty('patternDetect');
+    expect(results).not.toHaveProperty('contextAnalyzer');
     expect(results).toHaveProperty('summary');
   });
 
@@ -52,8 +52,8 @@ describe('CLI Unified Analysis', () => {
       tools: ['context'],
     });
 
-    expect(results).not.toHaveProperty('patterns');
-    expect(results).toHaveProperty('context');
+    expect(results).not.toHaveProperty('patternDetect');
+    expect(results).toHaveProperty('contextAnalyzer');
     expect(results).toHaveProperty('summary');
   });
 });
