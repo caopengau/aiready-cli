@@ -69,12 +69,12 @@ export async function scanAction(directory: string, options: ScanOptions) {
         'patterns',
         'context',
         'consistency',
-        'aiSignalClarity',
-        'grounding',
+        'ai-signal-clarity',
+        'agent-grounding',
         'testability',
         'doc-drift',
         'deps-health',
-        'changeAmplification',
+        'change-amplification',
       ],
       include: undefined,
       exclude: undefined,
@@ -95,7 +95,11 @@ export async function scanAction(directory: string, options: ScanOptions) {
     if (options.profile) {
       switch (options.profile.toLowerCase()) {
         case 'agentic':
-          profileTools = ['aiSignalClarity', 'grounding', 'testability'];
+          profileTools = [
+            'ai-signal-clarity',
+            'agent-grounding',
+            'testability',
+          ];
           break;
         case 'cost':
           profileTools = ['patterns', 'context'];
@@ -104,7 +108,7 @@ export async function scanAction(directory: string, options: ScanOptions) {
           profileTools = ['consistency', 'testability'];
           break;
         case 'onboarding':
-          profileTools = ['context', 'consistency', 'grounding'];
+          profileTools = ['context', 'consistency', 'agent-grounding'];
           break;
         default:
           console.log(
@@ -463,21 +467,22 @@ export async function scanAction(directory: string, options: ScanOptions) {
     console.log(
       `  Total issues (all tools): ${chalk.bold(String(results.summary.totalIssues || 0))}`
     );
-    if (results.duplicates)
+    if (results.patternDetect) {
       console.log(
-        `  Duplicate patterns found: ${chalk.bold(String(results.duplicates.length || 0))}`
+        `  Duplicate patterns found: ${chalk.bold(String(results.patternDetect.duplicates?.length || 0))}`
       );
-    if (results.patterns)
       console.log(
-        `  Pattern files with issues: ${chalk.bold(String(results.patterns.length || 0))}`
+        `  Pattern files with issues: ${chalk.bold(String(results.patternDetect.results.length || 0))}`
       );
-    if (results.context)
+    }
+    if (results.contextAnalyzer)
       console.log(
-        `  Context issues: ${chalk.bold(String(results.context.length || 0))}`
+        `  Context issues: ${chalk.bold(String(results.contextAnalyzer.results.length || 0))}`
       );
-    console.log(
-      `  Consistency issues: ${chalk.bold(String(results.consistency?.summary?.totalIssues || 0))}`
-    );
+    if (results.consistency)
+      console.log(
+        `  Consistency issues: ${chalk.bold(String(results.consistency.summary?.totalIssues || 0))}`
+      );
     if (results.changeAmplification)
       console.log(
         `  Change amplification: ${chalk.bold(String(results.changeAmplification.summary?.score || 0))}/100`
@@ -750,9 +755,9 @@ export async function scanAction(directory: string, options: ScanOptions) {
         }
 
         // Output annotations for critical issues
-        if (results.patterns) {
-          const criticalPatterns = results.patterns.flatMap((p: any) =>
-            p.issues.filter((i: any) => i.severity === 'critical')
+        if (results.patternDetect) {
+          const criticalPatterns = results.patternDetect.results.flatMap(
+            (p: any) => p.issues.filter((i: any) => i.severity === 'critical')
           );
           criticalPatterns.slice(0, 10).forEach((issue: any) => {
             console.log(
@@ -781,21 +786,21 @@ export async function scanAction(directory: string, options: ScanOptions) {
         let criticalCount = 0;
         let majorCount = 0;
 
-        if (results.patterns) {
-          results.patterns.forEach((p: any) => {
+        if (results.patternDetect) {
+          results.patternDetect.results.forEach((p: any) => {
             p.issues.forEach((i: any) => {
               if (i.severity === 'critical') criticalCount++;
               if (i.severity === 'major') majorCount++;
             });
           });
         }
-        if (results.context) {
-          results.context.forEach((c: any) => {
+        if (results.contextAnalyzer) {
+          results.contextAnalyzer.results.forEach((c: any) => {
             if (c.severity === 'critical') criticalCount++;
             if (c.severity === 'major') majorCount++;
           });
         }
-        if (results.consistency?.results) {
+        if (results.consistency) {
           results.consistency.results.forEach((r: any) => {
             r.issues?.forEach((i: any) => {
               if (i.severity === 'critical') criticalCount++;

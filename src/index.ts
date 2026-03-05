@@ -10,6 +10,27 @@ import {
 } from '@aiready/core';
 export type { ToolScoringOutput, ScoringResult };
 
+export interface UnifiedAnalysisOptions extends ScanOptions {
+  tools?: (
+    | 'patterns'
+    | 'context'
+    | 'consistency'
+    | 'doc-drift'
+    | 'deps-health'
+    | 'ai-signal-clarity'
+    | 'agent-grounding'
+    | 'testability'
+    | 'change-amplification'
+  )[];
+  minSimilarity?: number;
+  minLines?: number;
+  maxCandidatesPerBlock?: number;
+  minSharedTokens?: number;
+  useSmartDefaults?: boolean;
+  consistency?: any;
+  progressCallback?: (event: { tool: string; data: any }) => void;
+}
+
 export interface UnifiedAnalysisResult {
   // Standardized keys matching tool names
   patternDetect?: SpokeOutput & { duplicates: any[] };
@@ -185,7 +206,7 @@ export async function analyzeUnified(
   }
 
   // Run AI Signal Clarity analysis
-  if (tools.includes('aiSignalClarity')) {
+  if (tools.includes('ai-signal-clarity')) {
     const { analyzeAiSignalClarity } =
       await import('@aiready/ai-signal-clarity');
     const report = await analyzeAiSignalClarity({
@@ -195,7 +216,7 @@ export async function analyzeUnified(
       onProgress: options.onProgress,
     });
     if (options.progressCallback) {
-      options.progressCallback({ tool: 'aiSignalClarity', data: report });
+      options.progressCallback({ tool: 'ai-signal-clarity', data: report });
     }
     result.aiSignalClarity = {
       results: report.results || [],
@@ -209,7 +230,7 @@ export async function analyzeUnified(
   }
 
   // Run Agent Grounding analysis
-  if (tools.includes('grounding')) {
+  if (tools.includes('agent-grounding')) {
     const { analyzeAgentGrounding } = await import('@aiready/agent-grounding');
     const report = await analyzeAgentGrounding({
       rootDir: options.rootDir,
@@ -218,7 +239,7 @@ export async function analyzeUnified(
       onProgress: options.onProgress,
     });
     if (options.progressCallback) {
-      options.progressCallback({ tool: 'grounding', data: report });
+      options.progressCallback({ tool: 'agent-grounding', data: report });
     }
     result.agentGrounding = {
       results: report.results || [],
@@ -247,7 +268,7 @@ export async function analyzeUnified(
   }
 
   // Run Change Amplification analysis
-  if (tools.includes('changeAmplification')) {
+  if (tools.includes('change-amplification')) {
     const { analyzeChangeAmplification } =
       await import('@aiready/change-amplification');
     const report = await analyzeChangeAmplification({
@@ -257,7 +278,7 @@ export async function analyzeUnified(
       onProgress: options.onProgress,
     });
     if (options.progressCallback) {
-      options.progressCallback({ tool: 'changeAmplification', data: report });
+      options.progressCallback({ tool: 'change-amplification', data: report });
     }
     result.changeAmplification = {
       results: report.results || [],
@@ -277,16 +298,16 @@ export async function scoreUnified(
   const toolScores: Map<string, ToolScoringOutput> = new Map();
 
   // Patterns score
-  if (results.duplicates) {
+  if (results.patternDetect) {
     const { calculatePatternScore } = await import('@aiready/pattern-detect');
     try {
       const patternScore = calculatePatternScore(
-        results.duplicates,
-        results.patterns?.length || 0
+        results.patternDetect.duplicates,
+        results.patternDetect.results?.length || 0
       );
 
       // Calculate token budget for patterns (waste = duplication)
-      const wastedTokens = results.duplicates.reduce(
+      const wastedTokens = results.patternDetect.duplicates.reduce(
         (sum: number, d: any) => sum + (d.tokenCost || 0),
         0
       );
@@ -306,11 +327,10 @@ export async function scoreUnified(
   }
 
   // Context score
-  if (results.context) {
-    const { generateSummary: genContextSummary, calculateContextScore } =
-      await import('@aiready/context-analyzer');
+  if (results.contextAnalyzer) {
+    const { calculateContextScore } = await import('@aiready/context-analyzer');
     try {
-      const ctxSummary = genContextSummary(results.context);
+      const ctxSummary = results.contextAnalyzer.summary;
       const contextScore = calculateContextScore(ctxSummary);
 
       // Calculate token budget for context (waste = fragmentation + depth overhead)
@@ -356,11 +376,11 @@ export async function scoreUnified(
   }
 
   // Agent grounding score
-  if (results.grounding) {
+  if (results.agentGrounding) {
     const { calculateGroundingScore } =
       await import('@aiready/agent-grounding');
     try {
-      const agScore = calculateGroundingScore(results.grounding);
+      const agScore = calculateGroundingScore(results.agentGrounding);
       toolScores.set('agent-grounding', agScore);
     } catch (err) {
       void err;
@@ -382,10 +402,13 @@ export async function scoreUnified(
   if (results.docDrift) {
     toolScores.set('doc-drift', {
       toolName: 'doc-drift',
-      score: results.docDrift.summary.score,
-      rawMetrics: results.docDrift.rawData,
+      score:
+        results.docDrift.summary.score ||
+        results.docDrift.summary.totalScore ||
+        0,
+      rawMetrics: results.docDrift.summary,
       factors: [],
-      recommendations: (results.docDrift.recommendations || []).map(
+      recommendations: (results.docDrift.summary.recommendations || []).map(
         (action: string) => ({
           action,
           estimatedImpact: 5,
@@ -396,19 +419,19 @@ export async function scoreUnified(
   }
 
   // Dependency Health score
-  if (results.deps) {
+  if (results.dependencyHealth) {
     toolScores.set('dependency-health', {
       toolName: 'dependency-health',
-      score: results.deps.summary.score,
-      rawMetrics: results.deps.rawData,
+      score: results.dependencyHealth.summary.score || 0,
+      rawMetrics: results.dependencyHealth.summary,
       factors: [],
-      recommendations: (results.deps.recommendations || []).map(
-        (action: string) => ({
-          action,
-          estimatedImpact: 5,
-          priority: 'medium',
-        })
-      ),
+      recommendations: (
+        results.dependencyHealth.summary.recommendations || []
+      ).map((action: string) => ({
+        action,
+        estimatedImpact: 5,
+        priority: 'medium',
+      })),
     });
   }
 
@@ -416,16 +439,16 @@ export async function scoreUnified(
   if (results.changeAmplification) {
     toolScores.set('change-amplification', {
       toolName: 'change-amplification',
-      score: results.changeAmplification.summary.score,
-      rawMetrics: results.changeAmplification.rawData,
+      score: results.changeAmplification.summary.score || 0,
+      rawMetrics: results.changeAmplification.summary,
       factors: [],
-      recommendations: (results.changeAmplification.recommendations || []).map(
-        (action: string) => ({
-          action,
-          estimatedImpact: 5,
-          priority: 'medium',
-        })
-      ),
+      recommendations: (
+        results.changeAmplification.summary.recommendations || []
+      ).map((action: string) => ({
+        action,
+        estimatedImpact: 5,
+        priority: 'medium',
+      })),
     });
   }
 
@@ -456,12 +479,12 @@ export function generateUnifiedSummary(result: UnifiedAnalysisResult): string {
   output += `   Total issues found: ${summary.totalIssues}\n`;
   output += `   Execution time: ${(summary.executionTime / 1000).toFixed(2)}s\n\n`;
 
-  if (result.patterns) {
-    output += `🔍 Pattern Analysis: ${result.patterns.length} issues\n`;
+  if (result.patternDetect) {
+    output += `🔍 Pattern Analysis: ${result.patternDetect.results.length} issues\n`;
   }
 
-  if (result.context) {
-    output += `🧠 Context Analysis: ${result.context.length} issues\n`;
+  if (result.contextAnalyzer) {
+    output += `🧠 Context Analysis: ${result.contextAnalyzer.results.length} issues\n`;
   }
 
   if (result.consistency) {
@@ -469,23 +492,23 @@ export function generateUnifiedSummary(result: UnifiedAnalysisResult): string {
   }
 
   if (result.docDrift) {
-    output += `📝 Doc Drift Analysis: ${result.docDrift.issues?.length || 0} issues\n`;
+    output += `📝 Doc Drift Analysis: ${result.docDrift.results?.length || 0} issues\n`;
   }
 
-  if (result.deps) {
-    output += `📦 Dependency Health: ${result.deps.issues?.length || 0} issues\n`;
+  if (result.dependencyHealth) {
+    output += `📦 Dependency Health: ${result.dependencyHealth.results?.length || 0} issues\n`;
   }
 
   if (result.aiSignalClarity) {
     output += `🧠 AI Signal Clarity: ${result.aiSignalClarity.summary?.totalSignals || 0} signals\n`;
   }
 
-  if (result.grounding) {
-    output += `🧭 Agent Grounding: ${result.grounding.issues?.length || 0} issues\n`;
+  if (result.agentGrounding) {
+    output += `🧭 Agent Grounding: ${result.agentGrounding.results?.length || 0} issues\n`;
   }
 
   if (result.testability) {
-    output += `🧪 Testability Index: ${result.testability.issues?.length || 0} issues\n`;
+    output += `🧪 Testability Index: ${result.testability.results?.length || 0} issues\n`;
   }
 
   if (result.changeAmplification) {
