@@ -1,7 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { analyzePatterns, generateSummary } from '../index';
-// Import directly from source to avoid mock issues with barrel exports
-import { validateSpokeOutput } from '../../../core/src/types/contract';
+import { validateSpokeOutput, SpokeOutputSchema } from '@aiready/core';
 
 // Mock core functions to avoid actual FS access
 vi.mock('@aiready/core', async (importOriginal) => {
@@ -30,15 +29,30 @@ describe('Pattern Detect Contract Validation', () => {
     const fullOutput = {
       results: output.results,
       summary,
+      metadata: {
+        toolName: 'pattern-detect',
+        version: '0.1.0',
+        timestamp: new Date().toISOString(),
+      },
     };
 
+    // 1. Legacy validation
     const validation = validateSpokeOutput('pattern-detect', fullOutput);
 
     if (!validation.valid) {
-      console.error('Contract Validation Errors:', validation.errors);
+      console.error('Contract Validation Errors (Legacy):', validation.errors);
     }
 
     expect(validation.valid).toBe(true);
-    expect(validation.errors).toHaveLength(0);
+
+    // 2. Zod validation (Round 1 improvement)
+    const zodResult = SpokeOutputSchema.safeParse(fullOutput);
+    if (!zodResult.success) {
+      console.error(
+        'Contract Validation Errors (Zod):',
+        zodResult.error.format()
+      );
+    }
+    expect(zodResult.success).toBe(true);
   });
 });

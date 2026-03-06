@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { analyzeConsistency } from '../index';
-import { validateSpokeOutput } from '../../../core/src/types/contract';
+import { validateSpokeOutput, SpokeOutputSchema } from '@aiready/core';
 
 // Mock core functions
 vi.mock('@aiready/core', async (importOriginal) => {
@@ -21,14 +21,30 @@ describe('Consistency Spoke Contract Validation', () => {
     const fullOutput = {
       results: results.results,
       summary: results.summary,
+      metadata: {
+        toolName: 'consistency',
+        version: '0.1.0',
+        timestamp: new Date().toISOString(),
+      },
     };
 
+    // 1. Legacy validation
     const validation = validateSpokeOutput('consistency', fullOutput);
 
     if (!validation.valid) {
-      console.error('Contract Validation Errors:', validation.errors);
+      console.error('Contract Validation Errors (Legacy):', validation.errors);
     }
 
     expect(validation.valid).toBe(true);
+
+    // 2. Zod validation
+    const zodResult = SpokeOutputSchema.safeParse(fullOutput);
+    if (!zodResult.success) {
+      console.error(
+        'Contract Validation Errors (Zod):',
+        zodResult.error.format()
+      );
+    }
+    expect(zodResult.success).toBe(true);
   });
 });

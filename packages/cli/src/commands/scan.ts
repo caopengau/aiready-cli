@@ -22,6 +22,7 @@ import {
   getRatingDisplay,
   parseWeightString,
   getRepoMetadata,
+  Severity,
   type ToolScoringOutput,
 } from '@aiready/core';
 import { analyzeUnified, scoreUnified, type ScoringResult } from '../index';
@@ -364,7 +365,7 @@ export async function scanAction(directory: string, options: ScanOptions) {
               // Count severities
               const counts = issues.reduce(
                 (acc: any, it: any) => {
-                  const s = (it.severity || 'info').toLowerCase();
+                  const s = (it.severity || Severity.Info).toLowerCase();
                   acc[s] = (acc[s] || 0) + 1;
                   return acc;
                 },
@@ -374,12 +375,13 @@ export async function scanAction(directory: string, options: ScanOptions) {
               const sample =
                 issues.find(
                   (it: any) =>
-                    it.severity === 'critical' || it.severity === 'major'
+                    it.severity === Severity.Critical ||
+                    it.severity === Severity.Major
                 ) || issues[0];
               const sampleMsg = sample ? ` — ${sample.message}` : '';
 
               console.log(
-                `   ${idx + 1}. ${file} — ${issues.length} issue(s) (critical:${counts.critical || 0} major:${counts.major || 0} minor:${counts.minor || 0} info:${counts.info || 0})${sampleMsg}`
+                `   ${idx + 1}. ${file} — ${issues.length} issue(s) (critical:${counts[Severity.Critical] || 0} major:${counts[Severity.Major] || 0} minor:${counts[Severity.Minor] || 0} info:${counts[Severity.Info] || 0})${sampleMsg}`
               );
             });
 
@@ -757,7 +759,8 @@ export async function scanAction(directory: string, options: ScanOptions) {
         // Output annotations for critical issues
         if (results.patternDetect) {
           const criticalPatterns = results.patternDetect.results.flatMap(
-            (p: any) => p.issues.filter((i: any) => i.severity === 'critical')
+            (p: any) =>
+              p.issues.filter((i: any) => i.severity === Severity.Critical)
           );
           criticalPatterns.slice(0, 10).forEach((issue: any) => {
             console.log(
@@ -789,22 +792,22 @@ export async function scanAction(directory: string, options: ScanOptions) {
         if (results.patternDetect) {
           results.patternDetect.results.forEach((p: any) => {
             p.issues.forEach((i: any) => {
-              if (i.severity === 'critical') criticalCount++;
-              if (i.severity === 'major') majorCount++;
+              if (i.severity === Severity.Critical) criticalCount++;
+              if (i.severity === Severity.Major) majorCount++;
             });
           });
         }
         if (results.contextAnalyzer) {
           results.contextAnalyzer.results.forEach((c: any) => {
-            if (c.severity === 'critical') criticalCount++;
-            if (c.severity === 'major') majorCount++;
+            if (c.severity === Severity.Critical) criticalCount++;
+            if (c.severity === Severity.Major) majorCount++;
           });
         }
         if (results.consistency) {
           results.consistency.results.forEach((r: any) => {
             r.issues?.forEach((i: any) => {
-              if (i.severity === 'critical') criticalCount++;
-              if (i.severity === 'major') majorCount++;
+              if (i.severity === Severity.Critical) criticalCount++;
+              if (i.severity === Severity.Major) majorCount++;
             });
           });
         }

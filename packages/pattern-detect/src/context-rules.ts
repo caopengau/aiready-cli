@@ -1,9 +1,9 @@
+import { Severity } from '@aiready/core';
+
 /**
  * Context-aware severity detection for duplicate patterns
  * Identifies intentional duplication patterns and adjusts severity accordingly
  */
-
-export type Severity = 'critical' | 'major' | 'minor' | 'info';
 
 export interface ContextRule {
   name: string;
@@ -39,7 +39,7 @@ export const CONTEXT_RULES: ContextRule[] = [
 
       return isTestFile && hasTestFixtures;
     },
-    severity: 'info',
+    severity: Severity.Info,
     reason: 'Test fixture duplication is intentional for test isolation',
     suggestion:
       'Consider if shared test setup would improve maintainability without coupling tests',
@@ -63,7 +63,7 @@ export const CONTEXT_RULES: ContextRule[] = [
 
       return isTemplate && hasTemplateContent;
     },
-    severity: 'minor',
+    severity: Severity.Minor,
     reason:
       'Template duplication may be intentional for maintainability and branding consistency',
     suggestion:
@@ -96,7 +96,7 @@ export const CONTEXT_RULES: ContextRule[] = [
 
       return isE2ETest && hasPageObjectPatterns;
     },
-    severity: 'minor',
+    severity: Severity.Minor,
     reason:
       'E2E test duplication ensures test independence and reduces coupling',
     suggestion:
@@ -117,7 +117,7 @@ export const CONTEXT_RULES: ContextRule[] = [
         file.includes('tsconfig')
       );
     },
-    severity: 'minor',
+    severity: Severity.Minor,
     reason: 'Configuration files often have similar structure by design',
     suggestion:
       'Consider shared config base only if configurations become hard to maintain',
@@ -136,7 +136,7 @@ export const CONTEXT_RULES: ContextRule[] = [
 
       return isTypeFile && hasTypeDefinitions;
     },
-    severity: 'info',
+    severity: Severity.Info,
     reason:
       'Type duplication may be intentional for module independence and type safety',
     suggestion:
@@ -153,7 +153,7 @@ export const CONTEXT_RULES: ContextRule[] = [
         file.includes('.migration.')
       );
     },
-    severity: 'info',
+    severity: Severity.Info,
     reason: 'Migration scripts are typically one-off and intentionally similar',
     suggestion: 'Duplication is acceptable for migration scripts',
   },
@@ -178,7 +178,7 @@ export const CONTEXT_RULES: ContextRule[] = [
 
       return isMockFile && hasMockData;
     },
-    severity: 'info',
+    severity: Severity.Info,
     reason: 'Mock data duplication is expected for comprehensive test coverage',
     suggestion: 'Consider shared factories only for complex mock generation',
   },
@@ -214,33 +214,33 @@ export function calculateSeverity(
   // Default severity based on similarity and size for non-contextual duplicates
   if (similarity >= 0.95 && linesOfCode >= 30) {
     return {
-      severity: 'critical',
+      severity: Severity.Critical,
       reason:
         'Large nearly-identical code blocks waste tokens and create maintenance burden',
       suggestion: 'Extract to shared utility module immediately',
     };
   } else if (similarity >= 0.95 && linesOfCode >= 15) {
     return {
-      severity: 'major',
+      severity: Severity.Major,
       reason: 'Nearly identical code should be consolidated',
       suggestion: 'Move to shared utility file',
     };
   } else if (similarity >= 0.85) {
     return {
-      severity: 'major',
+      severity: Severity.Major,
       reason: 'High similarity indicates significant duplication',
       suggestion: 'Extract common logic to shared function',
     };
   } else if (similarity >= 0.7) {
     return {
-      severity: 'minor',
+      severity: Severity.Minor,
       reason: 'Moderate similarity detected',
       suggestion:
         'Consider extracting shared patterns if code evolves together',
     };
   } else {
     return {
-      severity: 'minor',
+      severity: Severity.Minor,
       reason: 'Minor similarity detected',
       suggestion: 'Monitor but refactoring may not be worthwhile',
     };
@@ -252,10 +252,10 @@ export function calculateSeverity(
  */
 export function getSeverityLabel(severity: Severity): string {
   const labels: Record<Severity, string> = {
-    critical: '🔴 CRITICAL',
-    major: '🟡 MAJOR',
-    minor: '🔵 MINOR',
-    info: 'ℹ️  INFO',
+    [Severity.Critical]: '🔴 CRITICAL',
+    [Severity.Major]: '🟡 MAJOR',
+    [Severity.Minor]: '🔵 MINOR',
+    [Severity.Info]: 'ℹ️  INFO',
   };
   return labels[severity];
 }
@@ -267,7 +267,12 @@ export function filterBySeverity<T extends { severity: Severity }>(
   duplicates: T[],
   minSeverity: Severity
 ): T[] {
-  const severityOrder: Severity[] = ['info', 'minor', 'major', 'critical'];
+  const severityOrder: Severity[] = [
+    Severity.Info,
+    Severity.Minor,
+    Severity.Major,
+    Severity.Critical,
+  ];
   const minIndex = severityOrder.indexOf(minSeverity);
 
   if (minIndex === -1) return duplicates;
@@ -283,10 +288,10 @@ export function filterBySeverity<T extends { severity: Severity }>(
  */
 export function getSeverityThreshold(severity: Severity): number {
   const thresholds: Record<Severity, number> = {
-    critical: 0.95,
-    major: 0.85,
-    minor: 0.5,
-    info: 0,
+    [Severity.Critical]: 0.95,
+    [Severity.Major]: 0.85,
+    [Severity.Minor]: 0.5,
+    [Severity.Info]: 0,
   };
   return thresholds[severity] || 0;
 }
