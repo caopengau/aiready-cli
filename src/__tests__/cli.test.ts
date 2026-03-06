@@ -1,37 +1,63 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { analyzeUnified } from '../index';
-
-// Mock the individual tools
-vi.mock('@aiready/pattern-detect', () => ({
-  analyzePatterns: vi.fn().mockResolvedValue({
-    results: [],
-    duplicates: [],
-    files: [],
-  }),
-  generateSummary: vi.fn().mockReturnValue({
-    totalDuplicateLines: 0,
-    potentialSavings: 0,
-  }),
-}));
-
-vi.mock('@aiready/context-analyzer', () => ({
-  analyzeContext: vi.fn().mockResolvedValue([]),
-  generateSummary: vi.fn().mockReturnValue({
-    totalFiles: 0,
-    averageCohesion: 0,
-    averageFragmentation: 0,
-  }),
-}));
+import { ToolRegistry, ToolName, SpokeOutputSchema } from '@aiready/core';
 
 describe('CLI Unified Analysis', () => {
+  beforeEach(() => {
+    ToolRegistry.clear();
+
+    // Register mock providers
+    ToolRegistry.register({
+      id: ToolName.PatternDetect,
+      alias: ['patterns'],
+      analyze: async () =>
+        SpokeOutputSchema.parse({
+          results: [],
+          summary: {},
+          metadata: { toolName: ToolName.PatternDetect, version: '1.0.0' },
+        }),
+      score: () => ({
+        toolName: ToolName.PatternDetect,
+        score: 80,
+        factors: [],
+        recommendations: [],
+        rawMetrics: {},
+      }),
+      defaultWeight: 10,
+    });
+
+    ToolRegistry.register({
+      id: ToolName.ContextAnalyzer,
+      alias: ['context'],
+      analyze: async () =>
+        SpokeOutputSchema.parse({
+          results: [],
+          summary: {},
+          metadata: { toolName: ToolName.ContextAnalyzer, version: '1.0.0' },
+        }),
+      score: () => ({
+        toolName: ToolName.ContextAnalyzer,
+        score: 70,
+        factors: [],
+        recommendations: [],
+        rawMetrics: {},
+      }),
+      defaultWeight: 10,
+    });
+  });
+
+  afterEach(() => {
+    ToolRegistry.clear();
+  });
+
   it('should run unified analysis with both tools', async () => {
     const results = await analyzeUnified({
       rootDir: '/test',
       tools: ['patterns', 'context'],
     });
 
-    expect(results).toHaveProperty('patternDetect');
-    expect(results).toHaveProperty('contextAnalyzer');
+    expect(results).toHaveProperty(ToolName.PatternDetect);
+    expect(results).toHaveProperty(ToolName.ContextAnalyzer);
     expect(results).toHaveProperty('summary');
   });
 
@@ -41,8 +67,8 @@ describe('CLI Unified Analysis', () => {
       tools: ['patterns'],
     });
 
-    expect(results).toHaveProperty('patternDetect');
-    expect(results).not.toHaveProperty('contextAnalyzer');
+    expect(results).toHaveProperty(ToolName.PatternDetect);
+    expect(results).not.toHaveProperty(ToolName.ContextAnalyzer);
     expect(results).toHaveProperty('summary');
   });
 
@@ -52,8 +78,8 @@ describe('CLI Unified Analysis', () => {
       tools: ['context'],
     });
 
-    expect(results).not.toHaveProperty('patternDetect');
-    expect(results).toHaveProperty('contextAnalyzer');
+    expect(results).not.toHaveProperty(ToolName.PatternDetect);
+    expect(results).toHaveProperty(ToolName.ContextAnalyzer);
     expect(results).toHaveProperty('summary');
   });
 });
