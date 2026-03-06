@@ -1,4 +1,4 @@
-import { calculateAiSignalClarity } from '@aiready/core';
+import { calculateAiSignalClarity, ToolName } from '@aiready/core';
 import type { ToolScoringOutput } from '@aiready/core';
 import type { AiSignalClarityReport } from './types';
 
@@ -45,7 +45,7 @@ export function calculateAiSignalClarityScore(
     }));
 
   return {
-    toolName: 'ai-signal-clarity',
+    toolName: ToolName.AiSignalClarity,
     score,
     rawMetrics: {
       riskScore: riskResult.score,

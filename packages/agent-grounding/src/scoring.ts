@@ -1,4 +1,4 @@
-import type { ToolScoringOutput } from '@aiready/core';
+import { type ToolScoringOutput, ToolName } from '@aiready/core';
 import type { AgentGroundingReport } from './types';
 
 /**
@@ -51,7 +51,7 @@ export function calculateGroundingScore(
   );
 
   return {
-    toolName: 'agent-grounding',
+    toolName: ToolName.AgentGrounding,
     score: summary.score,
     rawMetrics: {
       ...rawData,

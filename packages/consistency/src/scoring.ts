@@ -1,4 +1,4 @@
-import { calculateProductivityImpact } from '@aiready/core';
+import { calculateProductivityImpact, ToolName } from '@aiready/core';
 import type { ToolScoringOutput, CostConfig } from '@aiready/core';
 import type { ConsistencyIssue } from './types';
 
@@ -127,7 +127,7 @@ export function calculateConsistencyScore(
   const productivityImpact = calculateProductivityImpact(issues);
 
   return {
-    toolName: 'consistency',
+    toolName: ToolName.NamingConsistency,
     score,
     rawMetrics: {
       totalIssues,

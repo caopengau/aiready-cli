@@ -5,9 +5,37 @@
  */
 
 import { z } from 'zod';
-import { AnalysisResult, SpokeOutput, UnifiedReport } from '../types';
+import {
+  AnalysisResult,
+  SpokeOutput,
+  UnifiedReport,
+  ScanOptions,
+} from '../types';
+import { ToolName } from './schema';
+import { ToolScoringOutput } from '../scoring';
 
 export type { SpokeOutput, UnifiedReport };
+
+/**
+ * Tool Provider Interface
+ * Every AIReady spoke must implement this interface to be integrated into the CLI registry.
+ */
+export interface ToolProvider {
+  /** Canonical tool ID */
+  id: ToolName;
+
+  /** CLI aliases/shorthand for this tool */
+  alias: string[];
+
+  /** Primary analysis logic */
+  analyze: (options: ScanOptions) => Promise<SpokeOutput>;
+
+  /** Scoring logic for this tool's output */
+  score: (output: SpokeOutput, options: ScanOptions) => ToolScoringOutput;
+
+  /** Optional weight override for this tool */
+  defaultWeight?: number;
+}
 
 /**
  * Validation utility to ensure a spoke's output matches the expected contract.

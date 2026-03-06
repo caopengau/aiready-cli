@@ -9,6 +9,15 @@
   "devDependencies": {
     "@aiready/cli": "workspace:*",
     "@aiready/core": "workspace:*",
+    "@aiready/agent-grounding": "workspace:*",
+    "@aiready/ai-signal-clarity": "workspace:*",
+    "@aiready/change-amplification": "workspace:*",
+    "@aiready/consistency": "workspace:*",
+    "@aiready/context-analyzer": "workspace:*",
+    "@aiready/deps": "workspace:*",
+    "@aiready/doc-drift": "workspace:*",
+    "@aiready/pattern-detect": "workspace:*",
+    "@aiready/testability": "workspace:*",
     "vitest": "^4.0.18",
     "execa": "^9.5.2"
   }

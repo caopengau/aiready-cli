@@ -78,7 +78,56 @@ make release-one SPOKE=your-tool TYPE=minor
 }
 ```
 
-### Step 4: Create `src/cli.ts`
+### Step 4: Implement ToolProvider and Registry
+
+Every spoke must implement the `ToolProvider` interface and register with the global `ToolRegistry` so that it is automatically discovered by the unified CLI.
+
+1.  **Create `src/provider.ts`**:
+    ```typescript
+    import { 
+      ToolProvider, 
+      ToolName, 
+      SpokeOutput, 
+      ScanOptions, 
+      ToolScoringOutput 
+    } from '@aiready/core';
+    import { analyzeYourTool } from './analyzer';
+    import { calculateYourToolScore } from './scoring';
+
+    export const YourToolProvider: ToolProvider = {
+      id: ToolName.YourToolID, // Add to ToolName enum in @aiready/core if new
+      alias: ['your-alias'],
+      
+      async analyze(options: ScanOptions): Promise<SpokeOutput> {
+        const result = await analyzeYourTool(options);
+        return {
+          results: result.results,
+          summary: result.summary,
+          metadata: { toolName: ToolName.YourToolID, version: '0.1.0' }
+        };
+      },
+
+      score(output: SpokeOutput, options: ScanOptions): ToolScoringOutput {
+        return calculateYourToolScore(output.summary, (options as any).costConfig);
+      },
+
+      defaultWeight: 10
+    };
+    ```
+
+2.  **Register in `src/index.ts`**:
+    ```typescript
+    import { ToolRegistry } from '@aiready/core';
+    import { YourToolProvider } from './provider';
+
+    // Register with global registry for automatic CLI discovery
+    ToolRegistry.register(YourToolProvider);
+
+    export { YourToolProvider };
+    // ... other exports
+    ```
+
+### Step 5: Create `src/cli.ts`
 
 ```typescript
 #!/usr/bin/env node

@@ -3,6 +3,7 @@ import {
   calculateProductivityImpact,
   DEFAULT_COST_CONFIG,
   type CostConfig,
+  ToolName,
 } from '@aiready/core';
 import type { ToolScoringOutput } from '@aiready/core';
 import type { ContextSummary } from './types';
@@ -150,7 +151,7 @@ export function calculateContextScore(
   const productivityImpact = calculateProductivityImpact(issues);
 
   return {
-    toolName: 'context-analyzer',
+    toolName: ToolName.ContextAnalyzer,
     score,
     rawMetrics: {
       avgContextBudget: Math.round(avgContextBudget),

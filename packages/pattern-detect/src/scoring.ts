@@ -3,6 +3,7 @@ import {
   calculateProductivityImpact,
   DEFAULT_COST_CONFIG,
   type CostConfig,
+  ToolName,
 } from '@aiready/core';
 import type { ToolScoringOutput } from '@aiready/core';
 import type { DuplicatePattern } from './detector';
@@ -34,7 +35,7 @@ export function calculatePatternScore(
   // Avoid division by zero
   if (totalFilesAnalyzed === 0) {
     return {
-      toolName: 'pattern-detect',
+      toolName: ToolName.PatternDetect,
       score: 100,
       rawMetrics: {
         totalDuplicates: 0,

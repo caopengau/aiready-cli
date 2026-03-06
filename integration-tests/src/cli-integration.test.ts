@@ -1,67 +1,79 @@
 import { describe, it, expect } from 'vitest';
-import { analyzeUnified, scoreUnified } from '@aiready/cli';
-import { validateSpokeOutput } from '@aiready/core';
+// @ts-ignore
+import { analyzeUnified, scoreUnified } from '../../packages/cli/dist/index.js';
+// @ts-ignore
+import {
+  validateSpokeOutput,
+  ToolRegistry,
+  ToolName,
+} from '../../packages/core/dist/index.js';
 import path from 'path';
-import fs from 'fs';
-import os from 'fs';
+import { fileURLToPath } from 'url';
 
-describe('CLI Integration Tier 2', () => {
-  it('should run a unified analysis and produce a valid contract-compliant report', async () => {
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+describe('CLI Registry Integration', () => {
+  it('should dynamically run all registered tools and produce a valid contract-compliant report', async () => {
     // We'll use the packages/core directory as a "real" repo to scan
-    // as it's guaranteed to exist and has a known structure.
-    const rootDir = path.resolve(__dirname, '../../core');
+    const rootDir = path.resolve(__dirname, '../../packages/core');
+
+    console.log(
+      `[TEST] ToolRegistry instanceId: ${(ToolRegistry as any).instanceId}`
+    );
+
+    // Get all possible tool IDs from the enum
+    const allPossibleTools = ToolRegistry.getAvailableIds();
+
+    // We'll filter for tools we know are implemented in this workspace
+    const implementedTools = [
+      ToolName.PatternDetect,
+      ToolName.ContextAnalyzer,
+      ToolName.NamingConsistency,
+      ToolName.AiSignalClarity,
+      ToolName.AgentGrounding,
+      ToolName.TestabilityIndex,
+      ToolName.DocDrift,
+      ToolName.DependencyHealth,
+      ToolName.ChangeAmplification,
+    ];
 
     const results = await analyzeUnified({
       rootDir,
-      tools: ['patterns', 'context', 'consistency'],
+      tools: implementedTools,
       exclude: ['**/node_modules/**', '**/dist/**'],
     });
 
     expect(results).toBeDefined();
-    expect(results.summary.toolsRun).toContain('patterns');
-    expect(results.summary.toolsRun).toContain('context');
-    expect(results.summary.toolsRun).toContain('consistency');
+    console.log('DEBUG: results.summary.toolsRun:', results.summary.toolsRun);
+    console.log('DEBUG: results keys:', Object.keys(results));
+
+    // Ensure all tools were at least attempted
+    for (const toolId of implementedTools) {
+      expect(results.summary.toolsRun).toContain(toolId);
+      expect((results as any)[toolId]).toBeDefined();
+
+      // Tier 2 Validation: Verify each spoke's output matches the contract
+      const validation = validateSpokeOutput(toolId, (results as any)[toolId]);
+      if (!validation.valid) {
+        console.error(
+          `❌ Tool '${toolId}' failed contract validation:`,
+          validation.errors
+        );
+      }
+      expect(validation.valid).toBe(true);
+    }
 
     // Run scoring to get the full report
     const scoring = await scoreUnified(results, { rootDir });
 
-    // Construct the final report structure that Platform would consume
-    const report = {
-      ...results,
-      scoring,
-      summary: {
-        totalFiles: results.summary.toolsRun.length, // approximation for test
-        totalIssues: results.summary.totalIssues,
-        criticalIssues: scoring.breakdown.reduce(
-          (sum, b) => sum + (b.criticalIssues || 0),
-          0
-        ),
-        majorIssues: scoring.breakdown.reduce(
-          (sum, b) => sum + (b.majorIssues || 0),
-          0
-        ),
-      },
-    };
-
-    // Tier 2 Validation: Verify the aggregated hub output
-    // (This part tests that analyzeUnified didn't mangle spoke data)
-    if (results.patterns) {
-      const patternValidation = validateSpokeOutput('patterns-in-hub', {
-        results: results.patterns,
-        summary: {}, // patterns summary is inside results in index.ts
-      });
-      expect(patternValidation.valid).toBe(true);
-    }
-
-    if (results.context) {
-      const contextValidation = validateSpokeOutput('context-in-hub', {
-        results: results.context,
-        summary: {},
-      });
-      expect(contextValidation.valid).toBe(true);
-    }
-
     expect(scoring.overall).toBeGreaterThanOrEqual(0);
     expect(scoring.overall).toBeLessThanOrEqual(100);
-  }, 30000); // 30s timeout for real analysis
+    expect(scoring.breakdown.length).toBe(results.summary.toolsRun.length);
+
+    // Ensure each breakdown matches a tool that was run
+    scoring.breakdown.forEach((toolScore) => {
+      expect(results.summary.toolsRun).toContain(toolScore.toolName);
+    });
+  }, 60000); // 60s timeout for all tools
 });

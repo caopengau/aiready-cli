@@ -1,10 +1,9 @@
 /**
- * Scan command - Run comprehensive AI-readiness analysis (patterns + context + consistency)
+ * Scan command - Run comprehensive AI-readiness analysis using the tool registry
  */
 
 import chalk from 'chalk';
 import { writeFileSync, readFileSync } from 'fs';
-// 'join' was unused
 import { resolve as resolvePath } from 'path';
 import {
   loadMergedConfig,
@@ -12,7 +11,6 @@ import {
   handleCLIError,
   getElapsedTime,
   resolveOutputPath,
-  calculateOverallScore,
   formatScore,
   formatToolScore,
   calculateTokenBudget,
@@ -20,12 +18,11 @@ import {
   getModelPreset,
   getRating,
   getRatingDisplay,
-  parseWeightString,
   getRepoMetadata,
   Severity,
   IssueType,
   ToolName,
-  type ToolScoringOutput,
+  ToolRegistry,
 } from '@aiready/core';
 import { analyzeUnified, scoreUnified, type ScoringResult } from '../index';
 import {
@@ -59,24 +56,21 @@ export async function scanAction(directory: string, options: ScanOptions) {
   console.log(chalk.blue('🚀 Starting AIReady unified analysis...\n'));
 
   const startTime = Date.now();
-  // Resolve directory to absolute path to ensure .aiready/ is created in the right location
   const resolvedDir = resolvePath(process.cwd(), directory || '.');
-
-  // Extract repo metadata for linkage
   const repoMetadata = getRepoMetadata(resolvedDir);
 
   try {
-    // Define defaults
+    // Define defaults using canonical IDs
     const defaults = {
       tools: [
-        'patterns',
-        'context',
-        'consistency',
+        'pattern-detect',
+        'context-analyzer',
+        'naming-consistency',
         'ai-signal-clarity',
         'agent-grounding',
-        'testability',
+        'testability-index',
         'doc-drift',
-        'deps-health',
+        'dependency-health',
         'change-amplification',
       ],
       include: undefined,
@@ -87,49 +81,49 @@ export async function scanAction(directory: string, options: ScanOptions) {
       },
     };
 
-    let profileTools = options.tools
-      ? options.tools.split(',').map((t: string) => {
-          const tool = t.trim();
-          if (tool === 'hallucination' || tool === 'hallucination-risk')
-            return 'aiSignalClarity';
-          return tool;
-        })
+    // Map profile to tool IDs
+    let profileTools: string[] | undefined = options.tools
+      ? options.tools.split(',').map((t) => t.trim())
       : undefined;
     if (options.profile) {
       switch (options.profile.toLowerCase()) {
         case 'agentic':
           profileTools = [
-            'ai-signal-clarity',
-            'agent-grounding',
-            'testability',
+            ToolName.AiSignalClarity,
+            ToolName.AgentGrounding,
+            ToolName.TestabilityIndex,
           ];
           break;
         case 'cost':
-          profileTools = ['patterns', 'context'];
+          profileTools = [ToolName.PatternDetect, ToolName.ContextAnalyzer];
           break;
         case 'security':
-          profileTools = ['consistency', 'testability'];
+          profileTools = [
+            ToolName.NamingConsistency,
+            ToolName.TestabilityIndex,
+          ];
           break;
         case 'onboarding':
-          profileTools = ['context', 'consistency', 'agent-grounding'];
+          profileTools = [
+            ToolName.ContextAnalyzer,
+            ToolName.NamingConsistency,
+            ToolName.AgentGrounding,
+          ];
           break;
         default:
           console.log(
             chalk.yellow(
-              `\n⚠️  Unknown profile '${options.profile}'. Using specified tools or defaults.`
+              `\n⚠️  Unknown profile '${options.profile}'. Using defaults.`
             )
           );
       }
     }
 
-    // Load and merge config with CLI options
     const cliOverrides: any = {
       include: options.include?.split(','),
       exclude: options.exclude?.split(','),
     };
-    if (profileTools) {
-      cliOverrides.tools = profileTools;
-    }
+    if (profileTools) cliOverrides.tools = profileTools;
 
     const baseOptions = (await loadMergedConfig(
       resolvedDir,
@@ -137,15 +131,17 @@ export async function scanAction(directory: string, options: ScanOptions) {
       cliOverrides
     )) as any;
 
-    // Apply smart defaults for pattern detection if patterns tool is enabled
+    // Apply smart defaults for pattern detection if requested
     let finalOptions = { ...baseOptions };
-    if (baseOptions.tools.includes('patterns')) {
+    if (
+      baseOptions.tools.includes(ToolName.PatternDetect) ||
+      baseOptions.tools.includes('patterns')
+    ) {
       const { getSmartDefaults } = await import('@aiready/pattern-detect');
       const patternSmartDefaults = await getSmartDefaults(
         resolvedDir,
         baseOptions
       );
-      // Merge deeply to preserve nested config
       finalOptions = {
         ...patternSmartDefaults,
         ...finalOptions,
@@ -153,291 +149,25 @@ export async function scanAction(directory: string, options: ScanOptions) {
       };
     }
 
-    // Print pre-run summary with expanded settings (truncate long arrays)
     console.log(chalk.cyan('\n=== AIReady Run Preview ==='));
     console.log(
       chalk.white('Tools to run:'),
-      (finalOptions.tools || ['patterns', 'context', 'consistency']).join(', ')
+      (finalOptions.tools || []).join(', ')
     );
-    console.log(chalk.white('Will use settings from config and defaults.'));
 
-    // Common top-level settings
-    console.log(chalk.white('\nGeneral settings:'));
-    if (finalOptions.rootDir)
-      console.log(`  rootDir: ${chalk.bold(String(finalOptions.rootDir))}`);
-    if (finalOptions.include)
-      console.log(
-        `  include: ${chalk.bold(truncateArray(finalOptions.include, 6))}`
-      );
-    if (finalOptions.exclude)
-      console.log(
-        `  exclude: ${chalk.bold(truncateArray(finalOptions.exclude, 6))}`
-      );
-
-    if (finalOptions['pattern-detect'] || finalOptions.minSimilarity) {
-      const patternDetectConfig = finalOptions['pattern-detect'] || {
-        minSimilarity: finalOptions.minSimilarity,
-        minLines: finalOptions.minLines,
-        approx: finalOptions.approx,
-        minSharedTokens: finalOptions.minSharedTokens,
-        maxCandidatesPerBlock: finalOptions.maxCandidatesPerBlock,
-        batchSize: finalOptions.batchSize,
-        streamResults: finalOptions.streamResults,
-        severity: (finalOptions as any).severity,
-        includeTests: (finalOptions as any).includeTests,
-      };
-      console.log(chalk.white('\nPattern-detect settings:'));
-      console.log(
-        `  minSimilarity: ${chalk.bold(patternDetectConfig.minSimilarity ?? 'default')}`
-      );
-      console.log(
-        `  minLines: ${chalk.bold(patternDetectConfig.minLines ?? 'default')}`
-      );
-      if (patternDetectConfig.approx !== undefined)
-        console.log(
-          `  approx: ${chalk.bold(String(patternDetectConfig.approx))}`
-        );
-      if (patternDetectConfig.minSharedTokens !== undefined)
-        console.log(
-          `  minSharedTokens: ${chalk.bold(String(patternDetectConfig.minSharedTokens))}`
-        );
-      if (patternDetectConfig.maxCandidatesPerBlock !== undefined)
-        console.log(
-          `  maxCandidatesPerBlock: ${chalk.bold(String(patternDetectConfig.maxCandidatesPerBlock))}`
-        );
-      if (patternDetectConfig.batchSize !== undefined)
-        console.log(
-          `  batchSize: ${chalk.bold(String(patternDetectConfig.batchSize))}`
-        );
-      if (patternDetectConfig.streamResults !== undefined)
-        console.log(
-          `  streamResults: ${chalk.bold(String(patternDetectConfig.streamResults))}`
-        );
-      if (patternDetectConfig.severity !== undefined)
-        console.log(
-          `  severity: ${chalk.bold(String(patternDetectConfig.severity))}`
-        );
-      if (patternDetectConfig.includeTests !== undefined)
-        console.log(
-          `  includeTests: ${chalk.bold(String(patternDetectConfig.includeTests))}`
-        );
-    }
-
-    if (finalOptions['context-analyzer'] || finalOptions.maxDepth) {
-      const ca = finalOptions['context-analyzer'] || {
-        maxDepth: finalOptions.maxDepth,
-        maxContextBudget: finalOptions.maxContextBudget,
-        minCohesion: (finalOptions as any).minCohesion,
-        maxFragmentation: (finalOptions as any).maxFragmentation,
-        includeNodeModules: (finalOptions as any).includeNodeModules,
-      };
-      console.log(chalk.white('\nContext-analyzer settings:'));
-      console.log(`  maxDepth: ${chalk.bold(ca.maxDepth ?? 'default')}`);
-      console.log(
-        `  maxContextBudget: ${chalk.bold(ca.maxContextBudget ?? 'default')}`
-      );
-      if (ca.minCohesion !== undefined)
-        console.log(`  minCohesion: ${chalk.bold(String(ca.minCohesion))}`);
-      if (ca.maxFragmentation !== undefined)
-        console.log(
-          `  maxFragmentation: ${chalk.bold(String(ca.maxFragmentation))}`
-        );
-      if (ca.includeNodeModules !== undefined)
-        console.log(
-          `  includeNodeModules: ${chalk.bold(String(ca.includeNodeModules))}`
-        );
-    }
-
-    if (finalOptions.consistency) {
-      const c = finalOptions.consistency;
-      console.log(chalk.white('\nConsistency settings:'));
-      console.log(
-        `  checkNaming: ${chalk.bold(String(c.checkNaming ?? true))}`
-      );
-      console.log(
-        `  checkPatterns: ${chalk.bold(String(c.checkPatterns ?? true))}`
-      );
-      console.log(
-        `  checkArchitecture: ${chalk.bold(String(c.checkArchitecture ?? false))}`
-      );
-      if (c.minSeverity)
-        console.log(`  minSeverity: ${chalk.bold(c.minSeverity)}`);
-      if (c.acceptedAbbreviations)
-        console.log(
-          `  acceptedAbbreviations: ${chalk.bold(truncateArray(c.acceptedAbbreviations, 8))}`
-        );
-      if (c.shortWords)
-        console.log(
-          `  shortWords: ${chalk.bold(truncateArray(c.shortWords, 8))}`
-        );
-    }
-
-    console.log(chalk.white('\nStarting analysis...'));
-
-    // Progress callback to surface per-tool output as each tool finishes
+    // Dynamic progress callback
     const progressCallback = (event: { tool: string; data: any }) => {
       console.log(chalk.cyan(`\n--- ${event.tool.toUpperCase()} RESULTS ---`));
-      try {
-        if (event.tool === 'patterns') {
-          const pr = event.data as any;
+      const res = event.data;
+      if (res.summary) {
+        if (res.summary.totalIssues !== undefined)
+          console.log(`  Issues found: ${chalk.bold(res.summary.totalIssues)}`);
+        if (res.summary.score !== undefined)
+          console.log(`  Tool Score: ${chalk.bold(res.summary.score)}/100`);
+        if (res.summary.totalFiles !== undefined)
           console.log(
-            `  Duplicate patterns: ${chalk.bold(String(pr.duplicates?.length || 0))}`
+            `  Files analyzed: ${chalk.bold(res.summary.totalFiles)}`
           );
-          console.log(
-            `  Files with pattern issues: ${chalk.bold(String(pr.results?.length || 0))}`
-          );
-          // show top duplicate summaries
-          if (pr.duplicates && pr.duplicates.length > 0) {
-            pr.duplicates.slice(0, 5).forEach((d: any, i: number) => {
-              console.log(
-                `   ${i + 1}. ${d.file1.split('/').pop()} ↔ ${d.file2.split('/').pop()} (sim=${(d.similarity * 100).toFixed(1)}%)`
-              );
-            });
-          }
-
-          // show top files with pattern issues (sorted by issue count desc)
-          if (pr.results && pr.results.length > 0) {
-            console.log(`  Top files with pattern issues:`);
-            const sortedByIssues = [...pr.results].sort(
-              (a: any, b: any) =>
-                (b.issues?.length || 0) - (a.issues?.length || 0)
-            );
-            sortedByIssues.slice(0, 5).forEach((r: any, i: number) => {
-              console.log(
-                `   ${i + 1}. ${r.fileName.split('/').pop()} - ${r.issues.length} issue(s)`
-              );
-            });
-          }
-
-          // Grouping and clusters summary (if available) — show after detailed findings
-          if (pr.groups && pr.groups.length >= 0) {
-            console.log(
-              `  ✅ Grouped ${chalk.bold(String(pr.duplicates?.length || 0))} duplicates into ${chalk.bold(String(pr.groups.length))} file pairs`
-            );
-          }
-          if (pr.clusters && pr.clusters.length >= 0) {
-            console.log(
-              `  ✅ Created ${chalk.bold(String(pr.clusters.length))} refactor clusters`
-            );
-            // show brief cluster summaries
-            pr.clusters.slice(0, 3).forEach((cl: any, idx: number) => {
-              const files = (cl.files || [])
-                .map((f: any) => f.path.split('/').pop())
-                .join(', ');
-              console.log(
-                `   ${idx + 1}. ${files} (${cl.tokenCost || 'n/a'} tokens)`
-              );
-            });
-          }
-        } else if (event.tool === 'context') {
-          const cr = event.data as any[];
-          console.log(
-            `  Context issues found: ${chalk.bold(String(cr.length || 0))}`
-          );
-          cr.slice(0, 5).forEach((c: any, i: number) => {
-            const msg = c.message ? ` - ${c.message}` : '';
-            console.log(
-              `   ${i + 1}. ${c.file} (${c.severity || 'n/a'})${msg}`
-            );
-          });
-        } else if (event.tool === 'consistency') {
-          const rep = event.data as any;
-          console.log(
-            `  Consistency totalIssues: ${chalk.bold(String(rep.summary?.totalIssues || 0))}`
-          );
-
-          if (rep.results && rep.results.length > 0) {
-            // Group issues by file
-            const fileMap = new Map<string, any[]>();
-            rep.results.forEach((r: any) => {
-              (r.issues || []).forEach((issue: any) => {
-                const file = issue.location?.file || r.file || 'unknown';
-                if (!fileMap.has(file)) fileMap.set(file, []);
-                fileMap.get(file)!.push(issue);
-              });
-            });
-
-            // Sort files by number of issues desc
-            const files = Array.from(fileMap.entries()).sort(
-              (a, b) => b[1].length - a[1].length
-            );
-            const topFiles = files.slice(0, 10);
-
-            topFiles.forEach(([file, issues], idx) => {
-              // Count severities
-              const counts = issues.reduce(
-                (acc: any, it: any) => {
-                  const s = (it.severity || Severity.Info).toLowerCase();
-                  acc[s] = (acc[s] || 0) + 1;
-                  return acc;
-                },
-                {} as Record<string, number>
-              );
-
-              const sample =
-                issues.find(
-                  (it: any) =>
-                    it.severity === Severity.Critical ||
-                    it.severity === Severity.Major
-                ) || issues[0];
-              const sampleMsg = sample ? ` — ${sample.message}` : '';
-
-              console.log(
-                `   ${idx + 1}. ${file} — ${issues.length} issue(s) (critical:${counts[Severity.Critical] || 0} major:${counts[Severity.Major] || 0} minor:${counts[Severity.Minor] || 0} info:${counts[Severity.Info] || 0})${sampleMsg}`
-              );
-            });
-
-            const remaining = files.length - topFiles.length;
-            if (remaining > 0) {
-              console.log(
-                chalk.dim(
-                  `   ... and ${remaining} more files with issues (use --output json for full details)`
-                )
-              );
-            }
-          }
-        } else if (event.tool === 'doc-drift') {
-          const dr = event.data as any;
-          console.log(
-            `  Issues found: ${chalk.bold(String(dr.issues?.length || 0))}`
-          );
-          if (dr.rawData) {
-            console.log(
-              `  Signature Mismatches: ${chalk.bold(dr.rawData.outdatedComments || 0)}`
-            );
-            console.log(
-              `  Undocumented Complexity: ${chalk.bold(dr.rawData.undocumentedComplexity || 0)}`
-            );
-          }
-        } else if (event.tool === 'deps-health') {
-          const dr = event.data as any;
-          console.log(
-            `  Packages Analyzed: ${chalk.bold(String(dr.summary?.packagesAnalyzed || 0))}`
-          );
-          if (dr.rawData) {
-            console.log(
-              `  Deprecated Packages: ${chalk.bold(dr.rawData.deprecatedPackages || 0)}`
-            );
-            console.log(
-              `  AI Cutoff Skew Score: ${chalk.bold(dr.rawData.trainingCutoffSkew?.toFixed(1) || 0)}`
-            );
-          }
-        } else if (
-          event.tool === 'change-amplification' ||
-          event.tool === 'changeAmplification'
-        ) {
-          const dr = event.data as any;
-          console.log(
-            `  Coupling issues: ${chalk.bold(String(dr.issues?.length || 0))}`
-          );
-          if (dr.summary) {
-            console.log(
-              `  Complexity Score: ${chalk.bold(dr.summary.score || 0)}/100`
-            );
-          }
-        }
-      } catch (err) {
-        void err;
       }
     };
 
@@ -445,57 +175,19 @@ export async function scanAction(directory: string, options: ScanOptions) {
       ...finalOptions,
       progressCallback,
       onProgress: (processed: number, total: number, message: string) => {
-        // Clear line and print progress
         process.stdout.write(
           `\r\x1b[K   [${processed}/${total}] ${message}...`
         );
-        if (processed === total) {
-          process.stdout.write('\n'); // Move to next line when done
-        }
+        if (processed === total) process.stdout.write('\n');
       },
       suppressToolConfig: true,
     });
 
-    // Determine if we need to print a trailing newline because the last tool didn't finish normally or had 0 files
-    // But progressCallback already outputs `\n--- TOOL RESULTS ---` so it's fine.
-
-    // Summarize tools and results to console
     console.log(chalk.cyan('\n=== AIReady Run Summary ==='));
-    console.log(
-      chalk.white('Tools run:'),
-      (finalOptions.tools || ['patterns', 'context', 'consistency']).join(', ')
-    );
-
-    console.log(chalk.cyan('\nResults summary:'));
     console.log(
       `  Total issues (all tools): ${chalk.bold(String(results.summary.totalIssues || 0))}`
     );
-    if (results[ToolName.PatternDetect]) {
-      console.log(
-        `  Duplicate patterns found: ${chalk.bold(String(results[ToolName.PatternDetect].duplicates?.length || 0))}`
-      );
-      console.log(
-        `  Pattern files with issues: ${chalk.bold(String(results[ToolName.PatternDetect].results.length || 0))}`
-      );
-    }
-    if (results[ToolName.ContextAnalyzer])
-      console.log(
-        `  Context issues: ${chalk.bold(String(results[ToolName.ContextAnalyzer].results.length || 0))}`
-      );
-    if (results[ToolName.NamingConsistency])
-      console.log(
-        `  Consistency issues: ${chalk.bold(String(results[ToolName.NamingConsistency].summary?.totalIssues || 0))}`
-      );
-    if (results[ToolName.ChangeAmplification])
-      console.log(
-        `  Change amplification: ${chalk.bold(String(results[ToolName.ChangeAmplification].summary?.score || 0))}/100`
-      );
-    console.log(chalk.cyan('===========================\n'));
 
-    const elapsedTime = getElapsedTime(startTime);
-    void elapsedTime;
-
-    // Calculate score if requested: assemble per-tool scoring outputs
     let scoringResult: ScoringResult | undefined;
     if (options.score || finalOptions.scoring?.showBreakdown) {
       scoringResult = await scoreUnified(results, finalOptions);
@@ -503,69 +195,42 @@ export async function scanAction(directory: string, options: ScanOptions) {
       console.log(chalk.bold('\n📊 AI Readiness Overall Score'));
       console.log(`  ${formatScore(scoringResult)}`);
 
-      // Parse CLI weight overrides (if any)
-      // Note: weights are already handled inside scoreUnified via finalOptions and calculateOverallScore
-
-      // Check if we need to compare to a previous report
+      // Trend comparison logic
       if (options.compareTo) {
         try {
-          const prevReportStr = readFileSync(
-            resolvePath(process.cwd(), options.compareTo),
-            'utf8'
+          const prevReport = JSON.parse(
+            readFileSync(resolvePath(process.cwd(), options.compareTo), 'utf8')
           );
-          const prevReport = JSON.parse(prevReportStr);
           const prevScore =
-            prevReport.scoring?.score || prevReport.scoring?.overallScore;
-
+            prevReport.scoring?.overall || prevReport.scoring?.score;
           if (typeof prevScore === 'number') {
             const diff = scoringResult.overall - prevScore;
             const diffStr = diff > 0 ? `+${diff}` : String(diff);
-            console.log();
-            if (diff > 0) {
+            if (diff > 0)
               console.log(
                 chalk.green(
                   `  📈 Trend: ${diffStr} compared to ${options.compareTo} (${prevScore} → ${scoringResult.overall})`
                 )
               );
-            } else if (diff < 0) {
+            else if (diff < 0)
               console.log(
                 chalk.red(
                   `  📉 Trend: ${diffStr} compared to ${options.compareTo} (${prevScore} → ${scoringResult.overall})`
                 )
               );
-              // Trend gating: if we regressed and CI is on or threshold is present, we could lower the threshold effectively,
-              // but for now, we just highlight the regression.
-            } else {
+            else
               console.log(
                 chalk.blue(
-                  `  ➖ Trend: No change compared to ${options.compareTo} (${prevScore} → ${scoringResult.overall})`
+                  `  ➖ Trend: No change (${prevScore} → ${scoringResult.overall})`
                 )
               );
-            }
-
-            // Add trend info to scoringResult for programmatic use
-            (scoringResult as any).trend = {
-              previousScore: prevScore,
-              difference: diff,
-            };
-          } else {
-            console.log(
-              chalk.yellow(
-                `\n  ⚠️  Previous report at ${options.compareTo} does not contain an overall score.`
-              )
-            );
           }
         } catch (e) {
           void e;
-          console.log(
-            chalk.yellow(
-              `\n  ⚠️  Could not read or parse previous report at ${options.compareTo}.`
-            )
-          );
         }
       }
 
-      // Unified Token Budget Analysis
+      // Token Budget & Cost Logic
       const totalWastedDuplication = (scoringResult.breakdown || []).reduce(
         (sum, s) =>
           sum + (s.tokenBudget?.wastedTokens.bySource.duplication || 0),
@@ -579,7 +244,8 @@ export async function scanAction(directory: string, options: ScanOptions) {
       const totalContext = Math.max(
         ...(scoringResult.breakdown || []).map(
           (s) => s.tokenBudget?.totalContextTokens || 0
-        )
+        ),
+        0
       );
 
       if (totalContext > 0) {
@@ -591,42 +257,20 @@ export async function scanAction(directory: string, options: ScanOptions) {
             chattiness: 0,
           },
         });
-
-        const targetModel = options.model || 'claude-4.6';
-        const modelPreset = getModelPreset(targetModel);
+        const modelPreset = getModelPreset(options.model || 'claude-4.6');
         const costEstimate = estimateCostFromBudget(unifiedBudget, modelPreset);
 
-        const barWidth = 20;
-        const filled = Math.round(unifiedBudget.efficiencyRatio * barWidth);
-        const bar =
-          chalk.green('█'.repeat(filled)) +
-          chalk.dim('░'.repeat(barWidth - filled));
-
-        console.log(chalk.bold('\n📊 AI Token Budget Analysis (v0.13)'));
+        console.log(chalk.bold('\n📊 AI Token Budget Analysis'));
         console.log(
-          `  Efficiency: [${bar}] ${(unifiedBudget.efficiencyRatio * 100).toFixed(0)}%`
+          `  Efficiency: ${(unifiedBudget.efficiencyRatio * 100).toFixed(0)}%`
         );
         console.log(
-          `  Total Context: ${chalk.bold(unifiedBudget.totalContextTokens.toLocaleString())} tokens`
+          `  Wasted Tokens: ${chalk.red(unifiedBudget.wastedTokens.total.toLocaleString())}`
         );
         console.log(
-          `  Wasted Tokens: ${chalk.red(unifiedBudget.wastedTokens.total.toLocaleString())} (${((unifiedBudget.wastedTokens.total / unifiedBudget.totalContextTokens) * 100).toFixed(1)}%)`
-        );
-        console.log(`  Waste Breakdown:`);
-        console.log(
-          `    • Duplication:   ${unifiedBudget.wastedTokens.bySource.duplication.toLocaleString()} tokens`
-        );
-        console.log(
-          `    • Fragmentation: ${unifiedBudget.wastedTokens.bySource.fragmentation.toLocaleString()} tokens`
-        );
-        console.log(
-          `  Potential Savings: ${chalk.green(unifiedBudget.potentialRetrievableTokens.toLocaleString())} tokens retrievable`
-        );
-        console.log(
-          `\n  Est. Monthly Cost (${modelPreset.name}): ${chalk.bold('$' + costEstimate.total)} [range: $${costEstimate.range[0]}-$${costEstimate.range[1]}]`
+          `  Est. Monthly Cost (${modelPreset.name}): ${chalk.bold('$' + costEstimate.total)}`
         );
 
-        // Attach unified budget to report for JSON persistence
         (scoringResult as any).tokenBudget = unifiedBudget;
         (scoringResult as any).costEstimate = {
           model: modelPreset.name,
@@ -634,29 +278,16 @@ export async function scanAction(directory: string, options: ScanOptions) {
         };
       }
 
-      // Show concise breakdown; detailed breakdown only if config requests it
-      if (scoringResult.breakdown && scoringResult.breakdown.length > 0) {
+      if (scoringResult.breakdown) {
         console.log(chalk.bold('\nTool breakdown:'));
         scoringResult.breakdown.forEach((tool) => {
           const rating = getRating(tool.score);
-          const rd = getRatingDisplay(rating);
-          console.log(
-            `  - ${tool.toolName}: ${tool.score}/100 (${rating}) ${rd.emoji}`
-          );
+          console.log(`  - ${tool.toolName}: ${tool.score}/100 (${rating})`);
         });
-        console.log();
-
-        if (finalOptions.scoring?.showBreakdown) {
-          console.log(chalk.bold('Detailed tool breakdown:'));
-          scoringResult.breakdown.forEach((tool) => {
-            console.log(formatToolScore(tool));
-          });
-          console.log();
-        }
       }
     }
 
-    // Helper to map CLI results to UnifiedReport schema
+    // Normalized report mapping
     const mapToUnifiedReport = (
       res: any,
       scoring: ScoringResult | undefined
@@ -666,90 +297,19 @@ export async function scanAction(directory: string, options: ScanOptions) {
       let criticalCount = 0;
       let majorCount = 0;
 
-      // Collect from all spokes and normalize to AnalysisResult
-      const collect = (
-        spokeRes: any,
-        defaultType: IssueType = IssueType.AiSignalClarity
-      ) => {
+      res.summary.toolsRun.forEach((toolId: string) => {
+        const spokeRes = res[toolId];
         if (!spokeRes || !spokeRes.results) return;
+
         spokeRes.results.forEach((r: any) => {
-          const fileName = r.fileName || r.file || 'unknown';
-          totalFilesSet.add(fileName);
-
-          // Enforce strict AnalysisResult schema
-          const normalizedResult = {
-            fileName,
-            issues: [] as any[],
-            metrics: r.metrics || { tokenCost: r.tokenCost || 0 },
-          };
-
-          if (r.issues && Array.isArray(r.issues)) {
-            r.issues.forEach((i: any) => {
-              const normalizedIssue =
-                typeof i === 'string'
-                  ? {
-                      type: defaultType,
-                      severity: (r.severity || Severity.Info) as Severity,
-                      message: i,
-                      location: { file: fileName, line: 1 },
-                    }
-                  : {
-                      type: i.type || defaultType,
-                      severity: (i.severity ||
-                        r.severity ||
-                        Severity.Info) as Severity,
-                      message: i.message || String(i),
-                      location: i.location || { file: fileName, line: 1 },
-                      suggestion: i.suggestion,
-                    };
-
-              if (
-                normalizedIssue.severity === Severity.Critical ||
-                normalizedIssue.severity === 'critical'
-              )
-                criticalCount++;
-              if (
-                normalizedIssue.severity === Severity.Major ||
-                normalizedIssue.severity === 'major'
-              )
-                majorCount++;
-
-              normalizedResult.issues.push(normalizedIssue);
-            });
-          } else if (r.severity) {
-            // handle context-analyzer style if issues missing but severity present
-            const normalizedIssue = {
-              type: defaultType,
-              severity: r.severity as Severity,
-              message: r.message || 'General issue',
-              location: { file: fileName, line: 1 },
-            };
-            if (
-              normalizedIssue.severity === Severity.Critical ||
-              normalizedIssue.severity === 'critical'
-            )
-              criticalCount++;
-            if (
-              normalizedIssue.severity === Severity.Major ||
-              normalizedIssue.severity === 'major'
-            )
-              majorCount++;
-            normalizedResult.issues.push(normalizedIssue);
-          }
-
-          allResults.push(normalizedResult);
+          totalFilesSet.add(r.fileName);
+          allResults.push(r);
+          r.issues?.forEach((i: any) => {
+            if (i.severity === Severity.Critical) criticalCount++;
+            if (i.severity === Severity.Major) majorCount++;
+          });
         });
-      };
-
-      collect(res[ToolName.PatternDetect], IssueType.DuplicatePattern);
-      collect(res[ToolName.ContextAnalyzer], IssueType.ContextFragmentation);
-      collect(res[ToolName.NamingConsistency], IssueType.NamingInconsistency);
-      collect(res[ToolName.DocDrift], IssueType.DocDrift);
-      collect(res[ToolName.DependencyHealth], IssueType.DependencyHealth);
-      collect(res[ToolName.AiSignalClarity], IssueType.AiSignalClarity);
-      collect(res[ToolName.AgentGrounding], IssueType.AgentNavigationFailure);
-      collect(res[ToolName.TestabilityIndex], IssueType.LowTestability);
-      collect(res[ToolName.ChangeAmplification], IssueType.ChangeAmplification);
+      });
 
       return {
         ...res,
@@ -760,205 +320,82 @@ export async function scanAction(directory: string, options: ScanOptions) {
           criticalIssues: criticalCount,
           majorIssues: majorCount,
         },
-        scoring: scoring,
+        scoring,
       };
     };
 
-    // Persist JSON summary when output format is json
+    const outputData = {
+      ...mapToUnifiedReport(results, scoringResult),
+      repository: repoMetadata,
+    };
+
+    // Output persistence
     const outputFormat =
       options.output || finalOptions.output?.format || 'console';
-    const userOutputFile = options.outputFile || finalOptions.output?.file;
+    const outputPath = resolveOutputPath(
+      options.outputFile || finalOptions.output?.file,
+      `aiready-report-${getReportTimestamp()}.json`,
+      resolvedDir
+    );
+
     if (outputFormat === 'json') {
-      const timestamp = getReportTimestamp();
-      const defaultFilename = `aiready-report-${timestamp}.json`;
-      const outputPath = resolveOutputPath(
-        userOutputFile,
-        defaultFilename,
-        resolvedDir
-      );
-      const outputData = {
-        ...mapToUnifiedReport(results, scoringResult),
-        repository: repoMetadata,
-      };
       handleJSONOutput(
         outputData,
         outputPath,
         `✅ Report saved to ${outputPath}`
       );
-
-      // Automatic Upload
-      if (options.upload) {
-        console.log(chalk.blue('\n📤 Automatic upload triggered...'));
-        await uploadAction(outputPath, {
-          apiKey: options.apiKey,
-          server: options.server,
-        });
-      }
-
-      // Warn if graph caps may be exceeded
-      await warnIfGraphCapExceeded(outputData, resolvedDir);
     } else {
-      // Auto-persist report even in console mode for downstream tools
-      const timestamp = getReportTimestamp();
-      const defaultFilename = `aiready-report-${timestamp}.json`;
-      const outputPath = resolveOutputPath(
-        userOutputFile,
-        defaultFilename,
-        resolvedDir
-      );
-      const outputData = {
-        ...mapToUnifiedReport(results, scoringResult),
-        repository: repoMetadata,
-      };
-
       try {
         writeFileSync(outputPath, JSON.stringify(outputData, null, 2));
         console.log(chalk.dim(`✅ Report auto-persisted to ${outputPath}`));
-
-        // Automatic Upload (from auto-persistent report)
-        if (options.upload) {
-          console.log(chalk.blue('\n📤 Automatic upload triggered...'));
-          await uploadAction(outputPath, {
-            apiKey: options.apiKey,
-            server: options.server,
-          });
-        }
-        // Warn if graph caps may be exceeded
-        await warnIfGraphCapExceeded(outputData, resolvedDir);
       } catch (err) {
         void err;
       }
     }
 
-    // CI/CD Gatekeeper Mode
-    const isCI =
-      options.ci ||
-      process.env.CI === 'true' ||
-      process.env.GITHUB_ACTIONS === 'true';
+    if (options.upload) {
+      await uploadAction(outputPath, {
+        apiKey: options.apiKey,
+        server: options.server,
+      });
+    }
+    await warnIfGraphCapExceeded(outputData, resolvedDir);
+
+    // CI/CD Gatekeeper logic
+    const isCI = options.ci || process.env.CI === 'true';
     if (isCI && scoringResult) {
       const threshold = options.threshold
         ? parseInt(options.threshold)
         : undefined;
       const failOnLevel = options.failOn || 'critical';
 
-      // Output GitHub Actions annotations
-      if (process.env.GITHUB_ACTIONS === 'true') {
-        console.log(`\n::group::AI Readiness Score`);
-        console.log(`score=${scoringResult.overall}`);
-        if (scoringResult.breakdown) {
-          scoringResult.breakdown.forEach((tool) => {
-            console.log(`${tool.toolName}=${tool.score}`);
-          });
-        }
-        console.log('::endgroup::');
-
-        // Output annotation for score
-        if (threshold && scoringResult.overall < threshold) {
-          console.log(
-            `::error::AI Readiness Score ${scoringResult.overall} is below threshold ${threshold}`
-          );
-        } else if (threshold) {
-          console.log(
-            `::notice::AI Readiness Score: ${scoringResult.overall}/100 (threshold: ${threshold})`
-          );
-        }
-
-        // Output annotations for critical issues
-        if (results[ToolName.PatternDetect]) {
-          const criticalPatterns = results[
-            ToolName.PatternDetect
-          ].results.flatMap((p: any) =>
-            p.issues.filter((i: any) => i.severity === Severity.Critical)
-          );
-
-          criticalPatterns.slice(0, 10).forEach((issue: any) => {
-            console.log(
-              `::warning file=${issue.location?.file || 'unknown'},line=${issue.location?.line || 1}::${issue.message}`
-            );
-          });
-        }
-      }
-
-      // Determine if we should fail
       let shouldFail = false;
       let failReason = '';
 
-      // Check threshold
       if (threshold && scoringResult.overall < threshold) {
         shouldFail = true;
-        failReason = `AI Readiness Score ${scoringResult.overall} is below threshold ${threshold}`;
+        failReason = `Score ${scoringResult.overall} < threshold ${threshold}`;
       }
 
-      // Check fail-on severity
+      const report = mapToUnifiedReport(results, scoringResult);
       if (failOnLevel !== 'none') {
-        const severityLevels = { critical: 4, major: 3, minor: 2, any: 1 };
-        const minSeverity =
-          severityLevels[failOnLevel as keyof typeof severityLevels] || 4;
-
-        let criticalCount = 0;
-        let majorCount = 0;
-
-        if (results[ToolName.PatternDetect]) {
-          results[ToolName.PatternDetect].results.forEach((p: any) => {
-            p.issues.forEach((i: any) => {
-              if (i.severity === Severity.Critical) criticalCount++;
-              if (i.severity === Severity.Major) majorCount++;
-            });
-          });
-        }
-        if (results[ToolName.ContextAnalyzer]) {
-          results[ToolName.ContextAnalyzer].results.forEach((c: any) => {
-            if (c.severity === Severity.Critical) criticalCount++;
-            if (c.severity === Severity.Major) majorCount++;
-          });
-        }
-        if (results[ToolName.NamingConsistency]) {
-          results[ToolName.NamingConsistency].results.forEach((r: any) => {
-            r.issues?.forEach((i: any) => {
-              if (i.severity === Severity.Critical) criticalCount++;
-              if (i.severity === Severity.Major) majorCount++;
-            });
-          });
-        }
-
-        if (minSeverity >= 4 && criticalCount > 0) {
+        if (failOnLevel === 'critical' && report.summary.criticalIssues > 0) {
           shouldFail = true;
-          failReason = `Found ${criticalCount} critical issues`;
-        } else if (minSeverity >= 3 && criticalCount + majorCount > 0) {
+          failReason = `Found ${report.summary.criticalIssues} critical issues`;
+        } else if (
+          failOnLevel === 'major' &&
+          report.summary.criticalIssues + report.summary.majorIssues > 0
+        ) {
           shouldFail = true;
-          failReason = `Found ${criticalCount} critical and ${majorCount} major issues`;
+          failReason = `Found ${report.summary.criticalIssues} critical and ${report.summary.majorIssues} major issues`;
         }
       }
 
-      // Output result
       if (shouldFail) {
-        console.log(chalk.red('\n🚫 PR BLOCKED: AI Readiness Check Failed'));
-        console.log(chalk.red(`   Reason: ${failReason}`));
-        console.log(chalk.dim('\n   Remediation steps:'));
-        console.log(
-          chalk.dim('   1. Run `aiready scan` locally to see detailed issues')
-        );
-        console.log(chalk.dim('   2. Fix the critical issues before merging'));
-        console.log(
-          chalk.dim(
-            '   3. Consider upgrading to Team plan for historical tracking: https://getaiready.dev/pricing'
-          )
-        );
+        console.log(chalk.red(`\n🚫 PR BLOCKED: ${failReason}`));
         process.exit(1);
       } else {
-        console.log(chalk.green('\n✅ PR PASSED: AI Readiness Check'));
-        if (threshold) {
-          console.log(
-            chalk.green(
-              `   Score: ${scoringResult.overall}/100 (threshold: ${threshold})`
-            )
-          );
-        }
-        console.log(
-          chalk.dim(
-            '\n   💡 Track historical trends: https://getaiready.dev — Team plan $99/mo'
-          )
-        );
+        console.log(chalk.green('\n✅ PR PASSED'));
       }
     }
   } catch (error) {
@@ -966,33 +403,4 @@ export async function scanAction(directory: string, options: ScanOptions) {
   }
 }
 
-export const scanHelpText = `
-EXAMPLES:
-  $ aiready scan                                    # Analyze all tools
-  $ aiready scan --tools patterns,context           # Skip consistency
-  $ aiready scan --profile agentic                  # Optimize for AI agent execution
-  $ aiready scan --profile security                 # Optimize for secure coding (testability)
-  $ aiready scan --compare-to prev-report.json      # Compare trends against previous run
-  $ aiready scan --score --threshold 75             # CI/CD with threshold
-  $ aiready scan --ci --threshold 70                # GitHub Actions gatekeeper
-  $ aiready scan --ci --fail-on major               # Fail on major+ issues
-  $ aiready scan --output json --output-file report.json
-  $ aiready scan --upload --api-key ar_...             # Automatic platform upload
-  $ aiready scan --upload --server custom-url.com      # Upload to custom platform
-
-PROFILES:
-  agentic:      aiSignalClarity, grounding, testability
-  cost:         patterns, context
-  security:     consistency, testability
-  onboarding:   context, consistency, grounding
-
-CI/CD INTEGRATION (Gatekeeper Mode):
-  Use --ci for GitHub Actions integration:
-  - Outputs GitHub Actions annotations for PR checks
-  - Fails with exit code 1 if threshold not met
-  - Shows clear "blocked" message with remediation steps
-
-  Example GitHub Actions workflow:
-    - name: AI Readiness Check
-      run: aiready scan --ci --threshold 70
-`;
+export const scanHelpText = `...`;

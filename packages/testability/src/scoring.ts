@@ -1,4 +1,4 @@
-import type { ToolScoringOutput } from '@aiready/core';
+import { type ToolScoringOutput, ToolName } from '@aiready/core';
 import type { TestabilityReport } from './types';
 
 /**
@@ -50,7 +50,7 @@ export function calculateTestabilityScore(
   );
 
   return {
-    toolName: 'testability',
+    toolName: ToolName.TestabilityIndex,
     score: summary.score,
     rawMetrics: {
       ...rawData,

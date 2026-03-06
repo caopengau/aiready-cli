@@ -87,12 +87,39 @@ importers:
 
   integration-tests:
     devDependencies:
+      '@aiready/agent-grounding':
+        specifier: workspace:*
+        version: link:../packages/agent-grounding
+      '@aiready/ai-signal-clarity':
+        specifier: workspace:*
+        version: link:../packages/ai-signal-clarity
+      '@aiready/change-amplification':
+        specifier: workspace:*
+        version: link:../packages/change-amplification
       '@aiready/cli':
         specifier: workspace:*
         version: link:../packages/cli
+      '@aiready/consistency':
+        specifier: workspace:*
+        version: link:../packages/consistency
+      '@aiready/context-analyzer':
+        specifier: workspace:*
+        version: link:../packages/context-analyzer
       '@aiready/core':
         specifier: workspace:*
         version: link:../packages/core
+      '@aiready/deps':
+        specifier: workspace:*
+        version: link:../packages/deps
+      '@aiready/doc-drift':
+        specifier: workspace:*
+        version: link:../packages/doc-drift
+      '@aiready/pattern-detect':
+        specifier: workspace:*
+        version: link:../packages/pattern-detect
+      '@aiready/testability':
+        specifier: workspace:*
+        version: link:../packages/testability
       execa:
         specifier: ^9.5.2
         version: 9.6.1

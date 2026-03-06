@@ -176,16 +176,31 @@ export const AnalysisResultSchema = z.object({
 export type AnalysisResult = z.infer<typeof AnalysisResultSchema>;
 
 /**
+ * Standard spoke tool summary schema.
+ */
+export const SpokeSummarySchema = z
+  .object({
+    totalFiles: z.number().optional(),
+    totalIssues: z.number().optional(),
+    criticalIssues: z.number().optional(),
+    majorIssues: z.number().optional(),
+    score: z.number().optional(),
+  })
+  .catchall(z.any());
+
+export type SpokeSummary = z.infer<typeof SpokeSummarySchema>;
+
+/**
  * Standard spoke tool output contract.
  */
 export const SpokeOutputSchema = z.object({
   results: z.array(AnalysisResultSchema),
-  summary: z.any(),
+  summary: SpokeSummarySchema,
   metadata: z
     .object({
       toolName: z.string(),
-      version: z.string(),
-      timestamp: z.string(),
+      version: z.string().optional(),
+      timestamp: z.string().optional(),
     })
     .catchall(z.any())
     .optional(),

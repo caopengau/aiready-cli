@@ -1,4 +1,4 @@
-import { scanFiles, readFileContent } from '@aiready/core';
+import { scanFiles, readFileContent, ToolRegistry } from '@aiready/core';
 import {
   buildDependencyGraph,
   calculateImportDepth,
@@ -16,11 +16,15 @@ import {
 import { calculateContextScore } from './scoring';
 import { getSmartDefaults } from './defaults';
 import { generateSummary } from './summary';
+import { ContextAnalyzerProvider } from './provider';
 import type {
   ContextAnalyzerOptions,
   ContextAnalysisResult,
   ContextSummary,
 } from './types';
+
+// Register with global registry
+ToolRegistry.register(ContextAnalyzerProvider);
 
 export * from './analyzer';
 export * from './scoring';
@@ -28,6 +32,7 @@ export * from './defaults';
 export * from './summary';
 export * from './types';
 export * from './semantic-analysis';
+export { ContextAnalyzerProvider };
 
 /**
  * Analyze AI context window cost for a codebase

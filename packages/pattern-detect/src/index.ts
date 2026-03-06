@@ -1,4 +1,10 @@
-import { scanFiles, readFileContent, Severity, IssueType } from '@aiready/core';
+import {
+  scanFiles,
+  readFileContent,
+  Severity,
+  IssueType,
+  ToolRegistry,
+} from '@aiready/core';
 import type { AnalysisResult, Issue, ScanOptions } from '@aiready/core';
 import {
   detectDuplicatePatterns,
@@ -13,9 +19,13 @@ import {
   type RefactorCluster,
 } from './grouping';
 import { calculatePatternScore } from './scoring';
+import { PatternDetectProvider } from './provider';
+
+// Register with global registry
+ToolRegistry.register(PatternDetectProvider);
 
 export type { PatternType, DuplicatePattern, DuplicateGroup, RefactorCluster };
-export { calculatePatternScore, Severity };
+export { calculatePatternScore, Severity, PatternDetectProvider };
 
 export interface PatternDetectOptions extends ScanOptions {
   minSimilarity?: number; // 0-1, default 0.40 (Jaccard similarity)
