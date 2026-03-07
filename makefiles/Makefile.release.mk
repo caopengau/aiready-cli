@@ -285,12 +285,20 @@ release-one: ## Release one spoke: TYPE=patch|minor|major, SPOKE=core|pattern-de
 		exit 1; \
 	fi; \
 	@$(call log_success,Integration Tests passed); \
-	$(call log_step,Performing final CLI smoke test...); \
 	if ! $(MAKE) -C $(ROOT_DIR) test-verify-cli; then \
 		$(call log_error,CLI smoke test failed. Aborting release.); \
 		exit 1; \
 	fi; \
 	$(call log_success,CLI smoke test passed); \
+	@# If releasing a HUB (core or cli), verify downstream services
+	@if [ "$(SPOKE)" = "core" ] || [ "$(SPOKE)" = "cli" ]; then \
+		$(call log_step,HUB RELEASE DETECTED: Running mandatory downstream safety checks...); \
+		if ! $(MAKE) -C $(ROOT_DIR) test-downstream; then \
+			$(call log_error,Downstream verification failed for HUB release. Aborting release.); \
+			exit 1; \
+		fi; \
+		$(call log_success,Downstream safety checks passed); \
+	fi; \
 	$(call log_step,Publishing @aiready/$(SPOKE) to npm...); \
 	if ! $(MAKE) -C $(ROOT_DIR) npm-publish SPOKE=$(SPOKE); then \
 		$(call log_error,NPM publish failed for @aiready/$(SPOKE). Aborting release.); \
@@ -348,12 +356,13 @@ release-all: ## Release all spokes: TYPE=patch|minor|major (excludes landing)
 		exit 1; \
 	}; \
 	@$(call log_success,All Tiers of contract and integration testing passed); \
-	$(call log_step,Phase 2.5: Performing final CLI smoke test...); \
-	$(MAKE) -C $(ROOT_DIR) test-verify-cli || { \
-		$(call log_error,CLI smoke test failed. Aborting release-all.); \
+	$(call log_success,CLI smoke test passed); \
+	$(call log_step,Phase 2.6: Running mandatory downstream safety checks...); \
+	$(MAKE) -C $(ROOT_DIR) test-downstream || { \
+		$(call log_error,Downstream verification failed. Aborting release-all.); \
 		exit 1; \
 	}; \
-	$(call log_success,CLI smoke test passed); \
+	$(call log_success,Downstream safety checks passed); \
 	$(call log_step,Phase 3: Version bumping all spokes...); \
 	for spoke in $(CORE_SPOKE) $(MIDDLE_SPOKES) vscode-extension $(CLI_SPOKE); do \
 		$(call log_info,Bumping @aiready/$$spoke...); \

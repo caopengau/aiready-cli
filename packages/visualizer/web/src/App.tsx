@@ -137,9 +137,9 @@ function App() {
       }
       // Check that both connected nodes are visible
       const sourceId =
-        typeof edge.source === 'string' ? edge.source : edge.source.id;
+        typeof edge.source === 'string' ? edge.source : (edge.source as any).id;
       const targetId =
-        typeof edge.target === 'string' ? edge.target : edge.target.id;
+        typeof edge.target === 'string' ? edge.target : (edge.target as any).id;
       return visibleNodeIds.has(sourceId) && visibleNodeIds.has(targetId);
     });
 

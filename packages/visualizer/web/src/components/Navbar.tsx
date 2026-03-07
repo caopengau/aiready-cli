@@ -1,9 +1,10 @@
 import { ThemeColors, GraphData, Theme, BusinessMetrics } from '../types';
 
 // Icons as inline SVG components for the theme toggle
-const SunIcon = ({ className }: { className?: string }) => (
+const SunIcon = ({ className, style }: { className?: string; style?: React.CSSProperties }) => (
   <svg
     className={className}
+    style={style}
     width="16"
     height="16"
     viewBox="0 0 24 24"
@@ -25,9 +26,10 @@ const SunIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
-const MoonIcon = ({ className }: { className?: string }) => (
+const MoonIcon = ({ className, style }: { className?: string; style?: React.CSSProperties }) => (
   <svg
     className={className}
+    style={style}
     width="16"
     height="16"
     viewBox="0 0 24 24"
@@ -41,9 +43,10 @@ const MoonIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
-const SystemIcon = ({ className }: { className?: string }) => (
+const SystemIcon = ({ className, style }: { className?: string; style?: React.CSSProperties }) => (
   <svg
     className={className}
+    style={style}
     width="16"
     height="16"
     viewBox="0 0 24 24"

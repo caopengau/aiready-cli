@@ -208,7 +208,7 @@ export function transformReportToGraph(
       // from the source file's directory and try common extensions. As a
       // final fallback, match by basename (endsWith) similar to dependency
       // heuristics.
-      if (!nodeMap.has(relatedId)) {
+      if (!nodeMap.has(relatedId!)) {
         const sourceDir = ctx.file.substring(0, ctx.file.lastIndexOf('/'));
         const normalizedRel = related.replace(/^\.\/?/, '');
         const tryPaths = [
@@ -227,7 +227,7 @@ export function transformReportToGraph(
       }
 
       // Fallback: loose basename matching
-      if (!nodeMap.has(relatedId)) {
+      if (!nodeMap.has(relatedId!)) {
         const relBase = (related.split('/').pop() || related).replace(
           /\.(ts|tsx|js|jsx)$/,
           ''

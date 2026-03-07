@@ -5,7 +5,9 @@
 MAKEFILE_DIR := $(dir $(lastword $(MAKEFILE_LIST)))
 include $(MAKEFILE_DIR)/Makefile.shared.mk
 
-.PHONY: test test-core test-pattern-detect test-watch test-coverage test-verify-cli test-contract test-integration test-landing-e2e test-platform-e2e test-platform test-landing test-platform-e2e-local test-landing-e2e-local
+.PHONY: test test-core test-pattern-detect test-watch test-coverage test-verify-cli test-contract test-integration \
+	test-landing-e2e test-platform-e2e test-platform test-landing test-platform-e2e-local test-landing-e2e-local \
+	test-visualizer test-vscode-extension test-downstream
 
 test: ## Run tests for all packages (noninteractive)
 	@$(call log_step,Running tests for all packages (noninteractive)...) 
@@ -89,3 +91,23 @@ test-platform-e2e-local: ## Run platform E2E tests against local dev server
 	@$(call log_step,Running platform E2E tests against local server...)
 	@cd platform && CI=1 $(PNPM) test:e2e
 	@$(call log_success,Platform local E2E tests passed)
+
+test-visualizer: ## Build and test the visualizer
+	@$(call log_step,Verifying @aiready/visualizer...)
+	@$(PNPM) --filter @aiready/visualizer run typecheck || { $(call log_error,Visualizer typecheck failed); exit 1; }
+	@$(PNPM) --filter @aiready/visualizer build || { $(call log_error,Visualizer build failed); exit 1; }
+	@$(PNPM) --filter @aiready/visualizer test || { $(call log_error,Visualizer tests failed); exit 1; }
+	@$(call log_success,Visualizer verified)
+
+test-vscode-extension: ## Compile the VS Code extension to ensure no breaking changes
+	@$(call log_step,Verifying aiready (VS Code extension)...)
+	@cd packages/vscode-extension && $(PNPM) install && $(PNPM) exec tsc --noEmit && $(PNPM) run compile || { $(call log_error,VS Code extension verification failed); exit 1; }
+	@$(call log_success,VS Code extension verified)
+
+test-downstream: ## Run all downstream verification tests (platform, visualizer, vscode-extension)
+	@$(call log_step,Running DOWNSTREAM verification (safety check for hubs)...)
+	@$(MAKE) test-platform || exit 1
+	@$(MAKE) test-visualizer || exit 1
+	@$(MAKE) test-vscode-extension || exit 1
+	@$(MAKE) test-landing || exit 1
+	@$(call log_success,All downstream services verified)
