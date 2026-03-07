@@ -42,10 +42,9 @@ function extractBlocks(file: string, content: string): CodeBlock[] {
   const blocks: CodeBlock[] = [];
   const lines = content.split('\n');
 
-  // Regex to match declarations and app.get/post handlers
-  // Allow leading whitespace
+  // Regex to match declarations (TS/JS, Java, C# and Go)
   const blockRegex =
-    /^\s*(?:export\s+)?(?:async\s+)?(function|class|const|interface|type)\s+([a-zA-Z0-9_]+)|^\s*(app\.(?:get|post|put|delete|patch|use))\(/gm;
+    /^\s*(?:export\s+)?(?:async\s+)?(?:public\s+|private\s+|protected\s+|internal\s+|static\s+|readonly\s+|virtual\s+|abstract\s+|override\s+)*(function|class|const|interface|type|enum|record|struct|void|func|[a-zA-Z0-9_<>\[\]]+)\s+([a-zA-Z0-9_]+)(?:\s*\(|(?:\s+extends|\s+implements|\s+where)?\s*\{)|^\s*(app\.(?:get|post|put|delete|patch|use))\(/gm;
 
   let match;
   while ((match = blockRegex.exec(content)) !== null) {
