@@ -20,6 +20,8 @@ interface Props {
   initialSettings: AIReadyConfig | null;
   onSave: (settings: AIReadyConfig | null) => Promise<void>;
   fileCount?: number;
+  lastExecutionTime?: number;
+  lastSettings?: AIReadyConfig | null;
 }
 
 export function ScanConfigForm({
@@ -27,6 +29,8 @@ export function ScanConfigForm({
   initialSettings,
   onSave,
   fileCount = 0,
+  lastExecutionTime = 0,
+  lastSettings = null,
 }: Props) {
   const [confirmData, setConfirmData] = useState<{
     type: 'node_modules' | 'approx' | null;
@@ -150,68 +154,104 @@ export function ScanConfigForm({
   const estimatedTime = useMemo(() => {
     if (fileCount === 0) return null;
 
-    // Use a floor for estimation to show meaningful changes even on small repos
-    const estFileCount = Math.max(fileCount, 80);
+    // 1. Calculate base estimate using heuristics
+    const calculateHeuristic = (cfg: AIReadyConfig | null) => {
+      if (!cfg) return 60;
 
-    let seconds = 30; // Increased base overhead (provisioning, cloning, setup)
-    const activeTools = settings.scan?.tools || [];
+      // Use a floor for estimation to show meaningful changes even on small repos
+      const estFileCount = Math.max(fileCount, 100);
 
-    // 1. Core file scanning & parsing (0.15s per file)
-    seconds += estFileCount * 0.15;
+      let seconds = 35; // Base overhead (provisioning, cloning, setup)
+      const activeTools = cfg.scan?.tools || [];
 
-    // 2. Pattern Detection (The most expensive O(N^2) tool)
-    if (activeTools.includes(ToolName.PatternDetect)) {
-      const toolCfg = settings.tools?.[ToolName.PatternDetect];
-      const minLines = toolCfg?.minLines || 5;
-      const minSimilarity = toolCfg?.minSimilarity || 0.8;
-      const approx = toolCfg?.approx !== false;
-      const minTokens = toolCfg?.minSharedTokens || 10;
-      const maxCandidates = toolCfg?.maxCandidatesPerBlock || 100;
+      // Core file scanning & parsing (0.1s per file)
+      seconds += estFileCount * 0.1;
 
-      // Base block count
-      const blocksPerFile = 6 * (5 / minLines);
-      const blocks = estFileCount * blocksPerFile;
-      const totalComparisons = (blocks * blocks) / 2;
+      // Pattern Detection (The most expensive O(N^2) tool)
+      if (
+        activeTools.includes(ToolName.PatternDetect) ||
+        activeTools.includes('patterns')
+      ) {
+        const toolCfg =
+          cfg.tools?.[ToolName.PatternDetect] ||
+          (cfg.tools as any)?.['patterns'];
+        const minLines = toolCfg?.minLines || 5;
+        const minSimilarity = toolCfg?.minSimilarity || 0.8;
+        const approx = toolCfg?.approx !== false;
+        const minTokens = toolCfg?.minSharedTokens || 10;
+        const maxCandidates = toolCfg?.maxCandidatesPerBlock || 100;
 
-      if (approx) {
-        // Approximate mode
-        // 1. Candidate selection cost (O(N) with indexing)
-        seconds += blocks * 0.005;
+        // minLines impact: number of blocks scales inversely with minLines
+        const blocksPerFile = 7 * (5 / minLines);
+        const blocks = estFileCount * blocksPerFile;
+        const totalComparisons = (blocks * blocks) / 2;
 
-        // 2. Verification cost (O(blocks * maxCandidates))
-        // minTokens affects index specificity
-        const verificationWork =
-          blocks * maxCandidates * (1.5 - minTokens / 20);
-        seconds += verificationWork / 10000;
-      } else {
-        // Exhaustive mode (Very expensive)
-        // 1. Pairwise comparison cost
-        // minSimilarity allows some early exit, but the search space is still full N^2
-        const pruningEffect = 1.1 - minSimilarity;
-        const comparisonWork = totalComparisons * pruningEffect;
+        if (approx) {
+          // Candidate selection cost
+          seconds += blocks * 0.005;
 
-        // maxCandidates affects the depth of the Jaccard comparison
-        const workFactor = 1 + maxCandidates / 20;
-        seconds += (comparisonWork * workFactor) / 15000;
+          // Verification cost (Highly sensitive to minTokens and maxCandidates)
+          const tokenFactor = 2.0 - minTokens / 10; // More tokens = less work
+          const verificationWork = blocks * maxCandidates * tokenFactor;
+          seconds += verificationWork / 10000;
+        } else {
+          // Exhaustive mode (Very expensive)
+          const pruningFactor = 1.2 - minSimilarity; // Higher similarity = faster pruning
+          const comparisonWork = totalComparisons * pruningFactor;
+
+          // maxCandidates dramatically increases verification depth
+          const workFactor = 1 + maxCandidates / 10;
+          seconds += (comparisonWork * workFactor) / 18000;
+        }
       }
+
+      // Context Analyzer
+      if (
+        activeTools.includes(ToolName.ContextAnalyzer) ||
+        activeTools.includes('context')
+      ) {
+        const toolCfg =
+          cfg.tools?.[ToolName.ContextAnalyzer] ||
+          (cfg.tools as any)?.['context'];
+        const depth = toolCfg?.maxDepth || 5;
+        seconds += estFileCount * 0.2 * Math.pow(1.6, depth - 5);
+      }
+
+      // Other tools
+      const otherToolsCount = activeTools.filter(
+        (t) =>
+          t !== ToolName.PatternDetect &&
+          t !== 'patterns' &&
+          t !== ToolName.ContextAnalyzer &&
+          t !== 'context'
+      ).length;
+      seconds += estFileCount * 0.04 * otherToolsCount;
+
+      // Post-processing (Normalization, DB updates, Score calculation)
+      // Log showed this taking ~30-35s for 444 files
+      seconds += 25 + estFileCount * 0.03;
+
+      return seconds;
+    };
+
+    const currentHeuristic = calculateHeuristic(settings);
+
+    // 2. Refine using historical data if available
+    if (lastExecutionTime > 0 && lastSettings) {
+      const historicalHeuristic = calculateHeuristic(lastSettings);
+      const lastSeconds = lastExecutionTime / 1000;
+
+      // Correction factor: how much faster or slower the real repo is compared to heuristic
+      const correctionFactor = Math.min(
+        Math.max(lastSeconds / historicalHeuristic, 0.2),
+        5.0
+      );
+
+      return Math.round(currentHeuristic * correctionFactor);
     }
 
-    // 3. Context Analyzer (Recursive exploration)
-    if (activeTools.includes(ToolName.ContextAnalyzer)) {
-      const depth = settings.tools?.[ToolName.ContextAnalyzer]?.maxDepth || 5;
-      // Exponential increase with depth
-      const depthFactor = Math.pow(1.6, depth - 5);
-      seconds += estFileCount * 0.25 * depthFactor;
-    }
-
-    // 4. Other tools (Generally O(N))
-    const otherToolsCount = activeTools.filter(
-      (t) => t !== ToolName.PatternDetect && t !== ToolName.ContextAnalyzer
-    ).length;
-    seconds += estFileCount * 0.08 * otherToolsCount;
-
-    return Math.round(seconds);
-  }, [settings, fileCount]);
+    return Math.round(currentHeuristic);
+  }, [settings, fileCount, lastExecutionTime, lastSettings]);
 
   const timeWarning = estimatedTime && estimatedTime > 600; // > 10 minutes
 
@@ -886,8 +926,8 @@ export function ScanConfigForm({
                   key={check.id}
                   onClick={() => {
                     const current =
-                      settings.tools?.[ToolName.AiSignalClarity]?.[
-                        check.id as keyof any
+                      (settings.tools?.[ToolName.AiSignalClarity] as any)?.[
+                        check.id
                       ] !== false;
                     setSettings({
                       ...settings,
@@ -901,8 +941,8 @@ export function ScanConfigForm({
                     });
                   }}
                   className={`group relative p-3 rounded-xl border cursor-pointer transition-all flex items-center justify-between ${
-                    settings.tools?.[ToolName.AiSignalClarity]?.[
-                      check.id as keyof any
+                    (settings.tools?.[ToolName.AiSignalClarity] as any)?.[
+                      check.id
                     ] !== false
                       ? 'bg-cyan-500/10 border-cyan-500/30 text-cyan-500'
                       : 'bg-slate-900 border-slate-800 text-slate-500'
@@ -913,8 +953,8 @@ export function ScanConfigForm({
                   </span>
                   <div
                     className={`w-2.5 h-2.5 rounded-full ${
-                      settings.tools?.[ToolName.AiSignalClarity]?.[
-                        check.id as keyof any
+                      (settings.tools?.[ToolName.AiSignalClarity] as any)?.[
+                        check.id
                       ] !== false
                         ? 'bg-cyan-500 shadow-[0_0_8px_rgba(6,182,212,0.5)]'
                         : 'bg-slate-800'
@@ -1052,7 +1092,7 @@ export function ScanConfigForm({
                     key={check}
                     onClick={() => {
                       const disabled =
-                        settings.tools?.[ToolName.NamingConsistency]
+                        (settings.tools?.[ToolName.NamingConsistency] as any)
                           ?.disableChecks || [];
                       const newDisabled = disabled.includes(check)
                         ? disabled.filter((c: string) => c !== check)
@@ -1070,7 +1110,7 @@ export function ScanConfigForm({
                     }}
                     className={`p-2 rounded-lg border text-[10px] font-bold uppercase text-center cursor-pointer transition-all ${
                       (
-                        settings.tools?.[ToolName.NamingConsistency]
+                        (settings.tools?.[ToolName.NamingConsistency] as any)
                           ?.disableChecks || []
                       ).includes(check)
                         ? 'bg-slate-800 border-slate-700 text-slate-500 line-through'
