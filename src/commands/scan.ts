@@ -262,28 +262,40 @@ export async function scanAction(directory: string, options: ScanOptions) {
           wastedTokens: {
             duplication: totalWastedDuplication,
             fragmentation: totalWastedFragmentation,
-            chattiness: 0,
+            chattiness: totalContext * 0.1, // Default chattiness
           },
         });
-        const modelPreset = getModelPreset(options.model || 'claude-4.6');
-        const costEstimate = estimateCostFromBudget(unifiedBudget, modelPreset);
 
-        console.log(chalk.bold('\n📊 AI Token Budget Analysis'));
+        const modelId = options.model || 'claude-3-5-sonnet';
+        const modelPreset = getModelPreset(modelId);
+        const roi = (await import('@aiready/core')).calculateBusinessROI({
+          tokenWaste: unifiedBudget.wastedTokens.total,
+          issues: results.results.flatMap((r: any) => r.issues || []),
+          modelId: modelId,
+        });
+
+        console.log(chalk.bold('\n💰 Business Impact Analysis (Monthly)'));
         console.log(
-          `  Efficiency: ${(unifiedBudget.efficiencyRatio * 100).toFixed(0)}%`
+          `  Potential Savings: ${chalk.green(chalk.bold('$' + roi.monthlySavings.toLocaleString()))}`
         );
         console.log(
-          `  Wasted Tokens: ${chalk.red(unifiedBudget.wastedTokens.total.toLocaleString())}`
+          `  Productivity Gain: ${chalk.cyan(chalk.bold(roi.productivityGainHours + 'h'))} (est. dev time)`
         );
         console.log(
-          `  Est. Monthly Cost (${modelPreset.name}): ${chalk.bold('$' + costEstimate.total)}`
+          `  Context Efficiency: ${chalk.yellow((unifiedBudget.efficiencyRatio * 100).toFixed(0) + '%')}`
         );
+        console.log(
+          `  Annual Value: ${chalk.bold('$' + roi.annualValue.toLocaleString())} (ROI Prediction)`
+        );
+
+        (results.summary as any).businessImpact = {
+          estimatedMonthlyWaste: roi.monthlySavings,
+          potentialSavings: roi.monthlySavings,
+          productivityHours: roi.productivityGainHours,
+        };
 
         (scoringResult as any).tokenBudget = unifiedBudget;
-        (scoringResult as any).costEstimate = {
-          model: modelPreset.name,
-          ...costEstimate,
-        };
+        (scoringResult as any).businessROI = roi;
       }
 
       if (scoringResult.breakdown) {
