@@ -26,6 +26,7 @@
     "build": "tsx src/build.ts",
     "build:upgrade": "tsx src/build.ts --upgrade-version",
     "validate": "tsx src/validate.ts",
+    "test": "vitest run",
     "dev": "pnpm run build && pnpm run validate",
     "clean": "rm -rf dist"
   },
@@ -35,7 +36,8 @@
   "devDependencies": {
     "@types/node": "^24.0.0",
     "tsx": "^4.7.0",
-    "typescript": "^5.3.3"
+    "typescript": "^5.3.3",
+    "vitest": "^4.0.18"
   },
   "files": [
     "aiready-best-practices/**/*",

@@ -6,4 +6,5 @@ ToolRegistry.register(DocDriftProvider);
 
 export * from './types';
 export * from './analyzer';
+export * from './scoring';
 export { DocDriftProvider };

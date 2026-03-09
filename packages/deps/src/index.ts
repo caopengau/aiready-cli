@@ -6,4 +6,5 @@ ToolRegistry.register(DepsProvider);
 
 export * from './types';
 export * from './analyzer';
+export * from './scoring';
 export { DepsProvider };

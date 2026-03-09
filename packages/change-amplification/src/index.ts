@@ -5,6 +5,7 @@ import { ChangeAmplificationProvider } from './provider';
 ToolRegistry.register(ChangeAmplificationProvider);
 
 export { analyzeChangeAmplification } from './analyzer';
+export { calculateChangeAmplificationScore } from './scoring';
 export { ChangeAmplificationProvider };
 export type {
   ChangeAmplificationOptions,
