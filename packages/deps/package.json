@@ -1,6 +1,6 @@
 {
   "name": "@aiready/deps",
-  "version": "0.11.21",
+  "version": "0.12.0",
   "description": "AI-Readiness: Dependency Health & Cutoff Skew",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
