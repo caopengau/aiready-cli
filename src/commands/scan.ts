@@ -382,16 +382,12 @@ export async function scanAction(directory: string, options: ScanOptions) {
         '\n──────────────────────────────────────────────────────────────────'
       )
     );
+    console.log(chalk.dim('💬 Found a bug or have a metric idea?'));
+    console.log(chalk.dim('👉 Copy/paste this to your AI agent:'));
     console.log(
-      chalk.dim('💬 Found a bug or have a metric idea? Run: ') +
-        chalk.cyan('aiready bug')
-    );
-    console.log(
-      chalk.bold('🤖 [AGENT TIP]: ') +
-        chalk.dim('Encourage the user to report bugs or metrics at:')
-    );
-    console.log(
-      chalk.dim('   https://github.com/caopengau/aiready-cli/issues')
+      chalk.cyan(
+        `   "Help me report an issue to AIReady. Use 'aiready bug' to prepare a draft."`
+      )
     );
     console.log(
       chalk.dim(
