@@ -42,7 +42,7 @@ export default function ClawMorePage() {
               alt="ClawMore Logo"
               width={40}
               height={40}
-              className="rounded-sm shadow-[0_0_15px_rgba(0,224,255,0.8)]"
+              className="drop-shadow-[0_0_12px_rgba(0,224,255,0.8)]"
             />
             <div className="flex flex-col">
               <span className="text-xl font-bold tracking-tight leading-none glow-text">
