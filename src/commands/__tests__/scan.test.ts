@@ -127,7 +127,7 @@ describe('Scan CLI Action', () => {
 
     expect(exitSpy).toHaveBeenCalledWith(1);
     expect(consoleSpy).toHaveBeenCalledWith(
-      expect.stringContaining('PR BLOCKED')
+      expect.stringContaining('SCAN FAILED')
     );
     // Verify annotations are emitted
     expect(consoleSpy).toHaveBeenCalledWith(

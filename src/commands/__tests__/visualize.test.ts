@@ -2,7 +2,6 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { visualizeAction } from '../visualize';
 import * as fs from 'fs';
 import * as core from '@aiready/core';
-import * as helpers from '../../utils/helpers';
 import { spawn } from 'child_process';
 
 vi.mock('fs', async () => {
@@ -29,9 +28,6 @@ vi.mock('@aiready/visualizer/graph', () => ({
 vi.mock('@aiready/core', () => ({
   handleCLIError: vi.fn(),
   generateHTML: vi.fn().mockReturnValue('<html></html>'),
-}));
-
-vi.mock('../../utils/helpers', () => ({
   findLatestReport: vi.fn(),
 }));
 
@@ -54,7 +50,7 @@ describe('Visualize CLI Action', () => {
   });
 
   it('should find latest report if none specified', async () => {
-    vi.spyOn(helpers, 'findLatestReport').mockReturnValue('latest.json');
+    vi.mocked(core.findLatestReport).mockReturnValue('latest.json');
     await visualizeAction('.', {});
     expect(fs.readFileSync).toHaveBeenCalledWith(
       expect.stringContaining('latest.json'),
@@ -64,7 +60,7 @@ describe('Visualize CLI Action', () => {
 
   it('should handle missing reports', async () => {
     vi.spyOn(fs, 'existsSync').mockReturnValue(false);
-    vi.spyOn(helpers, 'findLatestReport').mockReturnValue(null);
+    vi.mocked(core.findLatestReport).mockReturnValue(null);
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
     await visualizeAction('.', { report: 'missing.json' });
