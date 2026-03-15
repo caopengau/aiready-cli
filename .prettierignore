@@ -28,3 +28,7 @@ Thumbs.db
 .github/
 action-marketplace/
 packages/visualizer/web/
+
+# Generated reports and tool artifacts
+**/.aiready/
+**/.smithery/

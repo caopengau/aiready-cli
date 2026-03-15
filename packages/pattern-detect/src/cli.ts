@@ -1,10 +1,7 @@
 #!/usr/bin/env node
 
 import { Command } from 'commander';
-import {
-  analyzePatterns,
-  generateSummary,
-} from './index';
+import { analyzePatterns, generateSummary } from './index';
 import type { PatternType } from './detector';
 import { filterBySeverity } from './context-rules';
 import chalk from 'chalk';

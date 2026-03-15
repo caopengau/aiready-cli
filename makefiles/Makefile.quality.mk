@@ -9,13 +9,13 @@ include makefiles/Makefile.shared.mk
 	type-check type-check-all
 
 # Dynamically generate leaf targets from ALL_SPOKES
+# NOTE: Do NOT add these to .PHONY — GNU Make 3.81 breaks pattern rules when
+# combined with .PHONY, causing "Nothing to be done" instead of running the recipe.
 FORMAT_LEAF := $(foreach spoke,$(ALL_SPOKES),format-check-$(spoke))
 FORMAT_FIX_LEAF := $(foreach spoke,$(ALL_SPOKES),format-$(spoke))
 LINT_LEAF := $(foreach spoke,$(ALL_SPOKES),lint-$(spoke))
 LINT_FIX_LEAF := $(foreach spoke,$(ALL_SPOKES),lint-fix-$(spoke))
 TYPE_LEAF := $(foreach spoke,$(ALL_SPOKES),type-check-$(spoke))
-
-.PHONY: $(FORMAT_LEAF) $(FORMAT_FIX_LEAF) $(LINT_LEAF) $(LINT_FIX_LEAF) $(TYPE_LEAF)
 
 # Combined quality checks
 check-all: ## Run format-check, lint, and type-check across the repo

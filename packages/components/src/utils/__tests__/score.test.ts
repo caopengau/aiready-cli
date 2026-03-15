@@ -1,10 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
-  scoreColor,
-  scoreBg,
-  scoreLabel,
-  getScoreRating,
-} from '../score';
+import { scoreColor, scoreBg, scoreLabel, getScoreRating } from '../score';
 
 describe('Score Utilities', () => {
   it('should return correct color for scores', () => {
