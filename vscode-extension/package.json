@@ -2,7 +2,7 @@
   "name": "aiready",
   "displayName": "AIReady - AI Readiness Checker",
   "description": "Real-time AI readiness analysis for your codebase. Measure the 9 dimensions of AI-friendliness and detect issues that confuse AI models.",
-  "version": "0.5.22",
+  "version": "0.5.23",
   "publisher": "pengcao",
   "license": "MIT",
   "icon": "media/icon.png",
