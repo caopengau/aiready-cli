@@ -1,35 +1,11 @@
 # @aiready/cli
 
-> Unified command-line interface for the AIReady framework.
+> Assess and improve your codebase's AI-readiness. Get an AI Readiness Score (0-100) and detect issues that confuse AI models.
 
-## 🏛️ Architecture
-
-```text
-                    🎯 USER
-                      │
-                      ▼
-         🎛️  @aiready/cli (orchestrator)  ← YOU ARE HERE
-          │     │     │     │     │     │     │     │     │
-          ▼     ▼     ▼     ▼     ▼     ▼     ▼     ▼     ▼
-        [PAT] [CTX] [CON] [AMP] [DEP] [DOC] [SIG] [AGT] [TST]
-          │     │     │     │     │     │     │     │     │
-          └─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┘
-                             │
-                             ▼
-                    🏢 @aiready/core
-```
-
-Legend:
-
-- PAT = pattern-detect | CTX = context-analyzer
-- CON = consistency | AMP = change-amplification
-- DEP = deps-health | DOC = doc-drift
-- SIG = ai-signal-clarity | AGT = agent-grounding
-- TST = testability
-
-## 🌐 Language Support
-
-Analyzes **TypeScript, JavaScript, Python, Java, Go, and C#** (95% market coverage).
+[![npm version](https://img.shields.io/npm/v/@aiready/cli)](https://www.npmjs.com/package/@aiready/cli)
+[![VS Code Marketplace](https://img.shields.io/visual-studio-marketplace/v/pengcao.aiready?label=VS%20Code)](https://marketplace.visualstudio.com/items?itemName=pengcao.aiready)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![GitHub Actions](https://github.com/caopengau/aiready-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/caopengau/aiready-cli/actions)
 
 ## 🚀 Quick Start
 
@@ -37,27 +13,58 @@ Analyzes **TypeScript, JavaScript, Python, Java, Go, and C#** (95% market covera
 # Install globally
 npm install -g @aiready/cli
 
-# Scan a codebase
+# Scan your codebase
 aiready scan .
 
-# Run a specific tool
-aiready patterns . --similarity 0.6
-
-# Run context analysis
-aiready context .
-
-# Check consistency
-aiready consistency .
+# Get detailed analysis
+aiready scan . --output report.json
 ```
+
+## 🤖 Why AIReady?
+
+As AI becomes deeply integrated into software development, codebases become harder for AI models to understand due to:
+
+- **Knowledge cutoff limitations** in AI models
+- **Context fragmentation** that breaks AI understanding
+- **Duplicated patterns** AI doesn't recognize
+- **Inconsistent naming** across the codebase
+
+AIReady helps teams **assess, visualize, and prepare** repositories for better AI adoption.
+
+## 🌟 The AIReady Ecosystem
+
+| Integration       | Package                                                                          | Description                                     |
+| ----------------- | -------------------------------------------------------------------------------- | ----------------------------------------------- |
+| **CLI**           | [`@aiready/cli`](https://www.npmjs.com/package/@aiready/cli)                     | Unified command-line interface                  |
+| **VS Code**       | [`aiready`](https://marketplace.visualstudio.com/items?itemName=pengcao.aiready) | Real-time AI readiness analysis in VS Code      |
+| **GitHub Action** | [`aiready-action`](https://github.com/marketplace/actions/aiready-action)        | CI/CD integration for automated scans           |
+| **MCP Server**    | [`@aiready/mcp-server`](https://www.npmjs.com/package/@aiready/mcp-server)       | Model Context Protocol server for AI assistants |
+| **Skills**        | [`@aiready/skills`](https://github.com/caopengau/aiready-skills)                 | AI-friendly coding practices for agents         |
+| **Docker**        | [`aiready/cli`](https://hub.docker.com/r/aiready/cli)                            | Containerized CLI                               |
+| **Homebrew**      | `brew install caopengau/aiready/aiready`                                         | macOS package                                   |
+
+## ✨ Features
+
+- **AI Readiness Score** - Get a 0-100 score indicating how AI-ready your codebase is
+- **Semantic Duplicate Detection** - Find duplicate patterns that waste AI context window tokens
+- **Context Analysis** - Analyze context window costs, import depth, and dependency fragmentation
+- **Consistency Checks** - Ensure naming conventions and pattern consistency
+- **Documentation Drift** - Track documentation freshness vs code churn
+- **Testability Assessment** - Measure code testability for AI agents
+- **Agent Grounding** - Evaluate how well code aids AI agents
+- **Interactive Visualization** - Generate force-directed graph visualizations
+- **CI/CD Integration** - Quality gates for AI readiness in your pipeline
 
 ## 📋 Commands
 
 ### Unified Scan
 
-Scan with multiple tools at once:
+Run all analysis tools at once:
 
 ```bash
+aiready scan .
 aiready scan . --output report.json
+aiready scan . --threshold 70
 ```
 
 ### Individual Tools
@@ -69,65 +76,104 @@ aiready scan . --output report.json
 | `aiready consistency` | Check naming conventions                   |
 | `aiready testability` | Assess code testability                    |
 | `aiready visualize`   | Generate interactive visualizations        |
-
-## 🔧 Options
-
-- `--output, -o`: Output file path (JSON format)
-- `--include`: Glob patterns to include
-- `--exclude`: Glob patterns to exclude
-- `--threshold`: Score threshold for pass/fail
-
-## ☁️ Platform Integration
-
-Connect your local scans to the [AIReady Dashboard](https://platform.getaiready.dev/dashboard).
-
-### Automatic Upload
-
-```bash
-aiready scan . --upload --api-key ar_...
-```
-
-### Manual Upload
-
-```bash
-aiready upload .aiready/latest.json --api-key ar_...
-```
-
-### Options
-
-- `--upload`: Automatically upload results after scan
-- `--api-key <key>`: Your platform API key (or set `AIREADY_API_KEY`)
-- `--server <url>`: Custom platform URL (optional)
-
-## 🛠️ Building Your Own Tool
-
-Want to build your own analysis tool that integrates with the AIReady ecosystem? Check out our [Spoke Development Guide](./docs/SPOKE_GUIDE.md).
+| `aiready upload`      | Upload results to AIReady platform         |
 
 ## 📦 Installation
 
+### npm / pnpm / yarn
+
 ```bash
-# Using npm
+# npm
 npm install -g @aiready/cli
 
-# Using pnpm
+# pnpm
 pnpm add -g @aiready/cli
 
-# Using yarn
+# yarn
 yarn global add @aiready/cli
 ```
 
-## 🔨 Build from Source
+### Docker
 
 ```bash
-# Clone the repository
-git clone https://github.com/caopengau/aiready-cli.git
-cd aiready-cli
+# Pull from Docker Hub
+docker pull aiready/cli
 
-# Install dependencies
-pnpm install
+# Run
+docker run aiready/cli scan .
 
-# Build
-pnpm build
+# Or use the image directly
+docker run -v $(pwd):/app aiready/cli scan /app
+```
+
+### Homebrew
+
+```bash
+brew install caopengau/aiready/aiready
+```
+
+### VS Code Extension
+
+Install from [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=pengcao.aiready) or search for "AIReady" in VS Code extensions.
+
+### GitHub Action
+
+```yaml
+- name: AIReady Code Analysis
+  uses: caopengau/aiready-action@v1
+  with:
+    threshold: 70
+```
+
+### MCP Server
+
+```bash
+npm install -g @aiready/mcp-server
+aiready-mcp
+```
+
+## 🔧 Configuration
+
+Create an `aiready.json` config file:
+
+```json
+{
+  "scan": {
+    "exclude": ["**/dist/**", "**/node_modules/**"]
+  },
+  "tools": {
+    "pattern-detect": { "minSimilarity": 0.5 },
+    "context-analyzer": { "maxContextBudget": 15000 }
+  },
+  "output": { "format": "json", "directory": ".aiready" }
+}
+```
+
+## 🌐 Language Support
+
+**Currently Supported (95% market coverage):**
+
+- ✅ TypeScript / JavaScript
+- ✅ Python
+- ✅ Java
+- ✅ Go
+- ✅ C#
+
+## 🏗️ Architecture
+
+```text
+                    🎯 USER
+                      │
+                      ▼
+         🎛️  @aiready/cli (orchestrator)
+              │     │     │     │     │
+              ▼     ▼     ▼     ▼     ▼
+           [PAT] [CTX] [CON] [DOC] [TEST]
+              │     │     │     │     │
+              └─────┴─────┴─────┴─────┘
+                         │
+                         ▼
+                🏢 @aiready/core
 ```
 
 ## 🤝 Contributing
@@ -140,7 +186,8 @@ MIT License - see [LICENSE](./LICENSE) for details.
 
 ## 🔗 Related Links
 
-- [Website](https://getaiready.dev)
-- [Documentation](https://docs.getaiready.dev)
-- [GitHub Actions](https://github.com/caopengau/aiready-action)
-- [VS Code Extension](https://github.com/caopengau/aiready-vscode)
+- 🌐 [Website](https://getaiready.dev)
+- 📖 [Documentation](https://docs.getaiready.dev)
+- 📦 [npm](https://www.npmjs.com/package/@aiready/cli)
+- 📊 [GitHub Actions](https://github.com/marketplace/actions/aiready-action)
+- 🔌 [VS Code Extension](https://marketplace.visualstudio.com/items?itemName=pengcao.aiready)
