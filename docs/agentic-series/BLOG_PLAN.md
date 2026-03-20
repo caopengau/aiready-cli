@@ -25,7 +25,7 @@ This series explores the evolution of software engineering from human-centric "r
   - **Focus**: Defining the transition from AI-human chats to autonomous Agentic Systems and Self-Conscious Evolution.
   - **Draft**: [02-beyond-the-sidekick.md](./02-beyond-the-sidekick.md)
 
-- [ ] **Post 3: The Economic Moat (Quantifying your AI ROI)**
+- [x] **Post 3: The Economic Moat (Quantifying your AI ROI)**
   - **Status**: Drafted
   - **Focus**: Turning Technical Debt into a Token Budget. Linking Fragmentation Scores to real-world model pricing.
   - **Draft**: [part-8-the-economic-moat.md](../../landing/blog-posts/part-8-the-economic-moat.md)
@@ -39,9 +39,10 @@ This series explores the evolution of software engineering from human-centric "r
   - **Status**: Drafted (LinkedIn)
   - **Focus**: The breakthrough of having agents write code and commit it back to Git.
 
-- [ ] **Post 6: Cognitive Tiering: Managing the Multi-Headed Brain**
-  - **Status**: Planned
+- [/] **Post 6: Cognitive Tiering: Managing the Multi-Headed Brain**
+  - **Status**: Drafted
   - **Focus**: Tiered memory architectures (Facts vs. Lessons vs. Gaps) and the end of "Prompt Bloat".
+  - **Draft**: [06-cognitive-tiering.md](./06-cognitive-tiering.md)
 
 - [ ] **Post 6: The Resilience Fortress: Designing for Disaster**
   - **Status**: Planned

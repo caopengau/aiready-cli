@@ -1,38 +1,35 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { getRepository } from '@/lib/db';
+import { withApiHandler } from '@/lib/api/handler';
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  try {
-    const { id } = await params;
-    const repoId = id;
-    const repo = await getRepository(repoId);
+  return withApiHandler(
+    async (_req, _params) => {
+      const { id } = await params;
+      const repoId = id;
+      const repo = await getRepository(repoId);
 
-    if (!repo) {
-      return new NextResponse('Repository not found', { status: 404 });
-    }
+      if (!repo) {
+        return { error: 'Repository not found', status: 404 };
+      }
 
-    const score = repo.aiScore || 0;
+      const score = repo.aiScore || 0;
 
-    // Choose color based on score
-    let color = '#ef4444'; // Red (<60)
-    if (score >= 90)
-      color = '#6366f1'; // Indigo (90+)
-    else if (score >= 75)
-      color = '#06b6d4'; // Cyan (75+)
-    else if (score >= 60) color = '#f59e0b'; // Amber (60+)
+      let color = '#ef4444';
+      if (score >= 90) color = '#6366f1';
+      else if (score >= 75) color = '#06b6d4';
+      else if (score >= 60) color = '#f59e0b';
 
-    const label = 'AI READY';
-    const value = `${score}/100`;
+      const label = 'AI READY';
+      const value = `${score}/100`;
+      const labelWidth = label.length * 7 + 10;
+      const valueWidth = value.length * 7 + 10;
+      const totalWidth = labelWidth + valueWidth;
 
-    // Calculate widths (rough estimates for SVG rendering)
-    const labelWidth = label.length * 7 + 10;
-    const valueWidth = value.length * 7 + 10;
-    const totalWidth = labelWidth + valueWidth;
-
-    const svg = `
+      const svg = `
 <svg xmlns="http://www.w3.org/2000/svg" width="${totalWidth}" height="20">
   <linearGradient id="b" x2="0" y2="100%">
     <stop offset="0" stop-color="#bbb" stop-opacity=".1"/>
@@ -55,20 +52,14 @@ export async function GET(
 </svg>
     `.trim();
 
-    return new NextResponse(svg, {
-      headers: {
-        'Content-Type': 'image/svg+xml',
-        'Cache-Control': 'public, max-age=3600, s-maxage=3600',
-      },
-    });
-  } catch (error: any) {
-    if (error.name === 'ResourceNotFoundException') {
-      return new NextResponse(
-        'Repository not found (Database not configured)',
-        { status: 404 }
-      );
-    }
-    console.error('Badge API error:', error);
-    return new NextResponse('Internal server error', { status: 500 });
-  }
+      return new Response(svg, {
+        headers: {
+          'Content-Type': 'image/svg+xml',
+          'Cache-Control': 'public, max-age=3600, s-maxage=3600',
+        },
+      });
+    },
+    request,
+    params
+  );
 }

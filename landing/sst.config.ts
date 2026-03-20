@@ -64,33 +64,32 @@ export default $config({
       ],
     });
 
-    // Static site - currently disabled (only health check infrastructure needed)
-    // const site = new sst.aws.StaticSite('AireadyLanding', {
-    //   path: './',
-    //   build: {
-    //     command: 'pnpm build',
-    //     output: 'out',
-    //   },
-    //   environment: {
-    //     NEXT_PUBLIC_REQUEST_URL: api.url,
-    //   },
-    //   domain: {
-    //     name:
-    //       $app.stage === 'production'
-    //         ? 'getaiready.dev'
-    //         : `${$app.stage}.getaiready.dev`,
-    //     dns: sst.cloudflare.dns({
-    //       zone: cloudflareZoneId,
-    //     }),
-    //   },
-    //   invalidation: {
-    //     paths: ['/*'],
-    //     wait: true,
-    //   },
-    // });
+    // Static site deployment
+    const site = new sst.aws.StaticSite('AireadyLanding', {
+      path: './',
+      build: {
+        command: 'pnpm build',
+        output: 'out',
+      },
+      environment: {
+        NEXT_PUBLIC_REQUEST_URL: api.url,
+      },
+      domain: {
+        name:
+          $app.stage === 'production'
+            ? 'getaiready.dev'
+            : `${$app.stage}.getaiready.dev`,
+        dns: sst.cloudflare.dns({
+          zone: cloudflareZoneId,
+        }),
+      },
+      invalidation: {
+        paths: ['/*'],
+        wait: true,
+      },
+    });
 
-    // Placeholder for site URL (not deployed)
-    const siteUrl = 'https://getaiready.dev';
+    const siteUrl = site.url;
 
     /*
     // VS Code Marketplace publisher verification
