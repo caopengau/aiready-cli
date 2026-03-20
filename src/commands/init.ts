@@ -68,31 +68,53 @@ export async function initAction(options: {
     // Tool-specific configurations
     tools: {
       [ToolName.PatternDetect]: {
-        minSimilarity: 0.8,
-        minLines: 5,
-        minSharedTokens: 10,
-        approx: true,
+        // Core detection thresholds
+        minSimilarity: 0.4, // Jaccard similarity threshold (0-1)
+        minLines: 5, // Minimum lines to consider a duplicate
+        minSharedTokens: 8, // Minimum shared tokens for candidate matching
+        approx: true, // Use approximate matching for performance
+
+        // Performance tuning
+        batchSize: 100, // Batch size for comparisons
+        maxCandidatesPerBlock: 100, // Max candidates per code block
+        maxResults: 10, // Max results in console output
+
+        // Cluster reporting
+        minClusterFiles: 3, // Min files for cluster reporting
+        minClusterTokenCost: 1000, // Min token cost for cluster reporting
+
+        // Output
+        outputFormat: 'console', // Output format (console, json, html)
+
         ...(options.full
           ? {
-              batchSize: 300,
-              maxCandidatesPerBlock: 500,
-              minClusterFiles: 3,
-              minClusterTokenCost: 1000,
+              // Advanced options (only included with --full)
+              // Add any additional advanced options here
             }
           : {}),
       },
       [ToolName.ContextAnalyzer]: {
-        maxContextBudget: 128000,
-        minCohesion: 0.6,
-        maxDepth: 7,
-        maxFragmentation: 0.4,
-        focus: 'all',
-        includeNodeModules: false,
+        // Smart defaults are generated dynamically based on repository size
+        // These are fallback values for when smart defaults can't be calculated
+        maxContextBudget: 25000, // Max acceptable token budget for a single context
+        minCohesion: 0.4, // Minimum acceptable cohesion score (0-1)
+        maxDepth: 7, // Maximum acceptable import depth
+        maxFragmentation: 0.7, // Maximum acceptable fragmentation score (0-1)
+
+        // Analysis focus
+        focus: 'all', // Analysis focus: fragmentation, cohesion, depth, or all
+        includeNodeModules: false, // Whether to include node_modules in analysis
       },
       [ToolName.NamingConsistency]: {
-        checkNaming: true,
-        checkPatterns: true,
-        checkArchitecture: true,
+        // Core checks
+        checkNaming: true, // Check naming conventions and quality
+        checkPatterns: true, // Check code pattern consistency
+        checkArchitecture: true, // Check architectural consistency
+
+        // Minimum severity to report
+        minSeverity: 'info', // Severity filter: critical, major, minor, info
+
+        // Custom vocabulary
         shortWords: ['id', 'db', 'ui', 'ai'],
         acceptedAbbreviations: [
           'API',
@@ -129,34 +151,48 @@ export async function initAction(options: {
         ...(options.full ? { disableChecks: [] } : {}),
       },
       [ToolName.AiSignalClarity]: {
-        checkMagicLiterals: true,
-        checkBooleanTraps: true,
-        checkAmbiguousNames: true,
-        checkUndocumentedExports: true,
-        checkImplicitSideEffects: true,
-        checkDeepCallbacks: true,
-        checkOverloadedSymbols: true,
-        checkLargeFiles: true,
+        // All signal clarity checks enabled by default
+        checkMagicLiterals: true, // Detect magic numbers and strings
+        checkBooleanTraps: true, // Detect boolean trap parameters
+        checkAmbiguousNames: true, // Detect ambiguous function/variable names
+        checkUndocumentedExports: true, // Detect exports without documentation
+        checkImplicitSideEffects: true, // Detect functions with hidden side effects
+        checkDeepCallbacks: true, // Detect deeply nested callbacks
+        checkOverloadedSymbols: true, // Detect overloaded function signatures
+        checkLargeFiles: true, // Detect files that are too large
       },
       [ToolName.AgentGrounding]: {
-        maxRecommendedDepth: 5,
-        readmeStaleDays: 30,
-        additionalVagueNames: ['stuff', 'misc', 'temp', 'test'],
+        // Structure clarity
+        maxRecommendedDepth: 4, // Max directory depth before flagging as "too deep"
+
+        // Documentation freshness
+        readmeStaleDays: 90, // Days after which README is considered stale
+
+        // File naming
+        additionalVagueNames: ['stuff', 'misc', 'temp', 'test'], // Custom vague file names
       },
       [ToolName.TestabilityIndex]: {
-        minCoverageRatio: 0.7,
+        // Coverage thresholds
+        minCoverageRatio: 0.3, // Minimum acceptable test/source ratio
+
+        // Test file patterns
         testPatterns: ['**/*.test.ts', '**/__tests__/**', '**/*.spec.ts'],
-        maxDepth: 10,
+
+        // Scan depth
+        maxDepth: 10, // Maximum scan depth
       },
       [ToolName.DocDrift]: {
-        maxCommits: 50,
-        staleMonths: 3,
+        // Drift detection
+        maxCommits: 50, // Maximum commit distance to check for drift
+        staleMonths: 3, // Consider comments older than this as outdated
       },
       [ToolName.DependencyHealth]: {
-        trainingCutoffYear: 2023,
+        // Training cutoff for AI knowledge assessment
+        trainingCutoffYear: 2023, // Year cutoff for AI training data
       },
       [ToolName.ChangeAmplification]: {
         // Change amplification primarily relies on global scan settings
+        // No additional tool-specific configuration required
       },
     },
 
