@@ -57,6 +57,13 @@ export function Header() {
       mobileOnly: false,
       desktopHidden: 'md:block',
     },
+    {
+      href: 'https://platform.getaiready.dev/login',
+      label: 'Sign In',
+      external: true,
+      mobileOnly: false,
+      desktopHidden: '',
+    },
   ];
 
   return (

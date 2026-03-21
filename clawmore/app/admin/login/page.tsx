@@ -134,7 +134,7 @@ export default function LoginPage() {
                 disabled={emailLoading}
                 className="w-full py-4 rounded-sm border border-cyber-blue/50 text-cyber-blue font-bold uppercase tracking-widest hover:bg-cyber-blue/10 transition-all shadow-[0_0_15px_rgba(0,224,255,0.1)]"
               >
-                {emailLoading ? 'Sending...' : 'Send Magic Link'}
+                {emailLoading ? 'Sending...' : 'Send Magic Link (Beta)'}
               </button>
             </form>
 
