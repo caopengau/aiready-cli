@@ -1,4 +1,5 @@
 import Stripe from 'stripe';
+import { Resource } from 'sst';
 
 let stripe: Stripe | null = null;
 
@@ -44,8 +45,8 @@ export async function createCheckoutSession(
   if (!stripeClient) throw new Error('Stripe not configured');
 
   const prices: Record<string, string> = {
-    pro: process.env.STRIPE_PRICE_ID_PRO || '',
-    team: process.env.STRIPE_PRICE_ID_TEAM || '',
+    pro: (Resource as any).ProPrice?.id || process.env.STRIPE_PRICE_ID_PRO || '',
+    team: (Resource as any).TeamPrice?.id || process.env.STRIPE_PRICE_ID_TEAM || '',
   };
 
   const session = await stripeClient.checkout.sessions.create({

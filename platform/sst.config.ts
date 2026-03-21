@@ -16,9 +16,58 @@ export default $config({
       name: 'aiready-platform',
       removal: input?.stage === 'production' ? 'retain' : 'remove',
       home: 'aws',
+      providers: {
+        stripe: '0.0.14',
+      },
     };
   },
   async run() {
+    // Configure the Stripe provider
+    $config.providers.stripe = {
+      apiKey: process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder',
+    };
+
+    // --- Stripe Products & Prices (IaC) ---
+
+    // 1. Pro Plan ($49/mo)
+    const proProduct = new stripe.Product('ProProduct', {
+      name: 'AIReady Pro',
+      description: 'Advanced AI-readiness metrics and historical trends for individual developers.',
+    });
+
+    const proPrice = new stripe.Price('ProPrice', {
+      product: proProduct.id,
+      unitAmount: 4900,
+      currency: 'usd',
+      recurring: { interval: 'month' },
+    });
+
+    // 2. Team Plan ($99/mo)
+    const teamProduct = new stripe.Product('TeamProduct', {
+      name: 'AIReady Team',
+      description: 'CI/CD integration, team benchmarking, and priority support.',
+    });
+
+    const teamPrice = new stripe.Price('TeamPrice', {
+      product: teamProduct.id,
+      unitAmount: 9900,
+      currency: 'usd',
+      recurring: { interval: 'month' },
+    });
+
+    // 3. Enterprise Plan ($299/mo)
+    const enterpriseProduct = new stripe.Product('EnterpriseProduct', {
+      name: 'AIReady Enterprise',
+      description: 'Custom rules, SSO, and dedicated support for large organizations.',
+    });
+
+    const enterprisePrice = new stripe.Price('EnterprisePrice', {
+      product: enterpriseProduct.id,
+      unitAmount: 29900,
+      currency: 'usd',
+      recurring: { interval: 'month' },
+    });
+
     // S3 Bucket for analysis data
     const bucket = new sst.aws.Bucket('AnalysisBucket');
 
@@ -133,10 +182,6 @@ export default $config({
         AUTH_TRUST_HOST: 'true',
         STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY || '',
         STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET || '',
-        STRIPE_PRICE_ID_PRO: process.env.STRIPE_PRICE_ID_PRO || '',
-        STRIPE_PRICE_ID_TEAM: process.env.STRIPE_PRICE_ID_TEAM || '',
-        STRIPE_PRICE_ID_ENTERPRISE:
-          process.env.STRIPE_PRICE_ID_ENTERPRISE || '',
         SES_DOMAIN: sesDomain,
         SES_FROM_EMAIL: `noreply@${sesDomain}`,
         SES_TO_EMAIL: process.env.SES_TO_EMAIL || 'team@getaiready.dev',
@@ -285,6 +330,9 @@ export default $config({
         submissions,
         bus,
         alertsTopic,
+        proPrice,
+        teamPrice,
+        enterprisePrice,
       ],
       permissions: [
         {
