@@ -107,12 +107,17 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
 
         const isCorrectPassword = credentials?.password === adminPassword;
 
-        // Hard-coded restriction to specific admin email
+        // Use the first email from ADMIN_EMAILS or a default for local dev
+        const adminEmails = process.env.ADMIN_EMAILS
+          ? process.env.ADMIN_EMAILS.split(',').map((e) => e.trim())
+          : ['admin@example.com'];
+        const primaryAdminEmail = adminEmails[0];
+
         if (isCorrectPassword) {
           return {
             id: 'admin-001',
-            name: 'Cao Peng',
-            email: 'caopengau@gmail.com',
+            name: 'ClawMore Admin',
+            email: primaryAdminEmail,
           };
         }
         return null;
@@ -132,11 +137,19 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
     },
     authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user;
-      const isAdminEmail = auth?.user?.email === 'caopengau@gmail.com';
-      const isOnAdmin = nextUrl.pathname.startsWith('/admin');
 
-      if (isOnAdmin) {
-        // Must be logged in AND have the specific admin email
+      const adminEmails = process.env.ADMIN_EMAILS
+        ? process.env.ADMIN_EMAILS.split(',').map((e) => e.trim())
+        : ['caopengau@gmail.com', 'admin@example.com']; // Fallbacks for existing flow
+
+      const userEmail = auth?.user?.email || '';
+      const isAdminEmail = adminEmails.includes(userEmail);
+
+      const isOnAdmin = nextUrl.pathname.startsWith('/admin');
+      const isOnAdminLogin = nextUrl.pathname === '/admin/login';
+
+      if (isOnAdmin && !isOnAdminLogin) {
+        // Must be logged in AND have an admin email
         if (isLoggedIn && isAdminEmail) return true;
         return false;
       }
@@ -144,6 +157,6 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
     },
   },
   pages: {
-    signIn: '/admin/login',
+    signIn: '/login',
   },
 });

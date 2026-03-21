@@ -19,5 +19,18 @@ export default async function DashboardPage() {
     mutationCount: 12,
   };
 
-  return <DashboardClient user={session.user} status={statusData} />;
+  const adminEmails = process.env.ADMIN_EMAILS
+    ? process.env.ADMIN_EMAILS.split(',').map((e) => e.trim())
+    : ['admin@example.com'];
+  const isAdmin = session?.user?.email
+    ? adminEmails.includes(session.user.email)
+    : false;
+
+  return (
+    <DashboardClient
+      user={session.user}
+      status={statusData}
+      isAdmin={isAdmin}
+    />
+  );
 }
