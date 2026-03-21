@@ -1,13 +1,16 @@
-import { defineConfig } from 'vitest/config';
+import { defineConfig, mergeConfig } from 'vitest/config';
 import { createAireadyVitestAliases } from '../../vitest-aliases';
+import baseConfig from '../../vitest.base.config';
 
-export default defineConfig({
-  test: {
-    globals: true,
-    environment: 'node',
-    alias: createAireadyVitestAliases(__dirname, {
-      packagesRootRelative: '..',
-      useIndexEntrypoints: true,
-    }),
-  },
-});
+export default defineConfig(
+  mergeConfig(baseConfig, {
+    test: {
+      globals: true,
+      environment: 'node',
+      alias: createAireadyVitestAliases(__dirname, {
+        packagesRootRelative: '..',
+        useIndexEntrypoints: true,
+      }),
+    },
+  })
+);
