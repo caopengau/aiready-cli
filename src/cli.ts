@@ -104,7 +104,7 @@ program
   .option('--exclude <patterns>', 'File patterns to exclude (comma-separated)')
   .option('-o, --output <format>', 'Output format: console, json', 'console')
   .option('--output-file <path>', 'Output file path (for json)')
-  .option('--score', 'Calculate and display AI Readiness Score (0-100)', true)
+  .option('--score', 'Calculate and display AI Readiness Score (0-100)')
   .option('--no-score', 'Disable calculating AI Readiness Score')
   .option('--weights <weights>', 'Custom scoring weights')
   .option('--threshold <score>', 'Fail CI/CD if score below threshold (0-100)')
@@ -163,7 +163,7 @@ program
   .option('--exclude <patterns>', 'File patterns to exclude (comma-separated)')
   .option('-o, --output <format>', 'Output format: console, json', 'console')
   .option('--output-file <path>', 'Output file path (for json)')
-  .option('--score', 'Calculate and display AI Readiness Score (0-100)', true)
+  .option('--score', 'Calculate and display AI Readiness Score (0-100)')
   .option('--no-score', 'Disable calculating AI Readiness Score')
   .addHelpText('after', PATTERNS_HELP_TEXT)
   .action(async (directory, options) => {
