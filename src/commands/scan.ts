@@ -27,7 +27,6 @@ import { uploadAction } from './upload';
 import {
   type ScanOptions,
   getProfileTools,
-  getDefaultTools,
   createProgressCallback,
 } from './scan-helpers';
 
