@@ -16,6 +16,8 @@ vi.mock('@aiready/core', () => ({
     ...defaults,
     ...config,
   })),
+  getReportTimestamp: vi.fn().mockReturnValue('20260322-230000'),
+  findLatestReport: vi.fn(),
 }));
 
 vi.mock('fs', () => ({
@@ -26,7 +28,7 @@ vi.mock('fs', () => ({
 describe('CLI Helpers', () => {
   it('should generate a valid timestamp', () => {
     const ts = getReportTimestamp();
-    expect(ts).toMatch(/^\d{8}-\d{6}$/);
+    expect(ts).toBe('20260322-230000');
   });
 
   it('should truncate arrays correctly', () => {

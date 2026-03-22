@@ -9,7 +9,11 @@ import { loadConfig, mergeConfigWithDefaults } from '@aiready/core';
 import type { ToolScoringOutput } from '@aiready/core';
 
 // Re-export helpers from core for deduplication
-export { findLatestReport, getReportTimestamp } from '@aiready/core';
+export {
+  findLatestReport,
+  getReportTimestamp,
+  handleJSONOutput,
+} from '@aiready/core';
 
 /**
  * Warn if graph caps may be exceeded for visualization.

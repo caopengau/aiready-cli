@@ -1,6 +1,6 @@
 {
   "name": "@aiready/cli",
-  "version": "0.14.22",
+  "version": "0.14.23",
   "description": "Assess and improve your codebase's AI-readiness. Get an AI Readiness Score (0-100) and detect semantic duplicates, context fragmentation, and naming inconsistencies.",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",

@@ -7,12 +7,13 @@ vi.mock('@aiready/core', async () => {
   const actual = await vi.importActual('@aiready/core');
   return {
     ...actual,
-    loadMergedConfig: vi.fn(),
-    handleJSONOutput: vi.fn(),
+    prepareActionConfig: vi.fn(),
+    handleStandardJSONOutput: vi.fn(),
     handleCLIError: vi.fn(),
     getElapsedTime: vi.fn().mockReturnValue('1.0'),
     resolveOutputPath: vi.fn().mockReturnValue('report.json'),
     formatToolScore: vi.fn().mockReturnValue('Score: 80'),
+    resolveOutputFormat: vi.fn().mockReturnValue({ format: 'console' }),
   };
 });
 
@@ -58,9 +59,13 @@ describe('Consistency CLI Action', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-    vi.mocked(core.loadMergedConfig).mockResolvedValue({
-      output: { format: 'console' },
-      rootDir: '/test',
+    vi.mocked(core.prepareActionConfig).mockResolvedValue({
+      resolvedDir: '/test',
+      finalOptions: {},
+    } as any);
+    vi.mocked(core.resolveOutputFormat).mockReturnValue({
+      format: 'console',
+      file: undefined,
     });
   });
 
@@ -74,18 +79,18 @@ describe('Consistency CLI Action', () => {
   });
 
   it('supports JSON output', async () => {
-    vi.mocked(core.loadMergedConfig).mockResolvedValue({
-      output: { format: 'json' },
-      rootDir: '/test',
+    vi.mocked(core.resolveOutputFormat).mockReturnValue({
+      format: 'json',
+      file: undefined,
     });
     await consistencyAction('.', {});
-    expect(core.handleJSONOutput).toHaveBeenCalled();
+    expect(core.handleStandardJSONOutput).toHaveBeenCalled();
   });
 
   it('supports Markdown output', async () => {
-    vi.mocked(core.loadMergedConfig).mockResolvedValue({
-      output: { format: 'markdown' },
-      rootDir: '/test',
+    vi.mocked(core.resolveOutputFormat).mockReturnValue({
+      format: 'markdown',
+      file: undefined,
     });
     await consistencyAction('.', {});
     expect(fs.writeFileSync).toHaveBeenCalled();
