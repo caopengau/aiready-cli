@@ -1,12 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import {
-  FileIcon,
-  InfoIcon,
-  PlayIcon,
-  SettingsIcon,
-} from '@/components/Icons';
+import { FileIcon, InfoIcon, PlayIcon, SettingsIcon } from '@/components/Icons';
 import {
   scoreColor,
   scoreBg,

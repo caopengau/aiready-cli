@@ -1,10 +1,6 @@
 import { auth } from '@/app/api/auth/[...nextauth]/route';
 import { redirect, notFound } from 'next/navigation';
-import {
-  getRepository,
-  listUserTeams,
-  listUserRepositories,
-} from '@/lib/db';
+import { getRepository, listUserTeams, listUserRepositories } from '@/lib/db';
 import RepoDetailClient from './RepoDetailClient';
 
 interface Props {

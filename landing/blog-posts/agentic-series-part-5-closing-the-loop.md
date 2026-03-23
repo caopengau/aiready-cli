@@ -24,14 +24,14 @@ The agent doesn't just push code and pray. It runs a local synthesis check to en
 
 ```typescript
 // Synthesizing JIT Concurrency Scaling...
-const api = new sst.aws.ApiGatewayV2("MyApi");
-api.route("POST /submit", {
-  handler: "api/handler.handler",
+const api = new sst.aws.ApiGatewayV2('MyApi');
+api.route('POST /submit', {
+  handler: 'api/handler.handler',
   transform: {
     function: {
-      reservedConcurrency: 100 // Mutated from 10 via Reflector SCR
-    }
-  }
+      reservedConcurrency: 100, // Mutated from 10 via Reflector SCR
+    },
+  },
 });
 // synthesis status: VALIDATED_OK
 // executing: sst deploy --stage production

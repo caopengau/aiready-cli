@@ -30,7 +30,12 @@ export const RemediationSwarm = {
       const githubTools = await githubAdapter.getMastraTools();
       const fsTools = await fsAdapter.getMastraTools();
 
-      // 2. Create the Agent with MCP Tools
+      // 2. Resolve Model and API Key
+      const model = config.model || 'anthropic/MiniMax-M2.7';
+
+      console.log(`[RemediationSwarm] Using model: ${model}`);
+
+      // 3. Create the Agent with MCP Tools
       const agent = new Agent({
         id: 'refactor-agent-mcp',
         name: 'Refactor Agent (MCP Powered)',
@@ -62,7 +67,7 @@ export const RemediationSwarm = {
             "explanation": "Brief explanation of changes"
           }
         `,
-        model: 'openai/gpt-5.4-mini',
+        model,
         tools: {
           ...githubTools,
           ...fsTools,

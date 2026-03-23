@@ -8,6 +8,8 @@ coverage
 .turbo
 .next
 .cache
+.sst
+.open-next
 
 # Package files
 pnpm-lock.yaml

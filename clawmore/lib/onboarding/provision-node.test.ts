@@ -75,6 +75,7 @@ describe('ProvisioningOrchestrator', () => {
       userName: 'Test User',
       repoName: 'test-repo',
       githubToken: 'fake-token',
+      coEvolutionOptIn: true,
     };
 
     const result = await orchestrator.provisionNode(options);

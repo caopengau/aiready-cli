@@ -1,4 +1,3 @@
-
 export function ScoringSection() {
   return (
     <section id="scoring" className="mb-16">

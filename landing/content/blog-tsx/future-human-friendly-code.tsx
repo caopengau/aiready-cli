@@ -112,7 +112,8 @@ const Post = () => (
     <h2>A Vision for the Future</h2>
 
     <p>
-      The future of software isn't "No Code." It’s <strong>High-Context Code</strong>.
+      The future of software isn't "No Code." It’s{' '}
+      <strong>High-Context Code</strong>.
     </p>
 
     <p>
@@ -120,8 +121,8 @@ const Post = () => (
       most lines of code. They will be the ones who maintain the leanest,
       highest-context repositories. They will be the teams whose codebases are
       so "human-friendly" (and thus AI-friendly) that their AI assistants can
-      operate with 99% accuracy because they are never confused by
-      fragmentation or duplicates.
+      operate with 99% accuracy because they are never confused by fragmentation
+      or duplicates.
     </p>
 
     <p>
@@ -147,7 +148,10 @@ const Post = () => (
       </li>
       <li>
         <strong>Contribute:</strong> Join us on{' '}
-        <a href="https://github.com/caopengau/aiready-cli" className="text-blue-500 hover:underline">
+        <a
+          href="https://github.com/caopengau/aiready-cli"
+          className="text-blue-500 hover:underline"
+        >
           GitHub
         </a>
         .
@@ -228,7 +232,9 @@ const Post = () => (
         </a>
       </li>
       <li>
-        <strong>Part 7: The Future is Human-Friendly Code ← You are here</strong>
+        <strong>
+          Part 7: The Future is Human-Friendly Code ← You are here
+        </strong>
       </li>
     </ul>
   </>

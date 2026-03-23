@@ -47,7 +47,7 @@ export async function createPlatformSubscriptionSession(
     customer_email: customerId ? undefined : userEmail,
     payment_method_types: ['card'],
     line_items: [
-      priceId 
+      priceId
         ? { price: priceId, quantity: 1 }
         : {
             price_data: {
@@ -148,7 +148,7 @@ export async function createFuelPackCheckout(
     customer: customerId,
     payment_method_types: ['card'],
     line_items: [
-      priceId 
+      priceId
         ? { price: priceId, quantity: 1 }
         : {
             price_data: {
@@ -171,4 +171,3 @@ export async function createFuelPackCheckout(
     },
   });
 }
-

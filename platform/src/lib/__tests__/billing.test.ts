@@ -14,22 +14,18 @@ vi.mock('stripe', () => {
       return {
         checkout: {
           sessions: {
-            create: vi
-              .fn()
-              .mockResolvedValue({
-                id: 'sess_123',
-                url: 'https://checkout.stripe.com/p/123',
-              }),
+            create: vi.fn().mockResolvedValue({
+              id: 'sess_123',
+              url: 'https://checkout.stripe.com/p/123',
+            }),
           },
         },
         billingPortal: {
           sessions: {
-            create: vi
-              .fn()
-              .mockResolvedValue({
-                id: 'bps_123',
-                url: 'https://billing.stripe.com/p/123',
-              }),
+            create: vi.fn().mockResolvedValue({
+              id: 'bps_123',
+              url: 'https://billing.stripe.com/p/123',
+            }),
           },
         },
       };

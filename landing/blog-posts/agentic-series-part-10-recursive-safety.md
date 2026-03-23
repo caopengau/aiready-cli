@@ -24,7 +24,7 @@ Every mutation event is tracked by a global limiter. The Recursion Guard monitor
       "Effect": "Deny",
       "Action": ["rds:DeleteDBInstance", "s3:DeleteBucket"],
       "Resource": "*",
-      "Condition": {"Bool": {"aws:MultiFactorAuthPresent": "false"}}
+      "Condition": { "Bool": { "aws:MultiFactorAuthPresent": "false" } }
     }
   ]
 }

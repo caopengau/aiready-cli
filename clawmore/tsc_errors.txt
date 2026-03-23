@@ -1,0 +1,5 @@
+functions/create-managed-account.test.ts(26,3): error TS2304: Cannot find name 'afterEach'.
+functions/report-mutation-tax.test.ts(42,3): error TS2304: Cannot find name 'afterEach'.
+lib/billing.test.ts(43,3): error TS2304: Cannot find name 'afterEach'.
+lib/onboarding/provision-node.test.ts(80,53): error TS2345: Argument of type '{ userEmail: string; userName: string; repoName: string; githubToken: string; }' is not assignable to parameter of type 'ProvisioningOptions'.
+  Property 'coEvolutionOptIn' is missing in type '{ userEmail: string; userName: string; repoName: string; githubToken: string; }' but required in type 'ProvisioningOptions'.
