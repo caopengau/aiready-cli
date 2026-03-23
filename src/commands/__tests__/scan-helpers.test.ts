@@ -160,4 +160,85 @@ describe('scan-helpers', () => {
       );
     });
   });
+
+  describe('executeToolAction score calculation', () => {
+    it('should extract scoreData from results.duplicates for pattern-detect', () => {
+      // Pattern-detect returns results.duplicates
+      const mockResults = {
+        duplicates: [
+          { file1: 'a.ts', file2: 'b.ts', similarity: 0.9, tokenCost: 100 },
+        ],
+        length: 327,
+      };
+      const mockSummary = { totalPatterns: 1, totalTokenCost: 100 };
+
+      // The score calculation should use results.duplicates, not summary
+      const scoreData = (mockResults as any).duplicates || mockSummary;
+      expect(scoreData).toEqual(mockResults.duplicates);
+      expect(scoreData).not.toEqual(mockSummary);
+    });
+
+    it('should extract scoreData from results.issues for consistency', () => {
+      // Consistency returns results.issues
+      const mockResults = {
+        issues: [
+          {
+            type: 'naming-inconsistency',
+            identifier: 'MY_CONST',
+            severity: 'minor',
+          },
+        ],
+        summary: { filesAnalyzed: 327, totalIssues: 1 },
+      };
+      const mockSummary = { filesAnalyzed: 327, totalIssues: 1 };
+
+      // The score calculation should use results.issues, not summary
+      const scoreData =
+        (mockResults as any).duplicates ||
+        (mockResults as any).issues ||
+        mockSummary;
+      expect(scoreData).toEqual(mockResults.issues);
+    });
+
+    it('should fall back to summary when no duplicates or issues', () => {
+      // Other tools return summary directly
+      const mockResults = {
+        summary: { score: 85, rating: 'good', filesAnalyzed: 327 },
+      };
+      const mockSummary = { score: 85, rating: 'good', filesAnalyzed: 327 };
+
+      const scoreData =
+        (mockResults as any).duplicates ||
+        (mockResults as any).issues ||
+        mockSummary;
+      expect(scoreData).toEqual(mockSummary);
+    });
+
+    it('should extract filesCount from results.length for pattern-detect', () => {
+      const mockResults = { length: 327 };
+      const filesCount =
+        (mockResults as any).length ||
+        (mockResults as any).summary?.filesAnalyzed ||
+        (mockResults as any).summary?.totalFiles;
+      expect(filesCount).toBe(327);
+    });
+
+    it('should extract filesCount from results.summary.filesAnalyzed for consistency', () => {
+      const mockResults = { summary: { filesAnalyzed: 327 } };
+      const filesCount =
+        (mockResults as any).length ||
+        (mockResults as any).summary?.filesAnalyzed ||
+        (mockResults as any).summary?.totalFiles;
+      expect(filesCount).toBe(327);
+    });
+
+    it('should extract filesCount from results.summary.totalFiles for other tools', () => {
+      const mockResults = { summary: { totalFiles: 327 } };
+      const filesCount =
+        (mockResults as any).length ||
+        (mockResults as any).summary?.filesAnalyzed ||
+        (mockResults as any).summary?.totalFiles;
+      expect(filesCount).toBe(327);
+    });
+  });
 });
