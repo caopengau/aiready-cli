@@ -117,8 +117,17 @@ export async function executeToolAction<
     let toolScore: ToolScoringOutput | undefined;
     if (options.score && calculateScore) {
       // Some tools like pattern-detect need extra data from results
-      const scoreData = (results as any).duplicates || summary;
-      toolScore = calculateScore(scoreData, (results as any).length);
+      // Different tools have different signatures:
+      // - pattern-detect: calculateScore(duplicates, totalFilesAnalyzed)
+      // - consistency: calculateScore(issues, totalFilesAnalyzed)
+      // - others: calculateScore(summary)
+      const resultsAny = results as any;
+      const scoreData = resultsAny.duplicates || resultsAny.issues || summary;
+      const filesCount =
+        resultsAny.length ||
+        resultsAny.summary?.filesAnalyzed ||
+        resultsAny.summary?.totalFiles;
+      toolScore = calculateScore(scoreData, filesCount);
     }
 
     // 5. Handle output
