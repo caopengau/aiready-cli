@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { docDriftAction } from '../doc-drift';
+import { docDriftAction } from '..';
 
 vi.mock('@aiready/doc-drift', () => ({
   analyzeDocDrift: vi.fn().mockResolvedValue({

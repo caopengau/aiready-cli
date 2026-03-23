@@ -12,7 +12,11 @@ export {
   VISUALIZE_HELP_TEXT,
   VISUALISE_HELP_TEXT,
 } from './visualize';
-export { aiSignalClarityAction } from './ai-signal-clarity';
+export {
+  aiSignalClarityAction,
+  depsHealthAction,
+  docDriftAction,
+} from './shared/standard-tool-actions';
 export { agentGroundingAction } from './agent-grounding';
 export { testabilityAction } from './testability';
 export { changeAmplificationAction } from './change-amplification';

@@ -15,7 +15,7 @@ import {
   handleStandardJSONOutput,
 } from '@aiready/core';
 import type { ToolScoringOutput } from '@aiready/core';
-import { getReportTimestamp, generateMarkdownReport } from '../utils/helpers';
+import { getReportTimestamp, generateMarkdownReport } from '../utils';
 
 interface ConsistencyOptions {
   naming?: boolean;

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { aiSignalClarityAction } from '../ai-signal-clarity';
+import { aiSignalClarityAction } from '..';
 
 vi.mock('@aiready/ai-signal-clarity', () => ({
   analyzeAiSignalClarity: vi.fn().mockResolvedValue({

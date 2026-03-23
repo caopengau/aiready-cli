@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { depsHealthAction } from '../deps-health';
+import { depsHealthAction } from '..';
 
 vi.mock('@aiready/deps', () => ({
   analyzeDeps: vi.fn().mockResolvedValue({

@@ -1,12 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { changeAmplificationAction } from '../change-amplification';
-import { agentGroundingAction } from '../agent-grounding';
-import { aiSignalClarityAction } from '../ai-signal-clarity';
-import { docDriftAction } from '../doc-drift';
-import { testabilityAction } from '../testability';
-import { depsHealthAction } from '../deps-health';
-import { patternsAction } from '../patterns';
-import { contextAction } from '../context';
+import {
+  changeAmplificationAction,
+  agentGroundingAction,
+  aiSignalClarityAction,
+  docDriftAction,
+  testabilityAction,
+  depsHealthAction,
+  patternsAction,
+  contextAction,
+} from '..';
 
 vi.mock('@aiready/core', async () => {
   const actual = await vi.importActual('@aiready/core');
