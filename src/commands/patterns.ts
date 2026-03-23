@@ -1,128 +1,60 @@
-/**
- * Patterns command - Detect duplicate code patterns that confuse AI models
- */
-
 import chalk from 'chalk';
+import { printTerminalHeader } from '@aiready/core';
+import { executeToolAction, BaseCommandOptions } from './scan-helpers';
 import {
-  handleCLIError,
-  getElapsedTime,
-  formatToolScore,
-  printTerminalHeader,
-  getTerminalDivider,
-  prepareActionConfig,
-  resolveOutputFormat,
-  formatStandardReport,
-  handleStandardJSONOutput,
-} from '@aiready/core';
-import type { ToolScoringOutput } from '@aiready/core';
+  renderSubSection,
+  renderToolScoreFooter,
+} from '../utils/terminal-renderers';
 
-interface PatternsOptions {
+interface PatternsOptions extends BaseCommandOptions {
   similarity?: string;
   minLines?: string;
   maxCandidates?: string;
   minSharedTokens?: string;
   fullScan?: boolean;
-  include?: string;
-  exclude?: string;
-  output?: string;
-  outputFile?: string;
-  score?: boolean;
 }
 
 export async function patternsAction(
   directory: string,
   options: PatternsOptions
 ) {
-  console.log(chalk.blue('🔍 Analyzing patterns...\n'));
-
-  const startTime = Date.now();
-
-  try {
-    // Determine if smart defaults should be used
-    const useSmartDefaults = !options.fullScan;
-
-    // Define defaults (only for options not handled by smart defaults)
-    const defaults = {
-      useSmartDefaults,
+  return await executeToolAction(directory, options, {
+    toolName: 'pattern-detect',
+    label: 'Pattern analysis',
+    emoji: '🔍',
+    defaults: {
+      useSmartDefaults: !options.fullScan,
       include: undefined,
       exclude: undefined,
-      output: {
-        format: 'console',
-        file: undefined,
-      },
-    };
-
-    // Set fallback defaults only if smart defaults are disabled
-    if (!useSmartDefaults) {
-      (defaults as any).minSimilarity = 0.4;
-      (defaults as any).minLines = 5;
-    }
-
-    // Load and merge config with CLI options
-    const cliOptions: any = {
-      minSimilarity: options.similarity
-        ? parseFloat(options.similarity)
+      output: { format: 'console', file: undefined },
+      minSimilarity: options.fullScan ? 0.4 : undefined,
+      minLines: options.fullScan ? 5 : undefined,
+    },
+    getCliOptions: (opts) => ({
+      minSimilarity: opts.similarity ? parseFloat(opts.similarity) : undefined,
+      minLines: opts.minLines ? parseInt(opts.minLines) : undefined,
+      maxCandidatesPerBlock: opts.maxCandidates
+        ? parseInt(opts.maxCandidates)
         : undefined,
-      minLines: options.minLines ? parseInt(options.minLines) : undefined,
-      useSmartDefaults,
-      include: options.include?.split(','),
-      exclude: options.exclude?.split(','),
-    };
-
-    // Only include performance tuning options if explicitly specified
-    if (options.maxCandidates) {
-      cliOptions.maxCandidatesPerBlock = parseInt(options.maxCandidates);
-    }
-    if (options.minSharedTokens) {
-      cliOptions.minSharedTokens = parseInt(options.minSharedTokens);
-    }
-
-    const { resolvedDir, finalOptions } = await prepareActionConfig(
-      directory,
-      defaults,
-      cliOptions
-    );
-
-    const { analyzePatterns, generateSummary, calculatePatternScore } =
-      await import('@aiready/pattern-detect');
-
-    const { results, duplicates } = (await analyzePatterns(
-      finalOptions
-    )) as any;
-
-    const elapsedTime = getElapsedTime(startTime);
-    const summary = generateSummary(results);
-
-    // Calculate score if requested
-    let patternScore: ToolScoringOutput | undefined;
-    if (options.score) {
-      patternScore = calculatePatternScore(duplicates, results.length);
-    }
-
-    const { format: outputFormat, file: userOutputFile } = resolveOutputFormat(
-      options,
-      finalOptions
-    );
-
-    if (outputFormat === 'json') {
-      const outputData = formatStandardReport({
-        results,
-        summary,
-        elapsedTime,
-        score: patternScore,
-      });
-
-      handleStandardJSONOutput({
-        outputData,
-        outputFile: userOutputFile,
-        resolvedDir,
-      });
-    } else {
-      // Console output - format to match standalone CLI
+      minSharedTokens: opts.minSharedTokens
+        ? parseInt(opts.minSharedTokens)
+        : undefined,
+    }),
+    importTool: async () => {
+      const { analyzePatterns, generateSummary, calculatePatternScore } =
+        await import('@aiready/pattern-detect');
+      return {
+        analyze: analyzePatterns as any,
+        generateSummary,
+        calculateScore: calculatePatternScore as any,
+      };
+    },
+    renderConsole: ({ results, summary, elapsedTime, score }) => {
+      const duplicates = (results as any).duplicates || [];
       printTerminalHeader('PATTERN ANALYSIS SUMMARY');
 
       console.log(
-        chalk.white(`📁 Files analyzed: ${chalk.bold(results.length)}`)
+        chalk.white(`📁 Files analyzed: ${chalk.bold((results as any).length)}`)
       );
       console.log(
         chalk.yellow(
@@ -138,70 +70,46 @@ export async function patternsAction(
         chalk.gray(`⏱  Analysis time: ${chalk.bold(elapsedTime + 's')}`)
       );
 
-      // Show breakdown by pattern type
       const sortedTypes = Object.entries(summary.patternsByType || {})
-        .filter(([, count]) => count > 0)
+        .filter(([, count]) => (count as number) > 0)
         .sort(([, a], [, b]) => (b as number) - (a as number));
 
       if (sortedTypes.length > 0) {
-        console.log('\n' + getTerminalDivider());
-        console.log(chalk.bold.white('  PATTERNS BY TYPE'));
-        console.log(getTerminalDivider() + '\n');
+        renderSubSection('Patterns By Type');
         sortedTypes.forEach(([type, count]) => {
           console.log(`  ${chalk.white(type.padEnd(15))} ${chalk.bold(count)}`);
         });
       }
 
-      // Show top duplicates
       if (summary.totalPatterns > 0 && duplicates.length > 0) {
-        console.log('\n' + getTerminalDivider());
-        console.log(chalk.bold.white('  TOP DUPLICATE PATTERNS'));
-        console.log(getTerminalDivider() + '\n');
-
-        // Sort by similarity and take top 10
-        const topDuplicates = [...duplicates]
+        renderSubSection('Top Duplicate Patterns');
+        [...duplicates]
           .sort((a, b) => b.similarity - a.similarity)
-          .slice(0, 10);
-
-        topDuplicates.forEach((dup) => {
-          const severity =
-            dup.similarity > 0.95
-              ? 'CRITICAL'
-              : dup.similarity > 0.9
-                ? 'HIGH'
-                : 'MEDIUM';
-          const severityIcon =
-            dup.similarity > 0.95 ? '🔴' : dup.similarity > 0.9 ? '🟡' : '🔵';
-          const file1Name = dup.file1.split('/').pop() || dup.file1;
-          const file2Name = dup.file2.split('/').pop() || dup.file2;
-          console.log(
-            `${severityIcon} ${severity}: ${chalk.bold(file1Name)} ↔ ${chalk.bold(file2Name)}`
-          );
-          console.log(
-            `   Similarity: ${chalk.bold(Math.round(dup.similarity * 100) + '%')} | Wasted: ${chalk.bold(dup.tokenCost.toLocaleString())} tokens each`
-          );
-          console.log(
-            `   Lines: ${chalk.cyan(dup.line1 + '-' + dup.endLine1)} ↔ ${chalk.cyan(dup.line2 + '-' + dup.endLine2)}\n`
-          );
-        });
+          .slice(0, 10)
+          .forEach((dup) => {
+            const isHigh = dup.similarity > 0.9;
+            const icon = dup.similarity > 0.95 ? '🔴' : isHigh ? '🟡' : '🔵';
+            const label =
+              dup.similarity > 0.95 ? 'CRITICAL' : isHigh ? 'HIGH' : 'MEDIUM';
+            console.log(
+              `${icon} ${label}: ${chalk.bold(dup.file1.split('/').pop())} ↔ ${chalk.bold(dup.file2.split('/').pop())}`
+            );
+            console.log(
+              `   Similarity: ${chalk.bold(Math.round(dup.similarity * 100) + '%')} | Wasted: ${chalk.bold(dup.tokenCost.toLocaleString())} tokens each`
+            );
+            console.log(
+              `   Lines: ${chalk.cyan(dup.line1 + '-' + dup.endLine1)} ↔ ${chalk.cyan(dup.line2 + '-' + dup.endLine2)}\n`
+            );
+          });
       } else {
         console.log(
           chalk.green('\n✨ Great! No duplicate patterns detected.\n')
         );
       }
 
-      // Display score if calculated
-      if (patternScore) {
-        console.log(getTerminalDivider());
-        console.log(chalk.bold.white('  AI READINESS SCORE (Patterns)'));
-        console.log(getTerminalDivider() + '\n');
-        console.log(formatToolScore(patternScore));
-        console.log();
-      }
-    }
-  } catch (error) {
-    handleCLIError(error, 'Pattern analysis');
-  }
+      renderToolScoreFooter(score);
+    },
+  });
 }
 
 export const PATTERNS_HELP_TEXT = `

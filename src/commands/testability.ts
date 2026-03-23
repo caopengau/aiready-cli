@@ -1,73 +1,64 @@
-/**
- * Testability command for unified CLI
- */
-
 import chalk from 'chalk';
-import { loadConfig, mergeConfigWithDefaults } from '@aiready/core';
-import type { ToolScoringOutput } from '@aiready/core';
+import { executeToolAction, BaseCommandOptions } from './scan-helpers';
+import {
+  renderToolHeader,
+  renderSafetyRating,
+  renderToolScoreFooter,
+} from '../utils/terminal-renderers';
+
+interface TestabilityOptions extends BaseCommandOptions {
+  minCoverage?: string;
+}
 
 export async function testabilityAction(
   directory: string,
-  options: any
-): Promise<ToolScoringOutput | undefined> {
-  const { analyzeTestability, calculateTestabilityScore } =
-    await import('@aiready/testability');
+  options: TestabilityOptions
+) {
+  return await executeToolAction(directory, options, {
+    toolName: 'testability-index',
+    label: 'Testability analysis',
+    emoji: '🧪',
+    defaults: {
+      minCoverageRatio: 0.3,
+      include: undefined,
+      exclude: undefined,
+      output: { format: 'console', file: undefined },
+    },
+    getCliOptions: (opts) => ({
+      minCoverageRatio: opts.minCoverage
+        ? parseFloat(opts.minCoverage)
+        : undefined,
+    }),
+    importTool: async () => {
+      const tool = await import('@aiready/testability');
+      return {
+        analyze: tool.analyzeTestability as any,
+        generateSummary: (report: any) => report.summary,
+        calculateScore: tool.calculateTestabilityScore as any,
+      };
+    },
+    renderConsole: ({ results, summary, score }) => {
+      renderToolHeader('Testability', '🧪', score?.score || 0, summary.rating);
+      renderSafetyRating(summary.aiChangeSafetyRating);
 
-  const config = await loadConfig(directory);
-  const merged = mergeConfigWithDefaults(config, {
-    minCoverageRatio: 0.3,
+      const rawData = (results as any).rawData || (results as any);
+      console.log(
+        chalk.dim(
+          `     Coverage: ${Math.round(summary.coverageRatio * 100)}%  (${rawData.testFiles} test / ${rawData.sourceFiles} source files)`
+        )
+      );
+
+      if (summary.aiChangeSafetyRating === 'blind-risk') {
+        console.log(
+          chalk.red.bold(
+            '\n     ⚠️  NO TESTS — AI changes to this codebase are completely unverifiable!\n'
+          )
+        );
+      }
+
+      if (score) {
+        renderToolScoreFooter(score);
+      }
+    },
   });
-
-  const report = await analyzeTestability({
-    rootDir: directory,
-    minCoverageRatio: options.minCoverageRatio ?? merged.minCoverageRatio,
-    include: options.include,
-    exclude: options.exclude,
-  });
-
-  const scoring = calculateTestabilityScore(report);
-
-  if (options.output === 'json') {
-    return scoring;
-  }
-
-  const safetyIcons: Record<string, string> = {
-    safe: '✅',
-    'moderate-risk': '⚠️ ',
-    'high-risk': '🔴',
-    'blind-risk': '💀',
-  };
-  const safetyColors: Record<string, (s: string) => string> = {
-    safe: chalk.green,
-    'moderate-risk': chalk.yellow,
-    'high-risk': chalk.red,
-    'blind-risk': chalk.bgRed.white,
-  };
-
-  const safety = report.summary.aiChangeSafetyRating;
-  const icon = safetyIcons[safety] ?? '❓';
-  const color = safetyColors[safety] ?? chalk.white;
-
-  console.log(
-    `  🧪 Testability:         ${chalk.bold(scoring.score + '/100')} (${report.summary.rating})`
-  );
-  console.log(
-    `     AI Change Safety:  ${color(`${icon} ${safety.toUpperCase()}`)}`
-  );
-  console.log(
-    chalk.dim(
-      `     Coverage: ${Math.round(report.summary.coverageRatio * 100)}%  (${report.rawData.testFiles} test / ${report.rawData.sourceFiles} source files)`
-    )
-  );
-
-  // Critical blind-risk banner in the unified output
-  if (safety === 'blind-risk') {
-    console.log(
-      chalk.red.bold(
-        '\n     ⚠️  NO TESTS — AI changes to this codebase are completely unverifiable!\n'
-      )
-    );
-  }
-
-  return scoring;
 }

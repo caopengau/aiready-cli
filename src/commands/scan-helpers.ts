@@ -3,7 +3,16 @@
  */
 
 import chalk from 'chalk';
-import { ToolName } from '@aiready/core';
+import {
+  handleCLIError,
+  getElapsedTime,
+  prepareActionConfig,
+  resolveOutputFormat,
+  formatStandardReport,
+  handleStandardJSONOutput,
+  ToolScoringOutput,
+  ToolName,
+} from '@aiready/core';
 
 export interface ScanOptions {
   tools?: string;
@@ -23,6 +32,130 @@ export interface ScanOptions {
   apiKey?: string;
   upload?: boolean;
   server?: string;
+}
+
+/**
+ * Common options for all tool-specific commands
+ */
+export interface BaseCommandOptions {
+  include?: string;
+  exclude?: string;
+  output?: string;
+  outputFile?: string;
+  score?: boolean;
+}
+
+/**
+ * Configuration for the generic tool action
+ */
+export interface ToolActionConfig<TResults, TSummary, TOptions> {
+  toolName: string;
+  label: string;
+  emoji: string;
+  defaults: TOptions;
+  getCliOptions: (options: any) => Partial<TOptions>;
+  importTool: () => Promise<{
+    analyze: (options: TOptions) => Promise<TResults>;
+    generateSummary: (results: TResults) => TSummary;
+    calculateScore?: (data: any, resultsCount?: number) => ToolScoringOutput;
+  }>;
+  renderConsole: (data: {
+    results: TResults;
+    summary: TSummary;
+    elapsedTime: string;
+    score?: ToolScoringOutput;
+    finalOptions: TOptions;
+  }) => void;
+  // Hook for tool-specific extra steps (like smart defaults)
+  preAnalyze?: (
+    resolvedDir: string,
+    baseOptions: TOptions
+  ) => Promise<TOptions>;
+}
+
+/**
+ * Generic tool action runner to eliminate boilerplate duplication
+ */
+export async function executeToolAction<
+  TResults,
+  TSummary,
+  TOptions extends Record<string, any>,
+>(
+  directory: string,
+  options: BaseCommandOptions & any,
+  config: ToolActionConfig<TResults, TSummary, TOptions>
+) {
+  console.log(chalk.blue(`${config.emoji} ${config.label}...\n`));
+
+  const startTime = Date.now();
+
+  try {
+    // 1. Prepare config
+    const { resolvedDir, finalOptions: baseOptions } =
+      await prepareActionConfig(
+        directory,
+        config.defaults as any,
+        config.getCliOptions(options)
+      );
+
+    let finalOptions = baseOptions as unknown as TOptions;
+
+    // 2. Pre-analyze hook (e.g. for smart defaults)
+    if (config.preAnalyze) {
+      finalOptions = await config.preAnalyze(resolvedDir, finalOptions);
+    }
+
+    // 3. Import and run tool
+    const { analyze, generateSummary, calculateScore } =
+      await config.importTool();
+    const results = await analyze(finalOptions);
+
+    const elapsedTime = getElapsedTime(startTime);
+    const summary = generateSummary(results);
+
+    // 4. Calculate score if requested
+    let toolScore: ToolScoringOutput | undefined;
+    if (options.score && calculateScore) {
+      // Some tools like pattern-detect need extra data from results
+      const scoreData = (results as any).duplicates || summary;
+      toolScore = calculateScore(scoreData, (results as any).length);
+    }
+
+    // 5. Handle output
+    const { format: outputFormat, file: userOutputFile } = resolveOutputFormat(
+      options,
+      finalOptions as any
+    );
+
+    const outputData = formatStandardReport({
+      results,
+      summary,
+      elapsedTime,
+      score: toolScore,
+    });
+
+    if (outputFormat === 'json') {
+      handleStandardJSONOutput({
+        outputData,
+        outputFile: userOutputFile,
+        resolvedDir,
+      });
+    } else {
+      // 6. Console output
+      config.renderConsole({
+        results,
+        summary,
+        elapsedTime,
+        score: toolScore,
+        finalOptions,
+      });
+    }
+
+    return outputData;
+  } catch (error) {
+    handleCLIError(error, config.label);
+    return undefined;
+  }
 }
 
 /**
