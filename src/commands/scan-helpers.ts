@@ -122,7 +122,7 @@ export async function executeToolAction<
       // - consistency: calculateScore(issues, totalFilesAnalyzed)
       // - others: calculateScore(summary)
       const resultsAny = results as any;
-      const scoreData = resultsAny.duplicates || resultsAny.issues || summary;
+      const scoreData = resultsAny.duplicates || resultsAny.issues || results;
       const filesCount =
         resultsAny.length ||
         resultsAny.summary?.filesAnalyzed ||

@@ -82,6 +82,7 @@ describe('Consistency CLI Action', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    vi.mocked(core.formatToolScore).mockReturnValue('Score: 80');
     vi.mocked(core.prepareActionConfig).mockImplementation(
       async (dir: any, defaults: any, cliOpts: any) => {
         return {
