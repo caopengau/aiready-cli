@@ -150,4 +150,46 @@ describe('Scan CLI Action', () => {
     await scanAction('.', {});
     expect(core.handleJSONOutput).toHaveBeenCalled();
   });
+
+  it('fails when score is below threshold from config', async () => {
+    const exitSpy = vi
+      .spyOn(process, 'exit')
+      .mockImplementation((() => {}) as any);
+
+    vi.mocked(core.loadMergedConfig).mockResolvedValue({
+      tools: ['pattern-detect'],
+      threshold: 90, // Higher than the mocked score of 80
+      failOn: 'none', // Disable fail-on to test threshold specifically
+      rootDir: '/test',
+    });
+
+    await scanAction('.', { score: true });
+
+    expect(exitSpy).toHaveBeenCalledWith(1);
+    expect(consoleSpy).toHaveBeenCalledWith(
+      expect.stringContaining('SCAN FAILED: Score 80 < threshold 90')
+    );
+    exitSpy.mockRestore();
+  });
+
+  it('fails when failOn is set in config and issues are found', async () => {
+    const exitSpy = vi
+      .spyOn(process, 'exit')
+      .mockImplementation((() => {}) as any);
+
+    vi.mocked(core.loadMergedConfig).mockResolvedValue({
+      tools: ['pattern-detect'],
+      threshold: 0, // Low threshold to test failOn specifically
+      failOn: 'critical',
+      rootDir: '/test',
+    });
+
+    await scanAction('.', { score: true });
+
+    expect(exitSpy).toHaveBeenCalledWith(1);
+    expect(consoleSpy).toHaveBeenCalledWith(
+      expect.stringContaining('SCAN FAILED: Found 1 critical issues')
+    );
+    exitSpy.mockRestore();
+  });
 });

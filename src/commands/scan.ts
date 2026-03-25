@@ -103,7 +103,13 @@ export async function scanAction(directory: string, options: ScanOptions) {
     await warnIfGraphCapExceeded(outputData, resolvedDir);
 
     // 4. Gatekeeper Logic (Thresholds & CI Failures)
-    await handleGatekeeper(outputData, scoringResult, options, results);
+    await handleGatekeeper(
+      outputData,
+      scoringResult,
+      options,
+      finalOptions,
+      results
+    );
   } catch (error) {
     handleCLIError(error, 'Analysis');
   }
@@ -116,12 +122,15 @@ async function handleGatekeeper(
   outputData: any,
   scoringResult: any,
   options: ScanOptions,
+  finalOptions: any,
   results: any
 ) {
   if (!scoringResult) return;
 
-  const threshold = options.threshold ? parseInt(options.threshold) : undefined;
-  const failOnLevel = options.failOn ?? 'critical';
+  const threshold = options.threshold
+    ? parseInt(options.threshold)
+    : finalOptions.threshold;
+  const failOnLevel = options.failOn ?? finalOptions.failOn ?? 'critical';
   const isCI = options.ci ?? process.env.CI === 'true';
 
   let shouldFail = false;
