@@ -177,6 +177,7 @@ export function getProfileTools(profile: string): string[] | undefined {
         ToolName.AiSignalClarity,
         ToolName.AgentGrounding,
         ToolName.TestabilityIndex,
+        ToolName.ContractEnforcement,
       ];
     case 'cost':
       return [ToolName.PatternDetect, ToolName.ContextAnalyzer];
@@ -187,6 +188,7 @@ export function getProfileTools(profile: string): string[] | undefined {
         ToolName.ContextAnalyzer,
         ToolName.PatternDetect,
         ToolName.ChangeAmplification,
+        ToolName.ContractEnforcement,
       ];
     case 'ui':
       return [
@@ -197,7 +199,11 @@ export function getProfileTools(profile: string): string[] | undefined {
         ToolName.AiSignalClarity,
       ];
     case 'security':
-      return [ToolName.NamingConsistency, ToolName.TestabilityIndex];
+      return [
+        ToolName.NamingConsistency,
+        ToolName.TestabilityIndex,
+        ToolName.ContractEnforcement,
+      ];
     case 'onboarding':
       return [
         ToolName.ContextAnalyzer,
