@@ -18,6 +18,7 @@ import {
   VISUALISE_HELP_TEXT,
   changeAmplificationAction,
   testabilityAction,
+  contractEnforcementAction,
   uploadAction,
   UPLOAD_HELP_TEXT,
   remediateAction,
@@ -307,6 +308,25 @@ program
   .action(async (directory, options) => {
     await testabilityAction(directory, options);
   });
+
+// Contract Enforcement command
+program
+  .command('contract')
+  .description('Analyze structural contract enforcement and defensive coding')
+  .argument('[directory]', 'Directory to analyze', '.')
+  .option(
+    '--min-chain-depth <depth>',
+    'Minimum optional chain depth to flag',
+    '3'
+  )
+  .option('--include <patterns>', 'File patterns to include (comma-separated)')
+  .option('--exclude <patterns>', 'File patterns to exclude (comma-separated)')
+  .option('-o, --output <format>', 'Output format: console, json', 'console')
+  .option('--output-file <path>', 'Output file path (for json)')
+  .action(async (directory, options) => {
+    await contractEnforcementAction(directory, options);
+  });
+
 // Upload command - Upload report JSON to platform
 program
   .command('upload')

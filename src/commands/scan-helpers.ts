@@ -226,6 +226,7 @@ export function getDefaultTools(): string[] {
     'doc-drift',
     'dependency-health',
     'change-amplification',
+    'contract-enforcement',
   ];
 }
 

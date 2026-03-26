@@ -19,6 +19,7 @@ export const SCAN_DEFAULTS = {
     'doc-drift',
     'dependency-health',
     'change-amplification',
+    'contract-enforcement',
   ],
   include: undefined,
   exclude: undefined,

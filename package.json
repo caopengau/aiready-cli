@@ -37,6 +37,7 @@
     "@aiready/deps": "workspace:*",
     "@aiready/doc-drift": "workspace:*",
     "@aiready/change-amplification": "workspace:*",
+    "@aiready/contract-enforcement": "workspace:*",
     "@aiready/ai-signal-clarity": "workspace:*",
     "@aiready/pattern-detect": "workspace:*",
     "@aiready/testability": "workspace:*",

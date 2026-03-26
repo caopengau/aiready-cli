@@ -239,6 +239,7 @@ export class UnifiedOrchestrator {
       'doc-drift': ['docDrift'],
       'dependency-health': ['dependencyHealth', 'deps'],
       'change-amplification': ['changeAmplification'],
+      'contract-enforcement': ['contractEnforcement', 'contract'],
     };
 
     for (const [kebabKey, aliases] of Object.entries(keyMappings)) {

@@ -20,6 +20,7 @@ export {
 export { agentGroundingAction } from './agent-grounding';
 export { testabilityAction } from './testability';
 export { changeAmplificationAction } from './change-amplification';
+export { contractEnforcementAction } from './contract-enforcement';
 export { uploadAction, UPLOAD_HELP_TEXT } from './upload';
 export { bugAction, BUG_HELP_TEXT } from './bug';
 export { remediateAction, REMEDIATE_HELP_TEXT } from './remediate';
