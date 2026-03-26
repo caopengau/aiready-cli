@@ -52,6 +52,7 @@ AIReady helps teams **assess, visualize, and prepare** repositories for better A
 - **Documentation Drift** - Track documentation freshness vs code churn
 - **Testability Assessment** - Measure code testability for AI agents
 - **Agent Grounding** - Evaluate how well code aids AI agents
+- **Contract Enforcement** - Measure structural type safety and boundary validation
 - **Interactive Visualization** - Generate force-directed graph visualizations
 - **CI/CD Integration** - Quality gates for AI readiness in your pipeline
 
@@ -75,6 +76,7 @@ aiready scan . --threshold 70
 | `aiready context`     | Analyze context window cost & dependencies |
 | `aiready consistency` | Check naming conventions                   |
 | `aiready testability` | Assess code testability                    |
+| `aiready contract`    | Analyze structural type safety & contracts |
 | `aiready visualize`   | Generate interactive visualizations        |
 | `aiready upload`      | Upload results to AIReady platform         |
 
@@ -166,14 +168,14 @@ Create an `aiready.json` config file:
                       │
                       ▼
          🎛️  @aiready/cli (orchestrator)
-              │     │     │     │     │
-              ▼     ▼     ▼     ▼     ▼
-           [PAT] [CTX] [CON] [DOC] [TEST]
-              │     │     │     │     │
-              └─────┴─────┴─────┴─────┘
-                         │
-                         ▼
-                🏢 @aiready/core
+          │     │     │     │     │     │     │     │     │     │
+          ▼     ▼     ▼     ▼     ▼     ▼     ▼     ▼     ▼     ▼
+        [PAT] [CTX] [CON] [AMP] [DEP] [DOC] [SIG] [AGT] [TST] [CTR]
+          │     │     │     │     │     │     │     │     │     │
+          └─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┘
+                               │
+                               ▼
+                        🏢 @aiready/core
 ```
 
 ## 🤝 Contributing
