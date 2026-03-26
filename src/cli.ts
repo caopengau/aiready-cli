@@ -20,6 +20,8 @@ import {
   testabilityAction,
   uploadAction,
   UPLOAD_HELP_TEXT,
+  remediateAction,
+  REMEDIATE_HELP_TEXT,
   bugAction,
   BUG_HELP_TEXT,
 } from './commands';
@@ -305,7 +307,6 @@ program
   .action(async (directory, options) => {
     await testabilityAction(directory, options);
   });
-
 // Upload command - Upload report JSON to platform
 program
   .command('upload')
@@ -317,6 +318,19 @@ program
   .addHelpText('after', UPLOAD_HELP_TEXT)
   .action(async (file, options) => {
     await uploadAction(file, options);
+  });
+
+// Remediate command - Suggest AI-ready refactors
+program
+  .command('remediate')
+  .description('Suggest AI-ready refactors based on a scan report')
+  .argument('[directory]', 'Directory to remediate', '.')
+  .option('-r, --report <path>', 'AIReady report JSON file')
+  .option('-t, --tool <name>', 'Filter by tool: patterns, context, consistency')
+  .option('--server <url>', 'Custom platform URL')
+  .addHelpText('after', REMEDIATE_HELP_TEXT)
+  .action(async (directory, options) => {
+    await remediateAction(directory, options);
   });
 
 program

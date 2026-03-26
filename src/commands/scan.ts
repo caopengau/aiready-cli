@@ -110,6 +110,30 @@ export async function scanAction(directory: string, options: ScanOptions) {
       finalOptions,
       results
     );
+
+    // 5. Deep Link to Platform
+    const isCI = options.ci ?? process.env.CI === 'true';
+    if (!isCI) {
+      console.log(
+        chalk.dim(
+          '\n──────────────────────────────────────────────────────────────────'
+        )
+      );
+      console.log(chalk.bold('📈 Want to see the full interactive report?'));
+      console.log(
+        chalk.cyan(
+          `   Upload this report to: ${chalk.bold('https://platform.getaiready.dev')}`
+        )
+      );
+      console.log(
+        chalk.dim('   Or run: ') + chalk.white(`aiready upload ${outputPath}`)
+      );
+      console.log(
+        chalk.dim(
+          '──────────────────────────────────────────────────────────────────'
+        )
+      );
+    }
   } catch (error) {
     handleCLIError(error, 'Analysis');
   }
