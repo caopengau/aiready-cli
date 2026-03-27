@@ -1,6 +1,6 @@
 {
   "name": "@aiready/cli",
-  "version": "0.15.4",
+  "version": "0.15.5",
   "description": "The unified CLI for Agentic Readiness. Optimize codebases for AI agents like Cursor, Windsurf, and Claude. Detect semantic duplicates, analyze context fragmentation, and improve agentic leverage.",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
