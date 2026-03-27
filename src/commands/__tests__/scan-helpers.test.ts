@@ -22,6 +22,7 @@ describe('scan-helpers', () => {
         ToolName.AiSignalClarity,
         ToolName.AgentGrounding,
         ToolName.TestabilityIndex,
+        ToolName.ContractEnforcement,
       ]);
     });
 
@@ -41,6 +42,7 @@ describe('scan-helpers', () => {
         ToolName.ContextAnalyzer,
         ToolName.PatternDetect,
         ToolName.ChangeAmplification,
+        ToolName.ContractEnforcement,
       ]);
     });
 
@@ -60,6 +62,7 @@ describe('scan-helpers', () => {
       expect(result).toEqual([
         ToolName.NamingConsistency,
         ToolName.TestabilityIndex,
+        ToolName.ContractEnforcement,
       ]);
     });
 
@@ -78,6 +81,7 @@ describe('scan-helpers', () => {
         ToolName.AiSignalClarity,
         ToolName.AgentGrounding,
         ToolName.TestabilityIndex,
+        ToolName.ContractEnforcement,
       ]);
     });
 
