@@ -31,9 +31,9 @@ export async function contractEnforcementAction(
     importTool: async () => {
       const tool = await import('@aiready/contract-enforcement');
       return {
-        analyze: tool.analyzeContractEnforcement as any,
+        analyze: tool.analyzeContractEnforcement,
         generateSummary: (report: any) => report.summary,
-        calculateScore: tool.calculateContractEnforcementScore as any,
+        calculateScore: tool.calculateContractEnforcementScore,
       };
     },
     renderConsole: ({ results, summary, score }) => {
@@ -44,7 +44,7 @@ export async function contractEnforcementAction(
         summary.rating
       );
 
-      const rawData = (results as any).rawData || (results as any);
+      const rawData = results.rawData || results;
       console.log(
         chalk.dim(
           `     Patterns: ${summary.totalDefensivePatterns}  (${summary.defensiveDensity}/kLOC)  |  ${summary.sourceFiles} files scanned`

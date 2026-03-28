@@ -32,9 +32,9 @@ export async function testabilityAction(
     importTool: async () => {
       const tool = await import('@aiready/testability');
       return {
-        analyze: tool.analyzeTestability as any,
+        analyze: tool.analyzeTestability,
         generateSummary: (report: any) => report.summary,
-        calculateScore: tool.calculateTestabilityScore as any,
+        calculateScore: tool.calculateTestabilityScore,
       };
     },
     renderConsole: ({ results, summary, score }) => {

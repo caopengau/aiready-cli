@@ -101,17 +101,17 @@ export async function patternsAction(
       const { analyzePatterns, generateSummary, calculatePatternScore } =
         await import('@aiready/pattern-detect');
       return {
-        analyze: analyzePatterns as any,
+        analyze: analyzePatterns,
         generateSummary,
-        calculateScore: calculatePatternScore as any,
+        calculateScore: calculatePatternScore,
       };
     },
     renderConsole: ({ results, summary, elapsedTime, score }) => {
-      const duplicates = (results as any).duplicates || [];
+      const duplicates = results.duplicates || [];
       printTerminalHeader('PATTERN ANALYSIS SUMMARY');
 
       console.log(
-        chalk.white(`📁 Files analyzed: ${chalk.bold((results as any).length)}`)
+        chalk.white(`📁 Files analyzed: ${chalk.bold(results.length)}`)
       );
       console.log(
         chalk.yellow(

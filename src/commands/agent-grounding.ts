@@ -35,9 +35,9 @@ export async function agentGroundingAction(
     importTool: async () => {
       const tool = await import('@aiready/agent-grounding');
       return {
-        analyze: tool.analyzeAgentGrounding as any,
+        analyze: tool.analyzeAgentGrounding,
         generateSummary: (report: any) => report.summary,
-        calculateScore: tool.calculateGroundingScore as any,
+        calculateScore: tool.calculateGroundingScore,
       };
     },
     renderConsole: ({ results, summary, score }) => {
@@ -49,7 +49,7 @@ export async function agentGroundingAction(
       );
       renderSafetyRating(summary.rating); // Using rating as safety for simplicity here
 
-      const _rawData = (results as any).rawData || (results as any);
+      const _rawData = results.rawData || results;
       console.log(
         chalk.dim(
           `     Files: ${summary.filesAnalyzed}  Dirs: ${summary.directoriesAnalyzed}`

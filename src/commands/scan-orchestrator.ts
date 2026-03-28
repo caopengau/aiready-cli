@@ -177,13 +177,13 @@ async function handleBusinessImpactMetrics(
 
     printBusinessImpact(roi, unifiedBudget);
 
-    (results.summary as any).businessImpact = {
+    (results.summary as Record<string, unknown>).businessImpact = {
       estimatedMonthlyWaste: roi.monthlySavings,
       potentialSavings: roi.monthlySavings,
       productivityHours: roi.productivityGainHours,
     };
 
-    (scoringResult as any).tokenBudget = unifiedBudget;
-    (scoringResult as any).businessROI = roi;
+    (scoringResult as Record<string, unknown>).tokenBudget = unifiedBudget;
+    (scoringResult as Record<string, unknown>).businessROI = roi;
   }
 }

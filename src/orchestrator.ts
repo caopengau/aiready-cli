@@ -150,7 +150,7 @@ export class UnifiedOrchestrator {
         [...GLOBAL_INFRA_OPTIONS, ...COMMON_FINE_TUNING_OPTIONS].forEach(
           (key) => {
             if (key in options && key !== 'toolConfigs' && key !== 'tools') {
-              toolOptions[key] = (options as any)[key];
+              toolOptions[key] = (options as Record<string, unknown>)[key];
             }
           }
         );
@@ -161,9 +161,9 @@ export class UnifiedOrchestrator {
           options.tools &&
           !Array.isArray(options.tools) &&
           typeof options.tools === 'object' &&
-          (options.tools as any)[provider.id]
+          (options.tools as Record<string, Record<string, unknown>>)[provider.id]
         ) {
-          Object.assign(toolOptions, (options.tools as any)[provider.id]);
+          Object.assign(toolOptions, (options.tools as Record<string, Record<string, unknown>>)[provider.id]);
         }
 
         toolOptions.onProgress = (

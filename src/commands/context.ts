@@ -71,9 +71,9 @@ export async function contextAction(
       const { analyzeContext, generateSummary, calculateContextScore } =
         await import('@aiready/context-analyzer');
       return {
-        analyze: analyzeContext as any,
-        generateSummary,
-        calculateScore: calculateContextScore as any,
+        analyze: analyzeContext,
+        generateSummary: generateContextSummary,
+        calculateScore: calculateContextScore,
       };
     },
     renderConsole: ({ results: _results, summary, elapsedTime, score }) => {

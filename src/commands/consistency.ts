@@ -82,12 +82,12 @@ export async function consistencyAction(
         await import('@aiready/consistency');
       return {
         analyze: async (opts) => {
-          const report = await analyzeConsistency(opts as any);
+          const report = await analyzeConsistency(opts);
           // Return the full report so renderConsole can access summary/results
-          return report as any;
+          return report;
         },
         generateSummary,
-        calculateScore: calculateConsistencyScore as any,
+        calculateScore: calculateConsistencyScore,
       };
     },
     renderConsole: ({ results: report, summary, elapsedTime, score }) => {

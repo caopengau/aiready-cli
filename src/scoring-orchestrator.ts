@@ -43,8 +43,8 @@ export class ScoringOrchestrator {
 
         // Special handling for token budget calculation if not provided by tool
         if (!toolScore.tokenBudget) {
-          if (toolId === ToolName.PatternDetect && (output as any).duplicates) {
-            const wastedTokens = (output as any).duplicates.reduce(
+          if (toolId === ToolName.PatternDetect && (output as { duplicates?: Array<{ tokenCost?: number }> }).duplicates) {
+            const wastedTokens = (output as { duplicates: Array<{ tokenCost?: number }> }).duplicates.reduce(
               (sum: number, d: any) => sum + (d.tokenCost ?? 0),
               0
             );
