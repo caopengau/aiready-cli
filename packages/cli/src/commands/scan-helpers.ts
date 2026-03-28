@@ -115,14 +115,18 @@ export async function executeToolAction<
 
     // 4. Calculate score if requested
     let toolScore: ToolScoringOutput | undefined;
-    if ((options.score || (finalOptions as { score?: boolean }).score) && calculateScore) {
+    if (
+      (options.score || (finalOptions as { score?: boolean }).score) &&
+      calculateScore
+    ) {
       // Some tools like pattern-detect need extra data from results
       // Different tools have different signatures:
       // - pattern-detect: calculateScore(duplicates, totalFilesAnalyzed)
       // - consistency: calculateScore(issues, totalFilesAnalyzed)
       // - others: calculateScore(summary)
-      const resultsAny = results as { summary?: Record<string, unknown>; issues?: unknown[] };
-      const scoreData = resultsAny.duplicates || resultsAny.issues || results;
+      const resultsAny = results as any;
+      const scoreData =
+        resultsAny.duplicates || resultsAny.issues || resultsAny;
       const filesCount =
         resultsAny.length ||
         resultsAny.summary?.filesAnalyzed ||

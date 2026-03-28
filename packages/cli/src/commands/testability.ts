@@ -19,10 +19,10 @@ export async function testabilityAction(
     label: 'Testability analysis',
     emoji: '🧪',
     defaults: {
+      rootDir: '',
       minCoverageRatio: 0.3,
       include: undefined,
       exclude: undefined,
-      output: { format: 'console', file: undefined },
     },
     getCliOptions: (opts) => ({
       minCoverageRatio: opts.minCoverage
@@ -41,7 +41,7 @@ export async function testabilityAction(
       renderToolHeader('Testability', '🧪', score?.score || 0, summary.rating);
       renderSafetyRating(summary.aiChangeSafetyRating);
 
-      const rawData = (results as any).rawData || (results as any);
+      const rawData = results.rawData || results;
       console.log(
         chalk.dim(
           `     Coverage: ${Math.round(summary.coverageRatio * 100)}%  (${rawData.testFiles} test / ${rawData.sourceFiles} source files)`

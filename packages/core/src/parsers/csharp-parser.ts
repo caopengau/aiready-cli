@@ -106,7 +106,7 @@ export class CSharpParser extends BaseLanguageParser {
             start: { line: idx + 1, column: 0 },
             end: { line: idx + 1, column: line.length },
           },
-        } as any);
+        } as unknown);
       }
     });
 
@@ -220,9 +220,16 @@ export class CSharpParser extends BaseLanguageParser {
             const metadata = this.analyzeMetadata(node, code);
             const nodeType = node.type.replace('_declaration', '');
             let exportType: any = 'class';
-            if (nodeType === 'record' || nodeType === 'struct' || nodeType === 'enum') {
+            if (
+              nodeType === 'record' ||
+              nodeType === 'struct' ||
+              nodeType === 'enum'
+            ) {
               exportType = 'class';
-            } else if (nodeType === 'interface' || nodeType === 'interface_declaration') {
+            } else if (
+              nodeType === 'interface' ||
+              nodeType === 'interface_declaration'
+            ) {
               exportType = 'interface';
             }
 
@@ -269,9 +276,7 @@ export class CSharpParser extends BaseLanguageParser {
             const methodItem: any = {
               name: nameNode.text,
               type:
-                node.type === 'method_declaration'
-                  ? 'function'
-                  : 'variable',
+                node.type === 'method_declaration' ? 'function' : 'variable',
               parentClass: currentClass,
               loc: {
                 start: {

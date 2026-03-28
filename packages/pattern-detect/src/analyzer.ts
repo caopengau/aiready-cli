@@ -153,7 +153,8 @@ export async function getSmartDefaults(
       key in userOptions &&
       userOptions[key as keyof PatternDetectOptions] !== undefined
     ) {
-      (result as any)[key] = userOptions[key as keyof PatternDetectOptions];
+      (result as Record<string, unknown>)[key] =
+        userOptions[key as keyof PatternDetectOptions];
     }
   }
 
@@ -170,7 +171,7 @@ function logConfiguration(
   config: PatternDetectOptions,
   estimatedBlocks: number
 ): void {
-  if ((config as any).suppressToolConfig) return;
+  if ((config as { suppressToolConfig?: boolean }).suppressToolConfig) return;
   console.log('📋 Configuration:');
   console.log(`   Repository size: ~${estimatedBlocks} code blocks`);
   console.log(`   Similarity threshold: ${config.minSimilarity}`);

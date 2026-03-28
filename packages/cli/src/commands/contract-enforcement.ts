@@ -1,4 +1,5 @@
 import chalk from 'chalk';
+import { ToolScoringOutput } from '@aiready/core';
 import { executeToolAction, BaseCommandOptions } from './scan-helpers';
 import {
   renderToolHeader,
@@ -18,10 +19,10 @@ export async function contractEnforcementAction(
     label: 'Contract enforcement analysis',
     emoji: '🛡️',
     defaults: {
+      rootDir: '',
       minChainDepth: 3,
       include: undefined,
       exclude: undefined,
-      output: { format: 'console', file: undefined },
     },
     getCliOptions: (opts) => ({
       minChainDepth: opts.minChainDepth
@@ -33,7 +34,35 @@ export async function contractEnforcementAction(
       return {
         analyze: tool.analyzeContractEnforcement,
         generateSummary: (report: any) => report.summary,
-        calculateScore: tool.calculateContractEnforcementScore,
+        calculateScore: (
+          data: any,
+          resultsCount?: number
+        ): ToolScoringOutput => {
+          const result = tool.calculateContractEnforcementScore(
+            data,
+            resultsCount ?? 0,
+            resultsCount ?? 0
+          );
+          return {
+            toolName: 'contract-enforcement',
+            score: result.score,
+            rawMetrics: result.dimensions || {},
+            factors: (result.recommendations || []).map(
+              (rec: string, i: number) => ({
+                name: `Recommendation ${i + 1}`,
+                impact: 0,
+                description: rec,
+              })
+            ),
+            recommendations: (result.recommendations || []).map(
+              (rec: string) => ({
+                action: rec,
+                estimatedImpact: 5,
+                priority: 'medium' as const,
+              })
+            ),
+          };
+        },
       };
     },
     renderConsole: ({ results, summary, score }) => {

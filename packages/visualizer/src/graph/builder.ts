@@ -93,7 +93,11 @@ export class GraphBuilder {
 
     const key = `${source}->${target}`;
     if (!this.edgesSet.has(key)) {
-      this.edges.push({ source, target, type: type as any });
+      this.edges.push({
+        source,
+        target,
+        type: type as 'dependency' | 'similar' | 'shared',
+      });
       this.edgesSet.add(key);
     }
   }

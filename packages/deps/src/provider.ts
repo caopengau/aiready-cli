@@ -29,8 +29,8 @@ export const DepsProvider = createProvider({
     return { rawData: report.rawData };
   },
   score(output) {
-    const summary = output.summary as any;
-    const rawData = (output.metadata as any)?.rawData || {};
+    const summary = output.summary;
+    const rawData = output.metadata?.rawData || {};
     return buildSimpleProviderScore(
       ToolName.DependencyHealth,
       summary,

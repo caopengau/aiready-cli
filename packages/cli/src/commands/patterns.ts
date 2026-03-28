@@ -80,6 +80,7 @@ export async function patternsAction(
     label: 'Pattern analysis',
     emoji: '🔍',
     defaults: {
+      rootDir: '',
       useSmartDefaults: !options.fullScan,
       include: undefined,
       exclude: undefined,
@@ -98,20 +99,26 @@ export async function patternsAction(
         : undefined,
     }),
     importTool: async () => {
-      const { analyzePatterns, generateSummary, calculatePatternScore } =
-        await import('@aiready/pattern-detect');
+      const {
+        analyzePatterns,
+        generateSummary: rawGenerateSummary,
+        calculatePatternScore,
+      } = await import('@aiready/pattern-detect');
       return {
         analyze: analyzePatterns,
-        generateSummary,
-        calculateScore: calculatePatternScore,
+        generateSummary: (results: any) => rawGenerateSummary(results.results),
+        calculateScore: (data: any, resultsCount?: number) =>
+          calculatePatternScore(data, resultsCount ?? 0),
       };
     },
     renderConsole: ({ results, summary, elapsedTime, score }) => {
-      const duplicates = results.duplicates || [];
+      const duplicates = (results as any).duplicates || [];
       printTerminalHeader('PATTERN ANALYSIS SUMMARY');
 
       console.log(
-        chalk.white(`📁 Files analyzed: ${chalk.bold(results.length)}`)
+        chalk.white(
+          `📁 Files analyzed: ${chalk.bold((results as any).files?.length || 0)}`
+        )
       );
       console.log(
         chalk.yellow(

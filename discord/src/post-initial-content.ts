@@ -38,7 +38,7 @@ async function postContent() {
 
     const guild = await client.guilds.fetch(serverId);
     console.log(`✅ Connected to server: ${guild.name}`);
-    
+
     // Fetch all channels
     await guild.channels.fetch();
     console.log(`   Found ${guild.channels.cache.size} channels`);
@@ -94,8 +94,7 @@ async function postContent() {
           },
           {
             name: '8. Have Fun',
-            value:
-              "We're here to learn and build together. Enjoy the journey!",
+            value: "We're here to learn and build together. Enjoy the journey!",
           }
         )
         .setFooter({
@@ -174,8 +173,7 @@ async function postContent() {
     // Post first announcement
     console.log('\n📢 Posting launch announcement...');
     const announcementsChannel = guild.channels.cache.find(
-      (c) =>
-        c?.name === 'announcements' && c.type === ChannelType.GuildText
+      (c) => c?.name === 'announcements' && c.type === ChannelType.GuildText
     );
 
     if (announcementsChannel && 'send' in announcementsChannel) {

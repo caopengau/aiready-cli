@@ -40,17 +40,17 @@ describe('Grid', () => {
       </Grid>
     );
     const grid = screen.getByTestId('grid');
-    expect(grid).toHaveClass('grid-cols-3');
+    expect(grid).toHaveClass('grid-cols-1', 'lg:grid-cols-3');
   });
 
   it('renders with gap', () => {
     render(
-      <Grid gap={4} data-testid="grid">
+      <Grid gap="lg" data-testid="grid">
         <div>Item</div>
       </Grid>
     );
     const grid = screen.getByTestId('grid');
-    expect(grid).toHaveClass('gap-4');
+    expect(grid).toHaveClass('gap-6');
   });
 
   it('applies default grid styling', () => {

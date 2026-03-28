@@ -50,7 +50,7 @@ export function traverseAST(
 
   // Visit children
   for (const key of Object.keys(node)) {
-    const value = (node as any)[key];
+    const value = (node as unknown as Record<string, unknown>)[key];
 
     if (Array.isArray(value)) {
       for (const child of value) {

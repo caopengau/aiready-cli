@@ -81,10 +81,7 @@ export async function analyzeConsistency(
     if (!shouldIncludeSeverity(issue.severity, minSeverity)) continue;
 
     const fileName =
-      issue.fileName ||
-      issue.file ||
-      issue.filePath ||
-      'unknown';
+      issue.fileName || issue.file || issue.filePath || 'unknown';
     if (!fileIssuesMap.has(fileName)) fileIssuesMap.set(fileName, []);
     fileIssuesMap.get(fileName)!.push(issue as unknown as ConsistencyIssue);
   }
@@ -93,13 +90,12 @@ export async function analyzeConsistency(
   for (const issue of patternIssues) {
     if (!shouldIncludeSeverity(issue.severity, minSeverity)) continue;
 
+    const anyIssue = issue as any;
     const fileName =
-      issue.fileName ||
-      issue.file ||
-      issue.filePath ||
-      (Array.isArray(issue.files)
-        ? issue.files[0]
-        : 'unknown');
+      (anyIssue.fileName as string) ||
+      (anyIssue.file as string) ||
+      (anyIssue.filePath as string) ||
+      (Array.isArray(issue.files) ? (issue.files[0] as string) : 'unknown');
     if (!fileIssuesMap.has(fileName)) fileIssuesMap.set(fileName, []);
     fileIssuesMap.get(fileName)!.push(issue as unknown as ConsistencyIssue);
   }

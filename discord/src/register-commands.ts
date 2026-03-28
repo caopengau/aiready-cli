@@ -66,9 +66,12 @@ async function registerCommands() {
     if (serverId) {
       // Register to specific guild (instant)
       console.log(`   Registering to guild: ${serverId}`);
-      await rest.put(Routes.applicationGuildCommands(applicationId!, serverId), {
-        body: commands,
-      });
+      await rest.put(
+        Routes.applicationGuildCommands(applicationId!, serverId),
+        {
+          body: commands,
+        }
+      );
     } else {
       // Register globally (takes ~1 hour)
       console.log('   Registering globally (takes ~1 hour to propagate)');

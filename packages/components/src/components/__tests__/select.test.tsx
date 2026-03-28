@@ -1,67 +1,67 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '../select';
+import { Select } from '../select';
 
 describe('Select', () => {
-  it('renders select trigger', () => {
+  it('renders select element', () => {
     render(
-      <Select>
-        <SelectTrigger data-testid="trigger">
-          <SelectValue placeholder="Select option" />
-        </SelectTrigger>
-      </Select>
+      <Select
+        options={[
+          { value: 'a', label: 'Option A' },
+          { value: 'b', label: 'Option B' },
+        ]}
+        data-testid="select"
+      />
     );
-    expect(screen.getByTestId('trigger')).toBeInTheDocument();
+    expect(screen.getByTestId('select')).toBeInTheDocument();
   });
 
-  it('renders trigger with custom className', () => {
+  it('renders with placeholder', () => {
     render(
-      <Select>
-        <SelectTrigger className="custom-trigger" data-testid="trigger">
-          <SelectValue placeholder="Select" />
-        </SelectTrigger>
-      </Select>
+      <Select
+        options={[{ value: 'a', label: 'Option A' }]}
+        placeholder="Select option"
+        data-testid="select"
+      />
     );
-    expect(screen.getByTestId('trigger')).toHaveClass('custom-trigger');
+    expect(screen.getByText('Select option')).toBeInTheDocument();
   });
 
-  it('trigger has button role', () => {
+  it('renders all options', () => {
     render(
-      <Select>
-        <SelectTrigger data-testid="trigger">
-          <SelectValue placeholder="Select" />
-        </SelectTrigger>
-      </Select>
+      <Select
+        options={[
+          { value: 'a', label: 'Option A' },
+          { value: 'b', label: 'Option B' },
+          { value: 'c', label: 'Option C' },
+        ]}
+        data-testid="select"
+      />
     );
-    expect(screen.getByTestId('trigger')).toHaveAttribute('role', 'combobox');
+    expect(screen.getByText('Option A')).toBeInTheDocument();
+    expect(screen.getByText('Option B')).toBeInTheDocument();
+    expect(screen.getByText('Option C')).toBeInTheDocument();
   });
 
-  it('trigger has default styling', () => {
+  it('applies custom className', () => {
     render(
-      <Select>
-        <SelectTrigger data-testid="trigger">
-          <SelectValue placeholder="Select" />
-        </SelectTrigger>
-      </Select>
+      <Select
+        options={[{ value: 'a', label: 'Option A' }]}
+        className="custom-select"
+        data-testid="select"
+      />
     );
-    const trigger = screen.getByTestId('trigger');
-    expect(trigger).toHaveClass('flex', 'h-10', 'w-full');
+    expect(screen.getByTestId('select')).toHaveClass('custom-select');
   });
 
-  it('SelectTrigger is disabled when disabled prop is true', () => {
+  it('is disabled when disabled prop is true', () => {
     render(
-      <Select disabled>
-        <SelectTrigger data-testid="trigger">
-          <SelectValue placeholder="Select" />
-        </SelectTrigger>
-      </Select>
+      <Select
+        options={[{ value: 'a', label: 'Option A' }]}
+        disabled
+        data-testid="select"
+      />
     );
-    expect(screen.getByTestId('trigger')).toBeDisabled();
+    expect(screen.getByTestId('select')).toBeDisabled();
   });
 });

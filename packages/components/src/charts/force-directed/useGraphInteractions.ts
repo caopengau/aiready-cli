@@ -35,7 +35,7 @@ export function useGraphZoom(
     const svg = d3.select(svgRef.current);
     const g = d3.select(gRef.current);
 
-    const zoom = (d3 as any)
+    const zoom = (d3 as typeof d3)
       .zoom()
       .scaleExtent([0.1, 10])
       .on('zoom', (event: any) => {
@@ -44,7 +44,7 @@ export function useGraphZoom(
         setTransform(event.transform);
       });
 
-    svg.call(zoom);
+    svg.call(zoom as unknown as any);
 
     return () => {
       svg.on('.zoom', null);

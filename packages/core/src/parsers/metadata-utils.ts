@@ -64,8 +64,9 @@ export function analyzeNodeMetadata(
       node.type === 'function_definition' ||
       node.type === 'class_definition'
     ) {
-      const body = node.childForFieldName('body') || 
-                   node.children.find((c) => c.type === 'block');
+      const body =
+        node.childForFieldName('body') ||
+        node.children.find((c) => c.type === 'block');
 
       if (body && body.children.length > 0) {
         const firstStmt = body.children[0];

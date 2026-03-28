@@ -316,8 +316,7 @@ export function calculateOverallScore(
   }
 
   // Determine profile from config or use default
-  const profile =
-    (config?.profile as ScoringProfile) || ScoringProfile.Default;
+  const profile = (config?.profile as ScoringProfile) || ScoringProfile.Default;
 
   const weights = new Map<string, number>();
   for (const [toolName] of toolOutputs.entries()) {
@@ -387,7 +386,8 @@ export function getRatingWithContext(
   modelTier: ModelContextTier = 'standard'
 ): ReadinessRating {
   const threshold = getRecommendedThreshold(fileCount, modelTier);
-  const normalized = score - threshold + SCORING_CONSTANTS.THRESHOLDS.NORMALIZATION_OFFSET;
+  const normalized =
+    score - threshold + SCORING_CONSTANTS.THRESHOLDS.NORMALIZATION_OFFSET;
   return getRating(normalized);
 }
 

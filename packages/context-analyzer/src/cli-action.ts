@@ -40,7 +40,7 @@ export async function contextActionHandler(directory: string, options: any) {
     };
 
     // Load and merge config with CLI options
-    let finalOptions = (await loadMergedConfig(directory, defaults, {
+    let finalOptions = await loadMergedConfig(directory, defaults, {
       maxDepth: options.maxDepth ? parseInt(options.maxDepth) : undefined,
       maxContextBudget: options.maxContext
         ? parseInt(options.maxContext)
@@ -58,7 +58,7 @@ export async function contextActionHandler(directory: string, options: any) {
       include: options.include?.split(','),
       exclude: options.exclude?.split(','),
       maxResults: options.maxResults ? parseInt(options.maxResults) : undefined,
-    })) as any;
+    });
 
     // Interactive setup if requested
     if (options.interactive) {
@@ -66,7 +66,7 @@ export async function contextActionHandler(directory: string, options: any) {
     }
 
     // Run analysis
-    const results = await analyzeContext(finalOptions);
+    const results = await analyzeContext(finalOptions as any);
     const summary = generateSummary(results, finalOptions);
 
     const duration = getElapsedTime(startTime);

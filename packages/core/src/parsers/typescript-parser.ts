@@ -309,8 +309,7 @@ export class TypeScriptParser implements LanguageParser {
           : structNode.body.body;
 
       methodCount = body.filter(
-        (m) =>
-          m.type === 'MethodDefinition' || m.type === 'TSMethodSignature'
+        (m) => m.type === 'MethodDefinition' || m.type === 'TSMethodSignature'
       ).length;
       propertyCount = body.filter(
         (m) =>
@@ -320,9 +319,7 @@ export class TypeScriptParser implements LanguageParser {
       // Extract constructor parameters for classes
       if (structNode.type === 'ClassDeclaration') {
         const constructor = body.find(
-          (m) =>
-            m.type === 'MethodDefinition' &&
-            m.kind === 'constructor'
+          (m) => m.type === 'MethodDefinition' && m.kind === 'constructor'
         ) as TSESTree.MethodDefinition | undefined;
         if (constructor && constructor.value && constructor.value.params) {
           parameters = constructor.value.params
@@ -399,29 +396,24 @@ export class TypeScriptParser implements LanguageParser {
   }
 
   private isLikelyPure(node: TSESTree.Node): boolean {
-    const sn: TSESTree.Node = (node.type === 'ExportNamedDeclaration' && node.declaration)
-      ? node.declaration
-      : node.type === 'ExportDefaultDeclaration'
-        ? (node.declaration as TSESTree.Node)
-        : node;
+    const sn: TSESTree.Node =
+      node.type === 'ExportNamedDeclaration' && node.declaration
+        ? node.declaration
+        : node.type === 'ExportDefaultDeclaration'
+          ? (node.declaration as TSESTree.Node)
+          : node;
 
     if (!sn) return false;
 
     // Constants are likely pure
-    if (
-      sn.type === 'VariableDeclaration' &&
-      sn.kind === 'const'
-    )
-      return true;
+    if (sn.type === 'VariableDeclaration' && sn.kind === 'const') return true;
 
     // For functions, check if the body has obvious side effects
-    if (
-      sn.type === 'FunctionDeclaration' ||
-      sn.type === 'MethodDefinition'
-    ) {
-      const body = sn.type === 'MethodDefinition' 
-        ? (sn.value as TSESTree.FunctionExpression).body
-        : (sn as TSESTree.FunctionDeclaration).body;
+    if (sn.type === 'FunctionDeclaration' || sn.type === 'MethodDefinition') {
+      const body =
+        sn.type === 'MethodDefinition'
+          ? (sn.value as TSESTree.FunctionExpression).body
+          : (sn as TSESTree.FunctionDeclaration).body;
 
       if (body && body.type === 'BlockStatement') {
         const bodyContent = JSON.stringify(body);

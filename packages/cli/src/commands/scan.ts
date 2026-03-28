@@ -72,9 +72,9 @@ export async function scanAction(directory: string, options: ScanOptions) {
 
     // Output persistence
     const outputFormat =
-      options.output ?? finalOptions.output?.format ?? 'console';
+      options.output ?? (finalOptions as any).output?.format ?? 'console';
     const outputPath = resolveOutputPath(
-      options.outputFile ?? finalOptions.output?.file,
+      options.outputFile ?? (finalOptions as any).output?.file,
       `aiready-report-${getReportTimestamp()}.json`,
       resolvedDir
     );

@@ -10,7 +10,11 @@ import {
   SpokeOutputSchema,
 } from '@aiready/core';
 import { calculateContextScore } from './scoring';
-import type { ContextAnalyzerOptions, ContextAnalysisResult } from './types';
+import type {
+  ContextAnalyzerOptions,
+  ContextAnalysisResult,
+  ContextSummary,
+} from './types';
 
 /**
  * Context Analyzer Tool Provider
@@ -58,7 +62,7 @@ export const ContextAnalyzerProvider: ToolProvider = {
   },
 
   score(output: SpokeOutput, options: ScanOptions): ToolScoringOutput {
-    const summary = output.summary;
+    const summary = output.summary as unknown as ContextSummary;
     return calculateContextScore(summary, options.costConfig);
   },
 

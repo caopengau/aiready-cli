@@ -121,7 +121,7 @@ export class AIReadyMcpServer {
             const error = new Error(
               `Tool ${name} not found and failed to load package ${packageName}: ${importError.message}`
             );
-            (error as any).cause = importError;
+            (error as { cause?: unknown }).cause = importError;
             throw error;
           }
         }

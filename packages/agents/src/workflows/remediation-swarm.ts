@@ -442,8 +442,13 @@ Remember: respond with ONLY a JSON object.`;
 
       // Extract reasoning from MiniMax thinking blocks
       let reasoning = '';
-      if ((result as any).raw?.content) {
-        reasoning = (result as any).raw.content
+      const rawContent = (
+        result as unknown as {
+          raw?: { content?: Array<{ type: string; thinking?: string }> };
+        }
+      ).raw?.content;
+      if (rawContent && Array.isArray(rawContent)) {
+        reasoning = rawContent
           .filter((block: any) => block.type === 'thinking')
           .map((block: any) => block.thinking)
           .join('\n\n');

@@ -1,5 +1,5 @@
 import { calculateImportSimilarity, isTestFile } from '@aiready/core';
-import type { ExportInfo } from './types';
+import type { ExportInfo } from '@aiready/core';
 
 /**
  * Calculates a cohesion score (0-1) for a module based on its exports,
@@ -29,7 +29,7 @@ export function calculateEnhancedCohesion(
   if (filePath && isTestFile(filePath)) return 1;
 
   // 1. Domain-based cohesion using entropy
-  const domains = exports.map((e) => e.inferredDomain || 'unknown');
+  const domains = exports.map((e: any) => e.inferredDomain || 'unknown');
   const domainCounts = new Map<string, number>();
   for (const domain of domains)
     domainCounts.set(domain, (domainCounts.get(domain) || 0) + 1);
@@ -63,8 +63,8 @@ export function calculateEnhancedCohesion(
       if (exp1Imports || exp2Imports) {
         anyImportData = true;
         const sim = calculateImportSimilarity(
-          { ...exports[i], imports: exp1Imports || [] } as { name: string; imports: string[] },
-          { ...exports[j], imports: exp2Imports || [] } as { name: string; imports: string[] }
+          { ...exports[i], imports: exp1Imports || [] } as any,
+          { ...exports[j], imports: exp2Imports || [] } as any
         );
         importScoreTotal += sim;
         pairsWithData++;

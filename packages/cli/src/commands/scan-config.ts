@@ -60,25 +60,27 @@ export async function resolveScanConfig(
     resolvedDir,
     SCAN_DEFAULTS,
     cliOverrides
-  )) as any;
+  )) as Record<string, unknown>;
 
   // Apply smart defaults for pattern detection if requested
   const finalOptions = { ...baseOptions };
-  if (
-    baseOptions.tools.includes(ToolName.PatternDetect) ||
-    baseOptions.tools.includes('patterns')
-  ) {
+  const tools = baseOptions.tools as string[] | undefined;
+  if (tools?.includes(ToolName.PatternDetect) || tools?.includes('patterns')) {
     const { getSmartDefaults } = await import('@aiready/pattern-detect');
+    const toolConfigs = finalOptions.toolConfigs as
+      | Record<string, unknown>
+      | undefined;
     const patternSmartDefaults = await getSmartDefaults(
       resolvedDir,
-      finalOptions.toolConfigs?.[ToolName.PatternDetect] ?? {}
+      (toolConfigs?.[ToolName.PatternDetect] as Record<string, unknown>) ?? {}
     );
 
     // Merge smart defaults into toolConfigs instead of root level
     if (!finalOptions.toolConfigs) finalOptions.toolConfigs = {};
-    finalOptions.toolConfigs[ToolName.PatternDetect] = {
+    const configs = finalOptions.toolConfigs as Record<string, unknown>;
+    configs[ToolName.PatternDetect] = {
       ...patternSmartDefaults,
-      ...finalOptions.toolConfigs[ToolName.PatternDetect],
+      ...(configs[ToolName.PatternDetect] as Record<string, unknown>),
     };
   }
 

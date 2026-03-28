@@ -19,7 +19,9 @@ export function detectModuleClusters(
   const domainMap = new Map<string, string[]>();
 
   for (const [file, node] of graph.nodes.entries()) {
-    const primaryDomain = node.exports[0]?.inferredDomain || 'unknown';
+    const primaryDomain =
+      (node.exports[0] as { inferredDomain?: string })?.inferredDomain ||
+      'unknown';
     if (!domainMap.has(primaryDomain)) {
       domainMap.set(primaryDomain, []);
     }

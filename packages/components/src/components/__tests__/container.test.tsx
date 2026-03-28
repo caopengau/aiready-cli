@@ -38,10 +38,10 @@ describe('Container', () => {
       </Container>
     );
     const container = screen.getByTestId('container');
-    expect(container).toHaveClass('container', 'mx-auto');
+    expect(container).toHaveClass('mx-auto', 'w-full');
   });
 
-  it('renders with padding by default', () => {
+  it('has padding by default', () => {
     render(
       <Container data-testid="container">
         <div>Content</div>
@@ -51,13 +51,13 @@ describe('Container', () => {
     expect(container).toHaveClass('px-4');
   });
 
-  it('can disable padding', () => {
+  it('applies size prop', () => {
     render(
-      <Container padding={false} data-testid="container">
+      <Container size="sm" data-testid="container">
         <div>Content</div>
       </Container>
     );
     const container = screen.getByTestId('container');
-    expect(container).not.toHaveClass('px-4');
+    expect(container).toHaveClass('max-w-screen-sm');
   });
 });

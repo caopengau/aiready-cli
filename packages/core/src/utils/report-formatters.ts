@@ -82,7 +82,7 @@ export interface ReportOptions {
 
 /**
  * Generic HTML tag builder to reduce string template noise.
- * 
+ *
  * @param name - HTML tag name
  * @param content - Inner contents
  * @param attrs - Attributes object
@@ -106,10 +106,12 @@ export function generateReportHead(
   title: string,
   styles: string = REPORT_STYLES
 ): string {
-  const metaCharset = tag('', '', { [REPORT_CONSTANTS.ATTRS.CHARSET]: REPORT_CONSTANTS.ATTRS.UTF8 }).replace(/^<|>/g, '');
-  const metaViewport = tag('', '', { 
+  const metaCharset = tag('', '', {
+    [REPORT_CONSTANTS.ATTRS.CHARSET]: REPORT_CONSTANTS.ATTRS.UTF8,
+  }).replace(/^<|>/g, '');
+  const metaViewport = tag('', '', {
     [REPORT_CONSTANTS.ATTRS.NAME]: REPORT_CONSTANTS.ATTRS.VIEWPORT,
-    [REPORT_CONSTANTS.ATTRS.CONTENT]: REPORT_CONSTANTS.ATTRS.VIEWPORT_VAL
+    [REPORT_CONSTANTS.ATTRS.CONTENT]: REPORT_CONSTANTS.ATTRS.VIEWPORT_VAL,
   }).replace(/^<|>/g, '');
 
   return `<!DOCTYPE html>\n<${REPORT_CONSTANTS.TAGS.HTML} ${REPORT_CONSTANTS.ATTRS.LANG}="${REPORT_CONSTANTS.ATTRS.EN}">\n<${REPORT_CONSTANTS.TAGS.HEAD}>\n  <meta ${metaCharset}>\n  <meta ${metaViewport}>\n  ${tag(REPORT_CONSTANTS.TAGS.TITLE, title)}\n  ${tag(REPORT_CONSTANTS.TAGS.STYLE, styles)}\n</${REPORT_CONSTANTS.TAGS.HEAD}>`;
@@ -121,7 +123,8 @@ export function generateReportHead(
 export function generateReportHero(title: string, subtitle?: string): string {
   return tag(
     REPORT_CONSTANTS.TAGS.DIV,
-    tag(REPORT_CONSTANTS.TAGS.H1, title) + (subtitle ? tag(REPORT_CONSTANTS.TAGS.P, subtitle) : ''),
+    tag(REPORT_CONSTANTS.TAGS.H1, title) +
+      (subtitle ? tag(REPORT_CONSTANTS.TAGS.P, subtitle) : ''),
     {
       [REPORT_CONSTANTS.ATTRS.CLASS]: REPORT_CONSTANTS.CLASSES.HERO,
     }
@@ -138,13 +141,20 @@ export function generateStatCards(cards: StatCard[]): string {
         REPORT_CONSTANTS.TAGS.DIV,
         tag(REPORT_CONSTANTS.TAGS.DIV, String(c.value), {
           [REPORT_CONSTANTS.ATTRS.CLASS]: REPORT_CONSTANTS.CLASSES.STAT_VALUE,
-          ...(c.color ? { [REPORT_CONSTANTS.ATTRS.STYLE]: `color: ${c.color}` } : {}),
-        }) + tag(REPORT_CONSTANTS.TAGS.DIV, c.label, { [REPORT_CONSTANTS.ATTRS.CLASS]: REPORT_CONSTANTS.CLASSES.STAT_LABEL }),
+          ...(c.color
+            ? { [REPORT_CONSTANTS.ATTRS.STYLE]: `color: ${c.color}` }
+            : {}),
+        }) +
+          tag(REPORT_CONSTANTS.TAGS.DIV, c.label, {
+            [REPORT_CONSTANTS.ATTRS.CLASS]: REPORT_CONSTANTS.CLASSES.STAT_LABEL,
+          }),
         { [REPORT_CONSTANTS.ATTRS.CLASS]: REPORT_CONSTANTS.CLASSES.STAT_CARD }
       )
     )
     .join('');
-  return tag(REPORT_CONSTANTS.TAGS.DIV, cardsHtml, { [REPORT_CONSTANTS.ATTRS.CLASS]: REPORT_CONSTANTS.CLASSES.STATS });
+  return tag(REPORT_CONSTANTS.TAGS.DIV, cardsHtml, {
+    [REPORT_CONSTANTS.ATTRS.CLASS]: REPORT_CONSTANTS.CLASSES.STATS,
+  });
 }
 
 /**
@@ -155,7 +165,9 @@ export function generateTable(config: TableConfig): string {
     REPORT_CONSTANTS.TAGS.THEAD,
     tag(
       REPORT_CONSTANTS.TAGS.TR,
-      config.headers.map((h: string) => tag(REPORT_CONSTANTS.TAGS.TH, h)).join('')
+      config.headers
+        .map((h: string) => tag(REPORT_CONSTANTS.TAGS.TH, h))
+        .join('')
     )
   );
   const body = tag(
@@ -297,7 +309,8 @@ export function generateStandardHtmlReport(
           [REPORT_CONSTANTS.ATTRS.CLASS]: REPORT_CONSTANTS.CLASSES.SCORE_VALUE,
         }) +
           tag(REPORT_CONSTANTS.TAGS.DIV, score.label, {
-            [REPORT_CONSTANTS.ATTRS.CLASS]: REPORT_CONSTANTS.CLASSES.SCORE_LABEL,
+            [REPORT_CONSTANTS.ATTRS.CLASS]:
+              REPORT_CONSTANTS.CLASSES.SCORE_LABEL,
           }),
         { [REPORT_CONSTANTS.ATTRS.CLASS]: REPORT_CONSTANTS.CLASSES.SCORE_CARD }
       )

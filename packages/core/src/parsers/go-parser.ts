@@ -116,7 +116,9 @@ export class GoParser extends BaseLanguageParser {
       if (typeMatch) {
         exports.push({
           name: typeMatch[1],
-          type: (typeMatch[2] === 'struct' ? 'class' : 'interface') as ExportInfo['type'],
+          type: (typeMatch[2] === 'struct'
+            ? 'class'
+            : 'interface') as ExportInfo['type'],
           visibility: 'public',
           isPure: true,
           hasSideEffects: false,

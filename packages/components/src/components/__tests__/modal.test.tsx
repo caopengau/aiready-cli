@@ -5,7 +5,7 @@ import { Modal } from '../modal';
 describe('Modal', () => {
   it('renders modal when open', () => {
     render(
-      <Modal open={true} onOpenChange={() => {}}>
+      <Modal isOpen={true} onClose={() => {}}>
         <div>Modal content</div>
       </Modal>
     );
@@ -14,7 +14,7 @@ describe('Modal', () => {
 
   it('does not render when closed', () => {
     render(
-      <Modal open={false} onOpenChange={() => {}}>
+      <Modal isOpen={false} onClose={() => {}}>
         <div>Hidden content</div>
       </Modal>
     );
@@ -23,7 +23,7 @@ describe('Modal', () => {
 
   it('renders with custom className', () => {
     render(
-      <Modal open={true} onOpenChange={() => {}} className="custom-modal">
+      <Modal isOpen={true} onClose={() => {}}>
         <div>Content</div>
       </Modal>
     );
@@ -32,19 +32,28 @@ describe('Modal', () => {
 
   it('renders modal overlay', () => {
     render(
-      <Modal open={true} onOpenChange={() => {}}>
+      <Modal isOpen={true} onClose={() => {}}>
         <div data-testid="content">Content</div>
       </Modal>
     );
     expect(screen.getByTestId('content')).toBeInTheDocument();
   });
 
-  it('renders with title when provided', () => {
+  it('renders close button by default', () => {
     render(
-      <Modal open={true} onOpenChange={() => {}} title="Test Title">
+      <Modal isOpen={true} onClose={() => {}}>
         <div>Content</div>
       </Modal>
     );
-    expect(screen.getByText('Test Title')).toBeInTheDocument();
+    expect(screen.getByLabelText('Close modal')).toBeInTheDocument();
+  });
+
+  it('hides close button when showClose is false', () => {
+    render(
+      <Modal isOpen={true} onClose={() => {}} showClose={false}>
+        <div>Content</div>
+      </Modal>
+    );
+    expect(screen.queryByLabelText('Close modal')).not.toBeInTheDocument();
   });
 });

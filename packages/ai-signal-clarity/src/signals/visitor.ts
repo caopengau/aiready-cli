@@ -123,22 +123,24 @@ export function detectStructuralSignals(
               suggestion: `const MEANINGFUL_NAME = ${tsNode.text};`,
             });
           }
-        } else if (tsNode.type === 'string' || tsNode.type === 'string_literal') {
+        } else if (
+          tsNode.type === 'string' ||
+          tsNode.type === 'string_literal'
+        ) {
           const val = tsNode.text.replace(/['"]/g, '');
           // Heuristic: ignore if it's likely a key in a map/dictionary (Tree-sitter)
-            const isKey =
-              tsNode.parent?.type?.includes('pair') ||
-              tsNode.parent?.type === 'assignment_expression';
+          const isKey =
+            tsNode.parent?.type?.includes('pair') ||
+            tsNode.parent?.type === 'assignment_expression';
 
           // Skip if it's an import/require/use statement (Tree-sitter)
-            const isImport =
-              tsNode.parent?.type?.toLowerCase().includes('import') ||
-              tsNode.parent?.type?.toLowerCase().includes('require') ||
-              tsNode.parent?.type?.toLowerCase().includes('use');
+          const isImport =
+            tsNode.parent?.type?.toLowerCase().includes('import') ||
+            tsNode.parent?.type?.toLowerCase().includes('require') ||
+            tsNode.parent?.type?.toLowerCase().includes('use');
 
-            const parentName =
-              tsNode.parent?.childForFieldName('name')?.text ||
-              '';
+          const parentName =
+            tsNode.parent?.childForFieldName('name')?.text || '';
 
           const isNamedConstant = /^[A-Z0-9_]{2,}$/.test(parentName);
 
@@ -251,9 +253,13 @@ export function detectStructuralSignals(
           // Check if this is a value in a JSX style object (Issue: Context-Blind CSS analysis)
           let isStyleValue = false;
           if (esParent?.type === 'Property' && keyInParent === 'value') {
-            let p: TSESTree.Node | undefined = (esParent as { parent?: TSESTree.Node }).parent; // ObjectExpression
+            let p: TSESTree.Node | undefined = (
+              esParent as { parent?: TSESTree.Node }
+            ).parent; // ObjectExpression
             while (p && p.type === 'ObjectExpression') {
-              const grandParent: TSESTree.Node | undefined = (p as { parent?: TSESTree.Node }).parent;
+              const grandParent: TSESTree.Node | undefined = (
+                p as { parent?: TSESTree.Node }
+              ).parent;
               if (grandParent?.type === 'JSXExpressionContainer') {
                 const attr = grandParent.parent;
                 if (
@@ -367,7 +373,8 @@ export function detectStructuralSignals(
             (c: Parser.Node) =>
               c.type === 'true' ||
               c.type === 'false' ||
-              (c.type === 'boolean' && (c.text === 'true' || c.text === 'false'))
+              (c.type === 'boolean' &&
+                (c.text === 'true' || c.text === 'false'))
           );
           if (hasBool) {
             // Skip if this is a Lambda context
@@ -461,7 +468,7 @@ export function detectStructuralSignals(
             const isDataFromJson =
               esNode.id.name === 'data' &&
               esNode.init &&
-                ctx.code
+              ctx.code
                 .slice(
                   (esNode.init as { range?: [number, number] }).range?.[0] || 0,
                   (esNode.init as { range?: [number, number] }).range?.[1] || 0
@@ -488,8 +495,9 @@ export function detectStructuralSignals(
 
     // --- Callback Depth ---
     const nodeType = (
-      (isTreeSitter ? (node as Parser.Node).type : (node as TSESTree.Node).type) ||
-      ''
+      (isTreeSitter
+        ? (node as Parser.Node).type
+        : (node as TSESTree.Node).type) || ''
     ).toLowerCase();
     const isFunction =
       nodeType.includes('function') ||

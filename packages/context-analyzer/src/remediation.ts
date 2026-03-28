@@ -155,5 +155,9 @@ export function getGeneralRecommendations(
     if (severity === 'info') severity = 'minor';
   }
 
-  return { recommendations, issues, severity: severity as any };
+  return {
+    recommendations,
+    issues,
+    severity: severity as 'critical' | 'major' | 'minor' | 'info',
+  };
 }

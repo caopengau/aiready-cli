@@ -1,9 +1,4 @@
-import {
-  AnalysisResult,
-  createProvider,
-  ToolName,
-  ScanOptions,
-} from '@aiready/core';
+import { createProvider, ToolName, ScanOptions } from '@aiready/core';
 import { analyzeConsistency } from './analyzer';
 import { calculateConsistencyScore } from './scoring';
 import { ConsistencyOptions, ConsistencyIssue } from './types';

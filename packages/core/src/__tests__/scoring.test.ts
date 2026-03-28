@@ -14,7 +14,6 @@ import {
   DEFAULT_TOOL_WEIGHTS,
   ScoringProfile,
   type ToolScoringOutput,
-  type ScoringResult,
 } from '../scoring';
 
 describe('Core Scoring Infrastructure', () => {
@@ -171,7 +170,7 @@ describe('Core Scoring Infrastructure', () => {
       ]);
 
       const config = { profile: ScoringProfile.Agentic };
-      
+
       // Agentic weights: ai-signal-clarity=25, agent-grounding=25
       // (100 * 25 + 50 * 25) / 50 = (2500 + 1250) / 50 = 3750 / 50 = 75
       const result = calculateOverallScore(toolOutputs, config);
@@ -285,18 +284,18 @@ describe('Core Scoring Infrastructure', () => {
       expect(getRecommendedThreshold(10, 'standard')).toBe(80);
       expect(getRecommendedThreshold(100, 'standard')).toBe(75);
       expect(getRecommendedThreshold(5000, 'standard')).toBe(58);
-      
+
       // Model bonuses
       expect(getRecommendedThreshold(100, 'extended')).toBe(73); // 75 - 2
       expect(getRecommendedThreshold(100, 'frontier')).toBe(72); // 75 - 3
     });
 
     it('should provide size-aware ratings', () => {
-      // Small project (80 threshold): 85 is Excellent? 
+      // Small project (80 threshold): 85 is Excellent?
       // Rating with context: score - threshold + 70
       // 85 - 80 + 70 = 75 -> Good
       expect(getRatingWithContext(85, 10, 'standard')).toBe('Good');
-      
+
       // Large project (58 threshold): 65
       // 65 - 58 + 70 = 77 -> Good
       expect(getRatingWithContext(65, 5000, 'standard')).toBe('Good');
@@ -305,9 +304,18 @@ describe('Core Scoring Infrastructure', () => {
 
   describe('Formatting and Display', () => {
     it('should get correct display properties for ratings', () => {
-      expect(getRatingDisplay('Excellent')).toEqual({ emoji: '✅', color: 'green' });
-      expect(getRatingDisplay('Critical')).toEqual({ emoji: '❌', color: 'red' });
-      expect(getRatingDisplay('Unknown')).toEqual({ emoji: '❓', color: 'gray' });
+      expect(getRatingDisplay('Excellent')).toEqual({
+        emoji: '✅',
+        color: 'green',
+      });
+      expect(getRatingDisplay('Critical')).toEqual({
+        emoji: '❌',
+        color: 'red',
+      });
+      expect(getRatingDisplay('Unknown')).toEqual({
+        emoji: '❓',
+        color: 'gray',
+      });
     });
 
     it('should format overall score correctly', () => {
@@ -321,11 +329,11 @@ describe('Core Scoring Infrastructure', () => {
         score: 70,
         rawMetrics: {},
         factors: [
-          { name: 'Test Factor', impact: -5, description: 'Negative impact' }
+          { name: 'Test Factor', impact: -5, description: 'Negative impact' },
         ],
         recommendations: [
-          { action: 'Fix this', priority: 'high', estimatedImpact: 10 }
-        ]
+          { action: 'Fix this', priority: 'high', estimatedImpact: 10 },
+        ],
       };
 
       const formatted = formatToolScore(output);

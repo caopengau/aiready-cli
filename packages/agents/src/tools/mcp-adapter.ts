@@ -22,7 +22,7 @@ export class MCPAdapter {
     this.transport = new StdioClientTransport({
       command,
       args,
-      env: { ...process.env, ...env } as any,
+      env: { ...process.env, ...env } as Record<string, string>,
     });
 
     this.client = new Client({ name: 'aiready-mcp-adapter', version: '1.0.0' });
@@ -40,25 +40,39 @@ export class MCPAdapter {
    * Discovers tools from the MCP server and wraps them as Mastra tools.
    */
   async getMastraTools(): Promise<Record<string, any>> {
-    const { tools } = await (this.client as any).request(
-      ListToolsRequestSchema,
-      {}
-    );
+    const response = await (
+      this.client as unknown as {
+        request: (schema: typeof ListToolsRequestSchema) => Promise<{
+          tools: Array<{
+            name: string;
+            description?: string;
+            inputSchema?: any;
+          }>;
+        }>;
+      }
+    ).request(ListToolsRequestSchema);
     const mastraTools: Record<string, any> = {};
 
-    for (const tool of tools) {
-      mastraTools[tool.name] = createTool({
-        id: tool.name,
-        description: tool.description || `MCP Tool: ${tool.name}`,
-        inputSchema: this.mapJsonSchemaToZod(tool.inputSchema),
+    for (const tool of response.tools) {
+      const toolName = tool.name;
+      const toolDescription = tool.description;
+      const toolInputSchema = tool.inputSchema;
+      mastraTools[toolName] = createTool({
+        id: toolName,
+        description: toolDescription || `MCP Tool: ${toolName}`,
+        inputSchema: this.mapJsonSchemaToZod(toolInputSchema),
         execute: async (args) => {
-          const result = await (this.client as any).request(
-            CallToolRequestSchema,
-            {
-              name: tool.name,
-              arguments: args,
+          const result = await (
+            this.client as unknown as {
+              request: (
+                schema: typeof CallToolRequestSchema,
+                params: { name: string; arguments: unknown }
+              ) => Promise<unknown>;
             }
-          );
+          ).request(CallToolRequestSchema, {
+            name: toolName,
+            arguments: args,
+          });
           return result;
         },
       });

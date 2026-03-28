@@ -419,8 +419,8 @@ export function detectDefensivePatterns(
       }
 
       if (returnAnno?.type === 'TSAnyKeyword') {
-        const returnTypeNode = 'returnType' in node ? (node as { returnType?: unknown }).returnType : undefined;
-        if (returnTypeNode?.loc) {
+        const fnNode = node as TSESTree.FunctionDeclaration;
+        if (fnNode.returnType?.loc) {
           counts['any-return']++;
           issues.push(
             makeIssue(
@@ -428,9 +428,9 @@ export function detectDefensivePatterns(
               Severity.Major,
               'Return type is `any` — callers cannot rely on the result shape',
               filePath,
-              returnTypeNode.loc.start.line,
-              returnTypeNode.loc.start.column,
-              getLineContent(code, returnTypeNode.loc.start.line)
+              fnNode.returnType.loc.start.line,
+              fnNode.returnType.loc.start.column,
+              getLineContent(code, fnNode.returnType.loc.start.line)
             )
           );
         }

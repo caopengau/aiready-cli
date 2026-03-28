@@ -126,35 +126,42 @@ async function setupRules(interaction: any) {
       .addFields(
         {
           name: '1. Be Respectful',
-          value: 'Treat everyone with dignity. No harassment, discrimination, or personal attacks.',
+          value:
+            'Treat everyone with dignity. No harassment, discrimination, or personal attacks.',
         },
         {
           name: '2. Stay On Topic',
-          value: 'Use appropriate channels for different discussions. Keep conversations relevant.',
+          value:
+            'Use appropriate channels for different discussions. Keep conversations relevant.',
         },
         {
           name: '3. No Spam',
-          value: "Don't post the same message multiple times. No excessive self-promotion.",
+          value:
+            "Don't post the same message multiple times. No excessive self-promotion.",
         },
         {
           name: '4. Help Others',
-          value: 'If you know the answer, help others. We learn together as a community.',
+          value:
+            'If you know the answer, help others. We learn together as a community.',
         },
         {
           name: '5. Share Knowledge',
-          value: 'Share your wins, tutorials, and insights. We celebrate each other\'s successes.',
+          value:
+            "Share your wins, tutorials, and insights. We celebrate each other's successes.",
         },
         {
           name: '6. English Only',
-          value: 'For now, we\'re an English-speaking community to ensure everyone can participate.',
+          value:
+            "For now, we're an English-speaking community to ensure everyone can participate.",
         },
         {
           name: '7. No Secrets',
-          value: 'Don\'t share API keys, passwords, or sensitive information in public channels.',
+          value:
+            "Don't share API keys, passwords, or sensitive information in public channels.",
         },
         {
           name: '8. Have Fun',
-          value: 'We\'re here to learn and build together. Enjoy the journey!',
+          value: "We're here to learn and build together. Enjoy the journey!",
         }
       )
       .setFooter({ text: 'Violations may result in warnings, mutes, or bans.' })
@@ -237,7 +244,9 @@ async function setupWelcome(interaction: any) {
       embeds: [welcomeEmbed],
       components: [row],
     });
-    await interaction.editReply('✅ Welcome message posted in #welcome channel.');
+    await interaction.editReply(
+      '✅ Welcome message posted in #welcome channel.'
+    );
   } catch (error) {
     console.error('Failed to setup welcome:', error);
     await interaction.editReply('❌ Failed to setup welcome message.');
@@ -263,8 +272,7 @@ async function postAnnouncement(interaction: any) {
     }
 
     const announcementsChannel = guild.channels.cache.find(
-      (c: any) =>
-        c.name === 'announcements' && c.type === ChannelType.GuildText
+      (c: any) => c.name === 'announcements' && c.type === ChannelType.GuildText
     );
 
     if (!announcementsChannel || !('send' in announcementsChannel)) {

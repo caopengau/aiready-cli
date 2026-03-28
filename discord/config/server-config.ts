@@ -114,7 +114,8 @@ export const SERVER_CONFIG: ServerConfig = {
         {
           name: 'showcase',
           type: ChannelType.GuildText,
-          topic: 'Share what you built with AIReady. Include screenshots or code.',
+          topic:
+            'Share what you built with AIReady. Include screenshots or code.',
         },
         {
           name: 'feedback',

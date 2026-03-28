@@ -92,7 +92,7 @@ export function useImperativeHandleMethods({
       svg
         .transition()
         .duration(TRANSITION_DURATION_MS)
-        .call((d3 as any).zoom().transform as any, newTransform);
+        .call(d3.zoom().transform as any, newTransform);
       setTransform(newTransform);
     }
   }, [nodes, width, height, svgRef, gRef, setTransform]);

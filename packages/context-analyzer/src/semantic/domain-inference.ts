@@ -2,8 +2,8 @@ import type {
   DependencyGraph,
   DomainAssignment,
   DomainSignals,
-  ExportInfo,
 } from '../types';
+import type { ExportInfo } from '@aiready/core';
 import { singularize } from '../utils/string-utils';
 
 /**
@@ -59,8 +59,12 @@ export function inferDomainFromSemantics(
     const coNode = graph.nodes.get(coFile);
     if (coNode) {
       for (const exp of coNode.exports) {
-        if (exp.inferredDomain && exp.inferredDomain !== 'unknown') {
-          const domain = exp.inferredDomain;
+        const expAny = exp as {
+          inferredDomain?: string;
+          domains?: Array<{ domain: string }>;
+        };
+        if (expAny.inferredDomain && expAny.inferredDomain !== 'unknown') {
+          const domain = expAny.inferredDomain;
           if (!domainSignals.has(domain)) {
             domainSignals.set(domain, {
               coUsage: false,
@@ -85,8 +89,15 @@ export function inferDomainFromSemantics(
           const typeNode = graph.nodes.get(typeFile);
           if (typeNode) {
             for (const exp of typeNode.exports) {
-              if (exp.inferredDomain && exp.inferredDomain !== 'unknown') {
-                const domain = exp.inferredDomain;
+              const expAny = exp as {
+                inferredDomain?: string;
+                domains?: Array<{ domain: string }>;
+              };
+              if (
+                expAny.inferredDomain &&
+                expAny.inferredDomain !== 'unknown'
+              ) {
+                const domain = expAny.inferredDomain;
                 if (!domainSignals.has(domain)) {
                   domainSignals.set(domain, {
                     coUsage: false,
@@ -160,7 +171,7 @@ export function extractExports(
         domainOptions,
         fileImports
       );
-      exports.push({ name, type, inferredDomain });
+      exports.push({ name, type, inferredDomain } as any);
     }
   });
 

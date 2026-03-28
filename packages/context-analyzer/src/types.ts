@@ -1,4 +1,5 @@
 import type { ScanOptions, Severity, ExportInfo } from '@aiready/core';
+export type { ExportInfo };
 
 /**
  * Options for the Context Analyzer tool.

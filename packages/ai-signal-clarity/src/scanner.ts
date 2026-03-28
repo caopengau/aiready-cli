@@ -86,7 +86,7 @@ export async function scanFile(
     return {
       fileName: filePath,
       issues: allIssues,
-      signals: combinedSignals as any,
+      signals: combinedSignals,
       metrics: {
         totalSymbols: parseResult.exports.length + parseResult.imports.length,
         totalExports: parseResult.exports.length,

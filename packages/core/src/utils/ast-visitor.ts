@@ -21,7 +21,9 @@ export function extractFileImports(ast: TSESTree.Program): FileImport[] {
         if (spec.type === 'ImportSpecifier') {
           const imported = spec.imported;
           const importName =
-            imported.type === 'Identifier' ? imported.name : (imported as { value: string }).value;
+            imported.type === 'Identifier'
+              ? imported.name
+              : (imported as unknown as { value: string }).value;
           specifiers.push(importName);
         } else if (spec.type === 'ImportDefaultSpecifier') {
           specifiers.push('default');
@@ -76,7 +78,7 @@ export function extractExportsWithDependencies(
             const name =
               spec.exported.type === 'Identifier'
                 ? (spec.exported as { name: string }).name
-                : (spec.exported as { value: string }).value;
+                : (spec.exported as unknown as { value: string }).value;
             exports.push({
               name,
               type: 'const' as ExportWithImports['type'], // Simplified, could be any type from source
@@ -109,7 +111,7 @@ export function extractExportsWithDependencies(
         name =
           node.exported.type === 'Identifier'
             ? (node.exported as { name: string }).name
-            : (node.exported as { value: string }).value;
+            : (node.exported as unknown as { value: string }).value;
       }
 
       exports.push({
@@ -181,7 +183,7 @@ export function findUsedImports(
     // Recursively visit child nodes
     for (const key in n) {
       if (key === 'parent') continue;
-      const value = (n as Record<string, unknown>)[key];
+      const value = (n as unknown as Record<string, unknown>)[key];
       if (value && typeof value === 'object') {
         if (Array.isArray(value)) {
           value.forEach((child) => {

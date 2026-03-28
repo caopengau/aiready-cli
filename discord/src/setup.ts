@@ -93,7 +93,9 @@ async function setupDiscordServer() {
           });
           console.log(`   ✅ Created category: ${categoryConfig.name}`);
         } else {
-          console.log(`   ⏭️  Category "${categoryConfig.name}" already exists`);
+          console.log(
+            `   ⏭️  Category "${categoryConfig.name}" already exists`
+          );
         }
 
         // Create channels in category
@@ -191,7 +193,7 @@ async function setupDiscordServer() {
                 {
                   name: '💬 Need Help?',
                   value:
-                    'Post in #help or one of the support channels. We\'re here to help!',
+                    "Post in #help or one of the support channels. We're here to help!",
                 },
               ],
               footer: {

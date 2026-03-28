@@ -4,7 +4,11 @@ import {
   calculateOverallScore,
   calculateTokenBudget,
 } from '@aiready/core';
-import type { ToolScoringOutput, ScoringResult } from '@aiready/core';
+import type {
+  ToolScoringOutput,
+  ScoringResult,
+  ScoringConfig,
+} from '@aiready/core';
 import type { UnifiedAnalysisOptions, UnifiedAnalysisResult } from './options';
 
 /**
@@ -43,8 +47,14 @@ export class ScoringOrchestrator {
 
         // Special handling for token budget calculation if not provided by tool
         if (!toolScore.tokenBudget) {
-          if (toolId === ToolName.PatternDetect && (output as { duplicates?: Array<{ tokenCost?: number }> }).duplicates) {
-            const wastedTokens = (output as { duplicates: Array<{ tokenCost?: number }> }).duplicates.reduce(
+          if (
+            toolId === ToolName.PatternDetect &&
+            (output as { duplicates?: Array<{ tokenCost?: number }> })
+              .duplicates
+          ) {
+            const wastedTokens = (
+              output as { duplicates: Array<{ tokenCost?: number }> }
+            ).duplicates.reduce(
               (sum: number, d: any) => sum + (d.tokenCost ?? 0),
               0
             );
@@ -78,7 +88,23 @@ export class ScoringOrchestrator {
       return this.emptyScoringResult();
     }
 
-    return calculateOverallScore(toolScores, options, undefined);
+    // Build a ScoringConfig from UnifiedAnalysisOptions
+    const scoringConfig: ScoringConfig = {
+      profile: options.profile,
+      threshold: options.threshold,
+      showBreakdown: options.scoring?.showBreakdown,
+      compareBaseline: options.compareTo,
+      tools: options.toolConfigs
+        ? Object.fromEntries(
+            Object.entries(options.toolConfigs).map(([k, v]) => [
+              k,
+              v as { scoreWeight?: number },
+            ])
+          )
+        : undefined,
+    };
+
+    return calculateOverallScore(toolScores, scoringConfig, undefined);
   }
 
   /**

@@ -161,9 +161,16 @@ export class UnifiedOrchestrator {
           options.tools &&
           !Array.isArray(options.tools) &&
           typeof options.tools === 'object' &&
-          (options.tools as Record<string, Record<string, unknown>>)[provider.id]
+          (options.tools as Record<string, Record<string, unknown>>)[
+            provider.id
+          ]
         ) {
-          Object.assign(toolOptions, (options.tools as Record<string, Record<string, unknown>>)[provider.id]);
+          Object.assign(
+            toolOptions,
+            (options.tools as Record<string, Record<string, unknown>>)[
+              provider.id
+            ]
+          );
         }
 
         toolOptions.onProgress = (

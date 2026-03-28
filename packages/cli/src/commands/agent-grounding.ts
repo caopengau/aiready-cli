@@ -20,6 +20,7 @@ export async function agentGroundingAction(
     label: 'Agent grounding',
     emoji: '🧭',
     defaults: {
+      rootDir: '',
       maxRecommendedDepth: 4,
       readmeStaleDays: 90,
       include: undefined,

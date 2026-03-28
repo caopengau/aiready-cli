@@ -82,6 +82,8 @@ export interface ExportInfo {
   hasSideEffects?: boolean;
   /** Whether the export has explicit type annotations (TS only) */
   isTyped?: boolean;
+  /** Inferred domain/area this export belongs to (e.g., "auth", "database") */
+  inferredDomain?: string;
   /** Associated documentation */
   documentation?: {
     content: string;

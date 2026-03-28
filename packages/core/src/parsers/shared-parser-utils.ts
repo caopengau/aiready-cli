@@ -185,10 +185,14 @@ export function extractParameterNames(node: Parser.Node): string[] {
   const candidates: (Parser.Node | null)[] = [
     // common field name
     getNodeProperty(node, 'childForFieldName')
-      ? getNodeProperty(node, 'childForFieldName')?.childForFieldName?.('parameters') ?? null
+      ? (getNodeProperty(node, 'childForFieldName')?.childForFieldName?.(
+          'parameters'
+        ) ?? null)
       : null,
     getNodeProperty(node, 'childForFieldName')
-      ? getNodeProperty(node, 'childForFieldName')?.childForFieldName?.('parameter_list') ?? null
+      ? (getNodeProperty(node, 'childForFieldName')?.childForFieldName?.(
+          'parameter_list'
+        ) ?? null)
       : null,
     node.children.find((c) => c.type === 'parameter_list') || null,
     node.children.find((c) => c.type === 'parameters') || null,
@@ -204,7 +208,9 @@ export function extractParameterNames(node: Parser.Node): string[] {
 
     // Try common identifier positions
     const id =
-      getNodeProperty(child, 'childForFieldName')?.childForFieldName?.('name') ||
+      getNodeProperty(child, 'childForFieldName')?.childForFieldName?.(
+        'name'
+      ) ||
       child.children.find((c) =>
         [
           'identifier',

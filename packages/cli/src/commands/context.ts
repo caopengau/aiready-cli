@@ -57,6 +57,7 @@ export async function contextAction(
     label: 'Context analysis',
     emoji: '🧩',
     defaults: {
+      rootDir: '',
       maxDepth: 5,
       maxContextBudget: 10000,
       include: undefined,
@@ -72,8 +73,9 @@ export async function contextAction(
         await import('@aiready/context-analyzer');
       return {
         analyze: analyzeContext,
-        generateSummary: generateContextSummary,
-        calculateScore: calculateContextScore,
+        generateSummary,
+        calculateScore: (data: any, _resultsCount?: number) =>
+          calculateContextScore(data),
       };
     },
     renderConsole: ({ results: _results, summary, elapsedTime, score }) => {

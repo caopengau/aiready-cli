@@ -1,6 +1,6 @@
 import chalk from 'chalk';
 import { Command } from 'commander';
-import { printTerminalHeader } from '@aiready/core';
+import { printTerminalHeader, Severity } from '@aiready/core';
 import { executeToolAction, BaseCommandOptions } from './scan-helpers';
 import {
   renderSubSection,
@@ -10,7 +10,7 @@ import {
 interface ConsistencyOptions extends BaseCommandOptions {
   naming?: boolean;
   patterns?: boolean;
-  minSeverity?: string;
+  minSeverity?: Severity;
 }
 
 /**
@@ -65,9 +65,10 @@ export async function consistencyAction(
     label: 'Consistency analysis',
     emoji: '📏',
     defaults: {
+      rootDir: '',
       checkNaming: options.naming !== false,
       checkPatterns: options.patterns !== false,
-      minSeverity: options.minSeverity || 'info',
+      minSeverity: (options.minSeverity || 'info') as Severity,
       include: undefined,
       exclude: undefined,
       output: { format: 'console', file: undefined },
@@ -75,7 +76,7 @@ export async function consistencyAction(
     getCliOptions: (opts) => ({
       checkNaming: opts.naming !== false,
       checkPatterns: opts.patterns !== false,
-      minSeverity: opts.minSeverity,
+      minSeverity: opts.minSeverity as Severity | undefined,
     }),
     importTool: async () => {
       const { analyzeConsistency, generateSummary, calculateConsistencyScore } =
@@ -87,7 +88,8 @@ export async function consistencyAction(
           return report;
         },
         generateSummary,
-        calculateScore: calculateConsistencyScore,
+        calculateScore: (data: any, resultsCount?: number) =>
+          calculateConsistencyScore(data, resultsCount ?? 0),
       };
     },
     renderConsole: ({ results: report, summary, elapsedTime, score }) => {

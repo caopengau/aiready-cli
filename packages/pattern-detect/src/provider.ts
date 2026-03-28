@@ -48,13 +48,8 @@ export const PatternDetectProvider: ToolProvider = {
   score(output: SpokeOutput, options: ScanOptions): ToolScoringOutput {
     const duplicates = output.summary.duplicates || [];
     const scoreData = duplicates;
-    const totalFiles =
-      output.summary.totalFiles || output.results.length;
-    return calculatePatternScore(
-      scoreData,
-      totalFiles,
-      options.costConfig
-    );
+    const totalFiles = output.summary.totalFiles || output.results.length;
+    return calculatePatternScore(scoreData, totalFiles, options.costConfig);
   },
 
   defaultWeight: 22,

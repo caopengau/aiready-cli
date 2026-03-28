@@ -56,7 +56,7 @@ function mapNodeToResult(
   const rawCohesionScore = calculateEnhancedCohesion(
     node.exports,
     file,
-    options as any
+    options as unknown as Record<string, unknown>
   );
 
   // Initial classification
@@ -108,7 +108,9 @@ function mapNodeToResult(
     cohesionScore,
     domains: Array.from(
       new Set(
-        node.exports.flatMap((e) => e.domains?.map((d) => d.domain) || [])
+        node.exports.flatMap(
+          (e: any) => e.domains?.map((d: any) => d.domain) || []
+        )
       )
     ),
     exportCount: node.exports.length,

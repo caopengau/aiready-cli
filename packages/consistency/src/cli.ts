@@ -91,7 +91,7 @@ EXAMPLES:
       checkNaming: options.naming !== false && mergedConfig.checkNaming,
       checkPatterns: options.patterns !== false && mergedConfig.checkPatterns,
       checkArchitecture: options.architecture || mergedConfig.checkArchitecture,
-      minSeverity: (options.minSeverity as any) || mergedConfig.minSeverity,
+      minSeverity: (options.minSeverity as string) || mergedConfig.minSeverity,
       include: options.include?.split(',') || mergedConfig.include,
       exclude: options.exclude?.split(',') || mergedConfig.exclude,
     };

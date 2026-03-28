@@ -50,9 +50,10 @@ describe('CLI Configuration Shape', () => {
       },
     });
 
-    const config = results.summary.config;
+    const config = results.summary.config as Record<string, any>;
 
     // 1. Check top-level structure
+    expect(config).toBeDefined();
     expect(config).toHaveProperty('scan');
     expect(config).toHaveProperty('tools');
 
@@ -65,7 +66,10 @@ describe('CLI Configuration Shape', () => {
     expect(config.scan).not.toHaveProperty('rootDir');
 
     // 4. Ensure recursive stripping in tools section
-    const patternConfig = config.tools[ToolName.PatternDetect];
+    const patternConfig = config.tools[ToolName.PatternDetect] as Record<
+      string,
+      any
+    >;
     expect(patternConfig).toHaveProperty('minSimilarity', 0.9);
     expect(patternConfig).not.toHaveProperty('rootDir');
     expect(patternConfig).not.toHaveProperty('onProgress');
@@ -79,13 +83,16 @@ describe('CLI Configuration Shape', () => {
       batchSize: 50,
     });
 
-    const config = results.summary.config;
+    const config = results.summary.config as Record<string, any>;
 
     expect(config).not.toHaveProperty('useSmartDefaults');
     expect(config.scan).not.toHaveProperty('useSmartDefaults');
 
     // Check tool level too
-    const patternConfig = config.tools[ToolName.PatternDetect];
+    const patternConfig = config.tools[ToolName.PatternDetect] as Record<
+      string,
+      any
+    >;
     expect(patternConfig).not.toHaveProperty('useSmartDefaults');
     expect(patternConfig).not.toHaveProperty('batchSize');
   });

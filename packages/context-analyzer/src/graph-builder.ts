@@ -189,9 +189,13 @@ export async function buildDependencyGraph(
         typeGraph,
         exp.typeReferences
       );
-      exp.domains = semanticAssignments;
+      const expAny = exp as {
+        inferredDomain?: string;
+        domains?: Array<{ domain: string }>;
+      };
+      expAny.domains = semanticAssignments;
       if (semanticAssignments.length > 0) {
-        exp.inferredDomain = semanticAssignments[0].domain;
+        expAny.inferredDomain = semanticAssignments[0].domain;
       }
     }
   }
