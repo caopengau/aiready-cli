@@ -68,6 +68,9 @@ const CLI_CONSTANTS = {
   },
 } as const;
 
+/**
+ * Get the current directory name, handling both ESM and CJS.
+ */
 const getDirname = () => {
   if (typeof __dirname !== 'undefined') return __dirname;
   return dirname(fileURLToPath(import.meta.url));

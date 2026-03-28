@@ -4,6 +4,7 @@ import {
   initializeParsers,
   GLOBAL_INFRA_OPTIONS,
   COMMON_FINE_TUNING_OPTIONS,
+  type ScanOptions as CoreScanOptions,
 } from '@aiready/core';
 import type { UnifiedAnalysisOptions, UnifiedAnalysisResult } from './options';
 
@@ -51,9 +52,10 @@ export class UnifiedOrchestrator {
   }
 
   /**
-   * Deeply sanitizes a configuration object.
+   * Deeply sanitizes a configuration object for reporting.
+   * Strips internal infrastructure keys to prevent AI context clutter.
    */
-  public sanitizeConfig(obj: any): any {
+  public sanitizeConfig(obj: Record<string, any>): Record<string, any> {
     if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return obj;
 
     const sanitized: any = {};
@@ -125,10 +127,10 @@ export class UnifiedOrchestrator {
         try {
           await import(packageName);
           provider = this.registry.find(toolName);
-        } catch (err: any) {
+        } catch (err) {
           console.log(
             `❌ Failed to dynamically load tool ${toolName} (${packageName}):`,
-            err.message
+            (err as Error).message
           );
         }
       }
@@ -141,7 +143,7 @@ export class UnifiedOrchestrator {
       }
 
       try {
-        const toolOptions: any = {
+        const toolOptions: CoreScanOptions = {
           rootDir: options.rootDir,
         };
 
@@ -204,7 +206,8 @@ export class UnifiedOrchestrator {
         }
 
         const issueCount = output.results.reduce(
-          (sum: number, file: any) => sum + (file.issues?.length ?? 0),
+          (sum: number, file: { issues?: any[] }) =>
+            sum + (file.issues?.length ?? 0),
           0
         );
         result.summary.totalIssues += issueCount;
