@@ -174,23 +174,21 @@ async function handleGatekeeper(
     emitIssuesAsAnnotations(report.results);
   }
 
-  if (failOnLevel !== 'none') {
-    if (threshold && scoringResult.overall < threshold) {
-      shouldFail = true;
-      failReason = `Score ${scoringResult.overall} < threshold ${threshold}`;
-    }
+  if (threshold && scoringResult.overall < threshold) {
+    shouldFail = true;
+    failReason = `Score ${scoringResult.overall} < threshold ${threshold}`;
+  }
 
-    if (!shouldFail) {
-      if (failOnLevel === 'critical' && report.summary.criticalIssues > 0) {
-        shouldFail = true;
-        failReason = `Found ${report.summary.criticalIssues} critical issues`;
-      } else if (
-        failOnLevel === 'major' &&
-        report.summary.criticalIssues + report.summary.majorIssues > 0
-      ) {
-        shouldFail = true;
-        failReason = `Found ${report.summary.criticalIssues} critical and ${report.summary.majorIssues} major issues`;
-      }
+  if (failOnLevel !== 'none' && !shouldFail) {
+    if (failOnLevel === 'critical' && report.summary.criticalIssues > 0) {
+      shouldFail = true;
+      failReason = `Found ${report.summary.criticalIssues} critical issues`;
+    } else if (
+      failOnLevel === 'major' &&
+      report.summary.criticalIssues + report.summary.majorIssues > 0
+    ) {
+      shouldFail = true;
+      failReason = `Found ${report.summary.criticalIssues} critical and ${report.summary.majorIssues} major issues`;
     }
   }
 
