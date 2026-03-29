@@ -19,7 +19,7 @@ vi.mock('child_process', () => ({
   spawn: vi.fn().mockReturnValue({ on: vi.fn(), kill: vi.fn() }),
 }));
 
-vi.mock('@aiready/visualizer/graph', () => ({
+vi.mock('@aiready/visualizer', () => ({
   GraphBuilder: {
     buildFromReport: vi.fn().mockReturnValue({ nodes: [], edges: [] }),
   },
@@ -29,6 +29,7 @@ vi.mock('@aiready/core', () => ({
   handleCLIError: vi.fn(),
   generateHTML: vi.fn().mockReturnValue('<html></html>'),
   findLatestReport: vi.fn(),
+  ensureDir: vi.fn(),
 }));
 
 describe('Visualize CLI Action', () => {

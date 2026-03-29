@@ -6,7 +6,7 @@ import chalk from 'chalk';
 import { writeFileSync, readFileSync, existsSync, copyFileSync } from 'fs';
 import { resolve as resolvePath } from 'path';
 import { spawn } from 'child_process';
-import { handleCLIError } from '@aiready/core';
+import { handleCLIError, ensureDir } from '@aiready/core';
 import { generateHTML, findLatestReport } from '@aiready/core';
 
 interface VisualizeOptions {
@@ -231,6 +231,7 @@ export async function visualizeAction(
     const html = generateHTML(graph);
     const defaultOutput = 'visualization.html';
     const outPath = resolvePath(dirPath, options.output ?? defaultOutput);
+    ensureDir(outPath);
     writeFileSync(outPath, html, 'utf8');
     console.log(chalk.green(`✅ Visualization written to: ${outPath}`));
 

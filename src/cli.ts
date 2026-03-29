@@ -160,7 +160,7 @@ program
   .option(
     CLI_CONSTANTS.OPTIONS.OUTPUT,
     'Output HTML path (relative to directory)',
-    'packages/visualizer/visualization.html'
+    'visualization.html'
   )
   .option(CLI_CONSTANTS.OPTIONS.OPEN, 'Open generated HTML in default browser')
   .option(
@@ -198,7 +198,7 @@ program
   .option(
     CLI_CONSTANTS.OPTIONS.OUTPUT,
     'Output HTML path (relative to directory)',
-    'packages/visualizer/visualization.html'
+    'visualization.html'
   )
   .option(CLI_CONSTANTS.OPTIONS.OPEN, 'Open generated HTML in default browser')
   .option(
