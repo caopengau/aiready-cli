@@ -27,7 +27,9 @@
     "test": "vitest run",
     "lint": "eslint src",
     "clean": "rm -rf dist",
-    "prepublishOnly": "pnpm build"
+    "prepublishOnly": "pnpm build",
+    "type-check": "tsc --noEmit",
+    "format-check": "prettier --check . --ignore-path ../../.prettierignore"
   },
   "dependencies": {
     "@aiready/agent-grounding": "workspace:*",

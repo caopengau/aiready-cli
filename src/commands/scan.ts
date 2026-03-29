@@ -13,6 +13,7 @@ import {
   getRepoMetadata,
   emitIssuesAsAnnotations,
 } from '@aiready/core';
+import type { UnifiedReport, ScoringResult } from '@aiready/core';
 import { getReportTimestamp, warnIfGraphCapExceeded } from '../utils';
 import { mapToUnifiedReport } from './report-formatter';
 import { uploadAction } from './upload';
@@ -71,10 +72,14 @@ export async function scanAction(directory: string, options: ScanOptions) {
     };
 
     // Output persistence
+    const finalOptionsRecord = finalOptions as Record<string, unknown>;
+    const outputConfig = finalOptionsRecord.output as
+      | Record<string, unknown>
+      | undefined;
     const outputFormat =
-      options.output ?? (finalOptions as any).output?.format ?? 'console';
+      options.output ?? (outputConfig?.format as string) ?? 'console';
     const outputPath = resolveOutputPath(
-      options.outputFile ?? (finalOptions as any).output?.file,
+      options.outputFile ?? (outputConfig?.file as string),
       `aiready-report-${getReportTimestamp()}.json`,
       resolvedDir
     );
@@ -144,11 +149,11 @@ export async function scanAction(directory: string, options: ScanOptions) {
  * Handles threshold checks and CI failures based on scan results.
  */
 async function handleGatekeeper(
-  outputData: any,
-  scoringResult: any,
+  outputData: UnifiedReport,
+  scoringResult: ScoringResult | undefined,
   options: ScanOptions,
-  finalOptions: any,
-  results: any
+  finalOptions: Record<string, unknown>,
+  results: Record<string, unknown>
 ) {
   if (!scoringResult) return;
 
@@ -156,8 +161,11 @@ async function handleGatekeeper(
   const defaultFailOn = isCI ? 'critical' : 'none';
   const threshold = options.threshold
     ? parseInt(options.threshold)
-    : finalOptions.threshold;
-  const failOnLevel = options.failOn ?? finalOptions.failOn ?? defaultFailOn;
+    : (finalOptions.threshold as number | undefined);
+  const failOnLevel =
+    options.failOn ??
+    (finalOptions.failOn as string | undefined) ??
+    defaultFailOn;
 
   let shouldFail = false;
   let failReason = '';

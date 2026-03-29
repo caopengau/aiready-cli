@@ -2,6 +2,7 @@ import type {
   ScanOptions,
   ToolScoringOutput,
   ScoringResult,
+  Issue,
 } from '@aiready/core';
 
 export type { ToolScoringOutput, ScoringResult };
@@ -51,7 +52,7 @@ export interface UnifiedAnalysisOptions extends ScanOptions {
 export interface ToolOutput {
   results: Array<{
     fileName: string;
-    issues?: any[]; // Avoiding deep type loops for now
+    issues?: Issue[];
     [key: string]: any;
   }>;
   summary?: Record<string, any>;
