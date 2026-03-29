@@ -152,11 +152,12 @@ async function handleGatekeeper(
 ) {
   if (!scoringResult) return;
 
+  const isCI = options.ci ?? process.env.CI === 'true';
+  const defaultFailOn = isCI ? 'critical' : 'none';
   const threshold = options.threshold
     ? parseInt(options.threshold)
     : finalOptions.threshold;
-  const failOnLevel = options.failOn ?? finalOptions.failOn ?? 'critical';
-  const isCI = options.ci ?? process.env.CI === 'true';
+  const failOnLevel = options.failOn ?? finalOptions.failOn ?? defaultFailOn;
 
   let shouldFail = false;
   let failReason = '';
@@ -173,21 +174,23 @@ async function handleGatekeeper(
     emitIssuesAsAnnotations(report.results);
   }
 
-  if (threshold && scoringResult.overall < threshold) {
-    shouldFail = true;
-    failReason = `Score ${scoringResult.overall} < threshold ${threshold}`;
-  }
-
   if (failOnLevel !== 'none') {
-    if (failOnLevel === 'critical' && report.summary.criticalIssues > 0) {
+    if (threshold && scoringResult.overall < threshold) {
       shouldFail = true;
-      failReason = `Found ${report.summary.criticalIssues} critical issues`;
-    } else if (
-      failOnLevel === 'major' &&
-      report.summary.criticalIssues + report.summary.majorIssues > 0
-    ) {
-      shouldFail = true;
-      failReason = `Found ${report.summary.criticalIssues} critical and ${report.summary.majorIssues} major issues`;
+      failReason = `Score ${scoringResult.overall} < threshold ${threshold}`;
+    }
+
+    if (!shouldFail) {
+      if (failOnLevel === 'critical' && report.summary.criticalIssues > 0) {
+        shouldFail = true;
+        failReason = `Found ${report.summary.criticalIssues} critical issues`;
+      } else if (
+        failOnLevel === 'major' &&
+        report.summary.criticalIssues + report.summary.majorIssues > 0
+      ) {
+        shouldFail = true;
+        failReason = `Found ${report.summary.criticalIssues} critical and ${report.summary.majorIssues} major issues`;
+      }
     }
   }
 
@@ -264,11 +267,7 @@ export function defineScanCommand(program: Command) {
       '--ci',
       'CI mode: GitHub Actions annotations, no colors, fail on threshold'
     )
-    .option(
-      '--fail-on <level>',
-      'Fail on issues: critical, major, any',
-      'critical'
-    )
+    .option('--fail-on <level>', 'Fail on issues: critical, major, any')
     .option('--api-key <key>', 'Platform API key for automatic upload')
     .option('--upload', 'Automatically upload results to the platform')
     .option('--server <url>', 'Custom platform URL')
