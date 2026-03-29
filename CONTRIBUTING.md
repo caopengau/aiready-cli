@@ -41,11 +41,11 @@ The CLI follows a **hub-and-spoke** pattern:
 
 ## � Development Setup
 
-1. Clone the [monorepo](https://github.com/caopengau/aiready):
+1. Clone the [CLI repository](https://github.com/getaiready/aiready-cli):
 
    ```bash
-   git clone https://github.com/caopengau/aiready.git
-   cd aiready
+   git clone https://github.com/getaiready/aiready-cli.git
+   cd aiready-cli
    pnpm install
    ```
 
@@ -116,7 +116,7 @@ For more details, see [Release Management](../../.github/sub-instructions/releas
 
 ## 🐛 Reporting Issues
 
-Found a bug or have a feature request? [Open an issue on GitHub](https://github.com/caopengau/aiready/issues) with:
+Found a bug or have a feature request? [Open an issue on GitHub](https://github.com/getaiready/aiready-cli/issues) with:
 
 - Clear description of the problem or feature
 - Steps to reproduce (for bugs)
@@ -127,7 +127,7 @@ Found a bug or have a feature request? [Open an issue on GitHub](https://github.
 
 - Review the [README.md](./README.md)
 - Check [AIReady documentation](https://getaiready.dev/)
-- Browse existing [discussions and issues](https://github.com/caopengau/aiready/discussions)
+- Browse existing [discussions and issues](https://github.com/getaiready/aiready-cli/discussions)
 
 ## 📄 License
 

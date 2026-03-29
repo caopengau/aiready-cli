@@ -5,7 +5,7 @@
 [![npm version](https://img.shields.io/npm/v/@aiready/cli)](https://www.npmjs.com/package/@aiready/cli)
 [![VS Code Marketplace](https://img.shields.io/visual-studio-marketplace/v/pengcao.aiready?label=VS%20Code)](https://marketplace.visualstudio.com/items?itemName=pengcao.aiready)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![GitHub Actions](https://github.com/caopengau/aiready-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/caopengau/aiready-cli/actions)
+[![GitHub Actions](https://github.com/getaiready/aiready-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/getaiready/aiready-cli/actions)
 
 ## 🚀 Quick Start
 
