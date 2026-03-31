@@ -38,7 +38,22 @@ export async function agentGroundingAction(
       return {
         analyze: tool.analyzeAgentGrounding,
         generateSummary: (report: any) => report.summary,
-        calculateScore: tool.calculateGroundingScore,
+        calculateScore: (data: any) => {
+          const score = tool.calculateGroundingScore(data);
+          return {
+            ...score,
+            toolName: 'agent-grounding',
+            rawMetrics: data,
+            factors: [],
+            recommendations: (score.recommendations || []).map(
+              (action: string) => ({
+                action,
+                estimatedImpact: 10,
+                priority: 'medium',
+              })
+            ),
+          };
+        },
       };
     },
     renderConsole: ({ results, summary, score }) => {

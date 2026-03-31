@@ -34,7 +34,22 @@ export async function testabilityAction(
       return {
         analyze: tool.analyzeTestability,
         generateSummary: (report: any) => report.summary,
-        calculateScore: tool.calculateTestabilityScore,
+        calculateScore: (data: any) => {
+          const score = tool.calculateTestabilityScore(data);
+          return {
+            ...score,
+            toolName: 'testability-index',
+            rawMetrics: data,
+            factors: [],
+            recommendations: (score.recommendations || []).map(
+              (action: string) => ({
+                action,
+                estimatedImpact: 10,
+                priority: 'medium',
+              })
+            ),
+          };
+        },
       };
     },
     renderConsole: ({ results, summary, score }) => {
