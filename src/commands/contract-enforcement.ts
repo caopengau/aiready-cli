@@ -101,22 +101,16 @@ export async function contractEnforcementAction(
         rawData['as-any'] !== undefined
       ) {
         const breakdown = [
-          rawData['as-any'] && `as-any: ${rawData['as-any']}`,
-          rawData['as-unknown'] && `as-unknown: ${rawData['as-unknown']}`,
-          rawData['deep-optional-chain'] &&
-            `deep-?.: ${rawData['deep-optional-chain']}`,
-          rawData['nullish-literal-default'] &&
-            `?? literal: ${rawData['nullish-literal-default']}`,
-          rawData['swallowed-error'] &&
-            `swallowed-error: ${rawData['swallowed-error']}`,
-          rawData['env-fallback'] && `env-fallback: ${rawData['env-fallback']}`,
-          rawData['unnecessary-guard'] &&
-            `guard-clause: ${rawData['unnecessary-guard']}`,
-          rawData['any-parameter'] && `any-param: ${rawData['any-parameter']}`,
-          rawData['any-return'] && `any-return: ${rawData['any-return']}`,
-        ]
-          .filter(Boolean)
-          .join('  |  ');
+          `as-any: ${rawData['as-any'] || 0}`,
+          `as-unknown: ${rawData['as-unknown'] || 0}`,
+          `deep-?.: ${rawData['deep-optional-chain'] || 0}`,
+          `?? literal: ${rawData['nullish-literal-default'] || 0}`,
+          `swallowed-error: ${rawData['swallowed-error'] || 0}`,
+          `env-fallback: ${rawData['env-fallback'] || 0}`,
+          `guard-clause: ${rawData['unnecessary-guard'] || 0}`,
+          `any-param: ${rawData['any-parameter'] || 0}`,
+          `any-return: ${rawData['any-return'] || 0}`,
+        ].join('  |  ');
         console.log(chalk.dim(`     ${breakdown}`));
       }
 

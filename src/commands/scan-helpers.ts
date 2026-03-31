@@ -126,7 +126,10 @@ export async function executeToolAction<
       // - others: calculateScore(summary)
       const resultsAny = results as any;
       const scoreData =
-        resultsAny.duplicates || resultsAny.issues || resultsAny;
+        resultsAny.rawData ||
+        resultsAny.duplicates ||
+        resultsAny.issues ||
+        resultsAny;
       const filesCount =
         resultsAny.length ||
         resultsAny.summary?.filesAnalyzed ||
