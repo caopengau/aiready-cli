@@ -8,8 +8,8 @@ import { execSync } from 'child_process';
  * @param options - Command options including type (bug, feature, metric) and submit (boolean to submit via gh CLI)
  */
 export async function bugAction(message: string | undefined, options: any) {
-  const repoUrl = 'https://github.com/caopengau/aiready-cli';
-  const repoSlug = 'caopengau/aiready-cli';
+  const repoUrl = 'https://github.com/getaiready/aiready-cli';
+  const repoSlug = 'getaiready/aiready-cli';
 
   if (message) {
     // Agent-assisted pre-filled issue
