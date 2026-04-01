@@ -43,9 +43,9 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/caopengau/aiready-ai-signal-clarity.git"
+    "url": "https://github.com/getaiready/aiready-ai-signal-clarity.git"
   },
-  "homepage": "https://github.com/caopengau/aiready-ai-signal-clarity",
+  "homepage": "https://github.com/getaiready/aiready-ai-signal-clarity",
   "dependencies": {
     "@aiready/core": "workspace:*",
     "@typescript-eslint/types": "^8.53.0",

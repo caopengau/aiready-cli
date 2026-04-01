@@ -33,14 +33,14 @@ export const generateOrganizationSchema = () => {
       'Open source tools to optimize codebases for AI collaboration. Free developer tools for detecting semantic duplicates, analyzing context windows, and maintaining code consistency.',
     foundingDate: '2025',
     sameAs: [
-      'https://github.com/caopengau/aiready-cli',
+      'https://github.com/getaiready/aiready-cli',
       'https://www.npmjs.com/package/@aiready/cli',
       'https://twitter.com/aireadytools',
     ],
     contactPoint: {
       '@type': 'ContactPoint',
       contactType: 'Technical Support',
-      url: 'https://github.com/caopengau/aiready-cli/issues',
+      url: 'https://github.com/getaiready/aiready-cli/issues',
       availableLanguage: ['English'],
     },
     privacyPolicy: `${LANDING_BASE_URL}/privacy`,

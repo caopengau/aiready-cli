@@ -37,11 +37,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/caopengau/aiready-core.git"
+    "url": "https://github.com/getaiready/aiready-core.git"
   },
-  "homepage": "https://github.com/caopengau/aiready-core",
+  "homepage": "https://github.com/getaiready/aiready-core",
   "bugs": {
-    "url": "https://github.com/caopengau/aiready-core/issues"
+    "url": "https://github.com/getaiready/aiready-core/issues"
   },
   "files": [
     "dist",

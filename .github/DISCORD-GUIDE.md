@@ -114,7 +114,7 @@ Welcome to the AIReady community! This guide helps you get the most out of our D
 ## Connect With Us
 
 - **Website:** [getaiready.dev](https://getaiready.dev)
-- **GitHub:** [github.com/caopengau/aiready](https://github.com/caopengau/aiready)
+- **GitHub:** [github.com/getaiready/aiready-cli](https://github.com/getaiready/aiready-cli)
 - **Twitter:** [@aiready](https://twitter.com/aiready)
 - **Blog:** [getaiready.dev/blog](https://getaiready.dev/blog)
 

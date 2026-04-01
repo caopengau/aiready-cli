@@ -335,10 +335,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/caopengau/aiready-vscode-extension.git"
+    "url": "https://github.com/getaiready/aiready-vscode-extension.git"
   },
   "homepage": "https://getaiready.dev",
   "bugs": {
-    "url": "https://github.com/caopengau/aiready-vscode-extension/issues"
+    "url": "https://github.com/getaiready/aiready-vscode-extension/issues"
   }
 }

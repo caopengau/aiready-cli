@@ -50,11 +50,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/caopengau/aiready-context-analyzer.git"
+    "url": "https://github.com/getaiready/aiready-context-analyzer.git"
   },
-  "homepage": "https://github.com/caopengau/aiready-context-analyzer",
+  "homepage": "https://github.com/getaiready/aiready-context-analyzer",
   "bugs": {
-    "url": "https://github.com/caopengau/aiready-context-analyzer/issues"
+    "url": "https://github.com/getaiready/aiready-context-analyzer/issues"
   },
   "dependencies": {
     "@aiready/core": "workspace:*",

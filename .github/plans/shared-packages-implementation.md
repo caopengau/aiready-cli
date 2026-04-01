@@ -23,7 +23,7 @@
 ## 📦 Package Structure
 
 ```
-PUBLIC REPO (github.com/caopengau/aiready-cli)
+PUBLIC REPO (github.com/getaiready/aiready-cli)
 ├── packages/
 │   ├── core/              # Existing - analysis utilities
 │   ├── cli/               # Existing - CLI tool
@@ -38,7 +38,7 @@ PUBLIC REPO (github.com/caopengau/aiready-cli)
 │       └── utils/         # Utilities (formatters, colors)
 └── landing/              # Existing - public marketing site
 
-PRIVATE REPO (github.com/caopengau/aiready-dashboard)
+PRIVATE REPO (github.com/getaiready/aiready-dashboard)
 └── SaaS Dashboard (Next.js 16, uses @aiready/components from npm)
 ```
 
@@ -541,7 +541,7 @@ export const spacing = {
 
 | Package             | Status         | Version | npm | GitHub                                                                                | Notes                                        |
 | ------------------- | -------------- | ------- | --- | ------------------------------------------------------------------------------------- | -------------------------------------------- |
-| @aiready/components | 🔜 Not Started | -       | -   | [aiready-components](https://github.com/caopengau/aiready-components) (to be created) | Unified package: UI + Charts + Hooks + Utils |
+| @aiready/components | 🔜 Not Started | -       | -   | [aiready-components](https://github.com/getaiready/aiready-components) (to be created) | Unified package: UI + Charts + Hooks + Utils |
 
 **Legend:**
 

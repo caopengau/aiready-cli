@@ -162,9 +162,9 @@ Stats are exported to `.aiready/stats/YYYY-MM-DD.json`:
 
 ### GitHub Insights
 
-- **Pulse**: https://github.com/caopengau/aiready-cli/pulse
-- **Traffic**: https://github.com/caopengau/aiready-cli/graphs/traffic
-- **Community**: https://github.com/caopengau/aiready-cli/pulse
+- **Pulse**: https://github.com/getaiready/aiready-cli/pulse
+- **Traffic**: https://github.com/getaiready/aiready-cli/graphs/traffic
+- **Community**: https://github.com/getaiready/aiready-cli/pulse
 
 Quick access: `make stats-dashboard`
 

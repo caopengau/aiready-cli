@@ -29,7 +29,7 @@ LABEL maintainer="AIReady <hello@getaiready.dev>"
 LABEL org.opencontainers.image.title="AIReady MCP Server"
 LABEL org.opencontainers.image.description="AIReady Model Context Protocol (MCP) Server"
 LABEL org.opencontainers.image.url="https://getaiready.dev"
-LABEL org.opencontainers.image.source="https://github.com/caopengau/aiready"
+LABEL org.opencontainers.image.source="https://github.com/getaiready/aiready-cli"
 LABEL org.opencontainers.image.vendor="AIReady"
 
 WORKDIR /app

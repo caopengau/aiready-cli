@@ -7,11 +7,11 @@
   "author": "AIReady",
   "repository": {
     "type": "git",
-    "url": "https://github.com/caopengau/aiready-skills.git"
+    "url": "https://github.com/getaiready/aiready-skills.git"
   },
-  "homepage": "https://github.com/caopengau/aiready-skills",
+  "homepage": "https://github.com/getaiready/aiready-skills",
   "bugs": {
-    "url": "https://github.com/caopengau/aiready-skills/issues"
+    "url": "https://github.com/getaiready/aiready-skills/issues"
   },
   "keywords": [
     "aiready",

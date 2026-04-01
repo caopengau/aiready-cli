@@ -1,7 +1,7 @@
 # Case Study: AIReady on AIReady
 
 **Date:** March 26, 2026
-**Repository:** `caopengau/aiready` (Monorepo)
+**Repository:** `getaiready/aiready-cli` (Monorepo)
 **Goal:** Assess and improve the AI-readiness of the tool that measures AI-readiness.
 
 ## 📊 Summary of Findings

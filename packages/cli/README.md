@@ -118,7 +118,7 @@ docker run -v $(pwd):/app aiready/cli scan /app
 ### Homebrew
 
 ```bash
-brew install caopengau/aiready/aiready
+brew install getaiready/aiready/aiready
 ```
 
 ### VS Code Extension
@@ -129,7 +129,7 @@ Install from [VS Code Marketplace](https://marketplace.visualstudio.com/items?it
 
 ```yaml
 - name: AIReady Code Analysis
-  uses: caopengau/aiready-action@v1
+  uses: getaiready/aiready-action@v1
   with:
     threshold: 70
 ```

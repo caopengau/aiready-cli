@@ -11,7 +11,7 @@ make npm-login
 Create the spoke repository first:
 
 ```bash
-gh repo create caopengau/aiready-{spoke-name} --public
+gh repo create getaiready/aiready-{spoke-name} --public
 ```
 
 ### "workspace:\* protocol" error

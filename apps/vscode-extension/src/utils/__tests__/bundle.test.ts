@@ -1,7 +1,7 @@
 /**
  * Bundle integrity test
  *
- * Regression guard for: https://github.com/caopengau/aiready-vscode-extension/issues
+ * Regression guard for: https://github.com/getaiready/aiready-vscode-extension/issues
  * Bug: @aiready/core was in `dependencies` so tsup externalized it.
  * The VSIX ships without node_modules, so VS Code couldn't resolve the module
  * at runtime → extension activation threw → all 3 panels showed

@@ -79,7 +79,7 @@ async function setup() {
       id: repoId,
       userId,
       name: 'aiready',
-      url: 'https://github.com/caopengau/aiready',
+      url: 'https://github.com/getaiready/aiready-cli',
       defaultBranch: 'main',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),

@@ -7,7 +7,7 @@ class Aiready < Formula
   url "https://registry.npmjs.org/@aiready/cli/-/cli-.tgz"
   sha256 ""
   license "MIT"
-  head "https://github.com/caopengau/aiready.git", branch: "main"
+  head "https://github.com/getaiready/aiready-cli.git", branch: "main"
 
   depends_on "node" => :recommended
 
@@ -51,7 +51,7 @@ class Aiready < Formula
         https://getaiready.dev/docs
 
       GitHub:
-        https://github.com/caopengau/aiready
+        https://github.com/getaiready/aiready-cli
     EOS
   end
 end

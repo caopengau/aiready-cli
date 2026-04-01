@@ -38,9 +38,9 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/caopengau/aiready-contract-enforcement.git"
+    "url": "https://github.com/getaiready/aiready-contract-enforcement.git"
   },
-  "homepage": "https://github.com/caopengau/aiready-contract-enforcement",
+  "homepage": "https://github.com/getaiready/aiready-contract-enforcement",
   "dependencies": {
     "@aiready/core": "workspace:*",
     "@typescript-eslint/typescript-estree": "^8.53.0"

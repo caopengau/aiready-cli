@@ -30,8 +30,8 @@ docker-push: docker-build ## Build and push Docker image to registries
 	@echo "$(CYAN)🚀 Pushing Docker images...$(RESET)"
 	docker push aiready/cli:latest
 	docker push aiready/cli:$$(node -p "require('./packages/cli/package.json').version")
-	docker tag aiready/cli:latest ghcr.io/caopengau/aiready:latest
-	docker push ghcr.io/caopengau/aiready:latest
+	docker tag aiready/cli:latest ghcr.io/getaiready/aiready-cli:latest
+	docker push ghcr.io/getaiready/aiready-cli:latest
 	@echo "$(GREEN)✅ Docker images pushed successfully$(RESET)"
 
 docker-test: ## Test Docker image

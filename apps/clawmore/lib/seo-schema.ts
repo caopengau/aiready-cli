@@ -29,7 +29,7 @@ export const generateOrganizationSchema = () => {
       "Simple one-click OpenClaw deployment. The world's first platform for Multi-Human Multi-Agent Collaboration on serverless AWS. Enabling seamless orchestration between humans and autonomous agentic swarms.",
     foundingDate: '2025',
     sameAs: [
-      'https://github.com/caopengau/aiready-cli', // Sharing the same hub
+      'https://github.com/getaiready/aiready-cli', // Sharing the same hub
       'https://twitter.com/clawmore',
     ],
   };

@@ -9,7 +9,7 @@ export const siteConfig = {
   ogImage: 'https://getaiready.dev/og-image.png',
   links: {
     twitter: 'https://twitter.com/aireadytools',
-    github: 'https://github.com/caopengau/aiready-cli',
+    github: 'https://github.com/getaiready/aiready-cli',
     npm: 'https://www.npmjs.com/package/@aiready/cli',
   },
 };

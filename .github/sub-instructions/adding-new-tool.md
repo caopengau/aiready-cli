@@ -200,7 +200,7 @@ git commit -m "feat: add @aiready/your-tool"
 make push  # Syncs monorepo + all spoke repos
 
 # Create GitHub repo for the spoke
-gh repo create caopengau/aiready-your-tool --public
+gh repo create getaiready/aiready-your-tool --public
 
 # Release first version
 make release-one SPOKE=your-tool TYPE=minor

@@ -4,7 +4,7 @@
 
 AIReady uses a **hub-and-spoke git architecture** where:
 
-- **Public Entry Point:** `https://github.com/caopengau/aiready-cli` - The CLI tool users install
+- **Public Entry Point:** `https://github.com/getaiready/aiready-cli` - The CLI tool users install
 - **Spokes:** Individual GitHub repos for each package (e.g., `aiready-cli`, `aiready-core`)
 
 ### Why This Architecture?
@@ -56,10 +56,10 @@ Monorepo: aiready/
 │   └── context-analyzer/ → Spoke: aiready-context-analyzer
 
 Spoke Repos:
-├── aiready-cli (https://github.com/caopengau/aiready-cli)
-├── aiready-core (https://github.com/caopengau/aiready-core)
-├── aiready-pattern-detect (https://github.com/caopengau/aiready-pattern-detect)
-└── aiready-context-analyzer (https://github.com/caopengau/aiready-context-analyzer)
+├── aiready-cli (https://github.com/getaiready/aiready-cli)
+├── aiready-core (https://github.com/getaiready/aiready-core)
+├── aiready-pattern-detect (https://github.com/getaiready/aiready-pattern-detect)
+└── aiready-context-analyzer (https://github.com/getaiready/aiready-context-analyzer)
 ```
 
 ### Critical Rules
@@ -140,7 +140,7 @@ make release-one SPOKE=cli TYPE=patch
 
 ```bash
 # Create the missing spoke repo first
-gh repo create caopengau/aiready-{spoke-name} --public
+gh repo create getaiready/aiready-{spoke-name} --public
 
 # Then retry
 make publish SPOKE={spoke-name}

@@ -124,7 +124,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/caopengau/aiready-components.git"
+    "url": "https://github.com/getaiready/aiready-components.git"
   },
   "peerDependencies": {
     "react": "^19.0.0",

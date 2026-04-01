@@ -75,15 +75,15 @@
   "license": "MIT",
   "funding": {
     "type": "github",
-    "url": "https://github.com/sponsors/caopengau"
+    "url": "https://github.com/sponsors/getaiready"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/caopengau/aiready-cli.git"
+    "url": "https://github.com/getaiready/aiready-cli.git"
   },
-  "homepage": "https://github.com/caopengau/aiready-cli",
+  "homepage": "https://github.com/getaiready/aiready-cli",
   "bugs": {
-    "url": "https://github.com/caopengau/aiready-cli/issues"
+    "url": "https://github.com/getaiready/aiready-cli/issues"
   },
   "engines": {
     "node": ">=18.0.0"

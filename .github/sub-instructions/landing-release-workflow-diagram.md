@@ -71,7 +71,7 @@
                         RESULTING STRUCTURE
 
 ┌──────────────────────────────────────────────────────────────────────┐
-│ caopengau/aiready (monorepo)                                          │
+│ getaiready/aiready (monorepo)                                          │
 ├──────────────────────────────────────────────────────────────────────┤
 │ main branch:                                                          │
 │   • landing/package.json → version: 0.2.0                            │
@@ -89,7 +89,7 @@
                                   │
                                   ▼
 ┌──────────────────────────────────────────────────────────────────────┐
-│ caopengau/aiready-landing (public sub-repo)                          │
+│ getaiready/aiready-landing (public sub-repo)                          │
 ├──────────────────────────────────────────────────────────────────────┤
 │ main branch:                                                          │
 │   • package.json → version: 0.2.0                                    │

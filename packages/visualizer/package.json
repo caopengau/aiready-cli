@@ -54,7 +54,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/caopengau/aiready-visualizer.git"
+    "url": "https://github.com/getaiready/aiready-visualizer.git"
   },
   "dependencies": {
     "@aiready/core": "workspace:*",

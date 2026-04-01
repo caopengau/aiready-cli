@@ -46,9 +46,9 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/caopengau/aiready-consistency.git"
+    "url": "https://github.com/getaiready/aiready-consistency.git"
   },
-  "homepage": "https://github.com/caopengau/aiready-consistency",
+  "homepage": "https://github.com/getaiready/aiready-consistency",
   "dependencies": {
     "@aiready/core": "workspace:*",
     "@typescript-eslint/types": "^8.53.0",

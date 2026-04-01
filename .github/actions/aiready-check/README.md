@@ -68,7 +68,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: AI Readiness Check
-        uses: caopengau/aiready-action@v1
+        uses: getaiready/aiready-action@v1
         with:
           threshold: 70
           fail-on: major

@@ -67,11 +67,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/caopengau/aiready-pattern-detect.git"
+    "url": "https://github.com/getaiready/aiready-pattern-detect.git"
   },
-  "homepage": "https://github.com/caopengau/aiready-pattern-detect",
+  "homepage": "https://github.com/getaiready/aiready-pattern-detect",
   "bugs": {
-    "url": "https://github.com/caopengau/aiready-pattern-detect/issues"
+    "url": "https://github.com/getaiready/aiready-pattern-detect/issues"
   },
   "dependencies": {
     "@aiready/core": "workspace:*",

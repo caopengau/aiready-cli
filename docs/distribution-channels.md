@@ -4,14 +4,14 @@ This document outlines the distribution strategy for AIReady tools and the statu
 
 ## Quick Status
 
-| Channel                | Status            | Package                     | Priority |
-| ---------------------- | ----------------- | --------------------------- | -------- |
-| **npm**                | ✅ Published      | `@aiready/cli`              | Done     |
-| **Docker Hub**         | 🟡 Ready          | `aiready/cli`               | High     |
-| **ghcr.io**            | 🟡 Ready          | `ghcr.io/caopengau/aiready` | High     |
-| **GitHub Marketplace** | ✅ Published      | `caopengau/aiready-action`  | Done     |
-| **VS Code Extension**  | 🟡 Scaffold Ready | `aiready.aiready`           | Medium   |
-| **Homebrew**           | 🟡 Formula Ready  | `aiready`                   | Medium   |
+| Channel                | Status            | Package                      | Priority |
+| ---------------------- | ----------------- | ---------------------------- | -------- |
+| **npm**                | ✅ Published      | `@aiready/cli`               | Done     |
+| **Docker Hub**         | 🟡 Ready          | `aiready/cli`                | High     |
+| **ghcr.io**            | 🟡 Ready          | `ghcr.io/getaiready/aiready` | High     |
+| **GitHub Marketplace** | ✅ Published      | `getaiready/aiready-action`  | Done     |
+| **VS Code Extension**  | 🟡 Scaffold Ready | `aiready.aiready`            | Medium   |
+| **Homebrew**           | 🟡 Formula Ready  | `aiready`                    | Medium   |
 
 ## Makefile Commands
 
@@ -114,7 +114,7 @@ make docker-push
 docker pull aiready/cli:latest
 
 # Pull from ghcr.io
-docker pull ghcr.io/caopengau/aiready:latest
+docker pull ghcr.io/getaiready/aiready:latest
 
 # Run analysis
 docker run --rm -v $(pwd):/workspace aiready/cli:latest scan /workspace
@@ -191,7 +191,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: caopengau/aiready-action@v1
+      - uses: getaiready/aiready-action@v1
         with:
           threshold: '70'
           fail-on: 'critical'

@@ -235,12 +235,12 @@ function printGuidance() {
 function printFooter() {
   console.log(
     chalk.dim(
-      '\n⭐ Like AIReady? Star us on GitHub: https://github.com/caopengau/aiready-pattern-detect'
+      '\n⭐ Like AIReady? Star us on GitHub: https://github.com/getaiready/aiready-pattern-detect'
     )
   );
   console.log(
     chalk.dim(
-      '🐛 Found a bug? Report it: https://github.com/caopengau/aiready-pattern-detect/issues\n'
+      '🐛 Found a bug? Report it: https://github.com/getaiready/aiready-pattern-detect/issues\n'
     )
   );
 }

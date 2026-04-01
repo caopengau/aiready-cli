@@ -55,8 +55,8 @@ export function generateHTMLReport(results: any, summary?: any): string {
     {
       title: 'Pattern Detection Report',
       packageName: 'pattern-detect',
-      packageUrl: 'https://github.com/caopengau/aiready-pattern-detect',
-      bugUrl: 'https://github.com/caopengau/aiready-pattern-detect/issues',
+      packageUrl: 'https://github.com/getaiready/aiready-pattern-detect',
+      bugUrl: 'https://github.com/getaiready/aiready-pattern-detect/issues',
       version: metadata.version,
       emoji: '🔍',
     },

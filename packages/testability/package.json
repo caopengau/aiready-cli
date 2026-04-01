@@ -42,9 +42,9 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/caopengau/aiready-testability.git"
+    "url": "https://github.com/getaiready/aiready-testability.git"
   },
-  "homepage": "https://github.com/caopengau/aiready-testability",
+  "homepage": "https://github.com/getaiready/aiready-testability",
   "dependencies": {
     "@aiready/core": "workspace:*",
     "@typescript-eslint/types": "^8.53.0",

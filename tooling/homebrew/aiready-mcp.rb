@@ -7,7 +7,7 @@ class AireadyMcp < Formula
   url "https://registry.npmjs.org/@aiready/mcp-server/-/mcp-server-0.1.0.tgz"
   sha256 "27bdffd6b88d0f65e3c5871e8d4e13dc56151a64349e78371a496428272aac77"
   license "MIT"
-  head "https://github.com/caopengau/aiready.git", branch: "main"
+  head "https://github.com/getaiready/aiready-cli.git", branch: "main"
 
   depends_on "node" => :recommended
 
@@ -45,7 +45,7 @@ class AireadyMcp < Formula
         https://getaiready.dev/docs
 
       GitHub:
-        https://github.com/caopengau/aiready
+        https://github.com/getaiready/aiready-cli
     EOS
   end
 end

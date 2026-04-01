@@ -140,13 +140,13 @@ make push                    # Push monorepo + sync all spokes to GitHub repos
 
 ### Docker
 
-- Images: `aiready/cli` (Docker Hub), `ghcr.io/caopengau/aiready/cli`
+- Images: `aiready/cli` (Docker Hub), `ghcr.io/getaiready/aiready-cli`
 - Build: `docker build -f docker/Dockerfile -t aiready/cli .`
 
 ### Homebrew
 
 - Formula: `homebrew/aiready.rb`
-- Install: `brew install caopengau/aiready/aiready`
+- Install: `brew install getaiready/aiready/aiready`
 
 ### MCP Server
 

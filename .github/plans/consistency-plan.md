@@ -66,7 +66,7 @@ Result:
 
 ### Implementation Overview
 
-**Package:** [@aiready/consistency](https://github.com/caopengau/aiready-consistency)
+**Package:** [@aiready/consistency](https://github.com/getaiready/aiready-consistency)
 
 **Published:** Staged for npm (v0.1.0)
 
@@ -530,7 +530,7 @@ console.log(`Found ${report.summary.totalIssues} issues`);
 
 ## 🔗 Related Resources
 
-- **GitHub Repo:** https://github.com/caopengau/aiready-consistency
+- **GitHub Repo:** https://github.com/getaiready/aiready-consistency
 - **npm Package:** (pending v0.1.0 publish)
 - **Main Docs:** [README.md](../../packages/consistency/README.md)
 - **Contributing:** [CONTRIBUTING.md](../../packages/consistency/CONTRIBUTING.md)

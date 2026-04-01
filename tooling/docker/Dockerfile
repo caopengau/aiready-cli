@@ -30,7 +30,7 @@ LABEL maintainer="AIReady <hello@getaiready.dev>"
 LABEL org.opencontainers.image.title="AIReady CLI"
 LABEL org.opencontainers.image.description="AI readiness analysis tools - detect issues that confuse AI models"
 LABEL org.opencontainers.image.url="https://getaiready.dev"
-LABEL org.opencontainers.image.source="https://github.com/caopengau/aiready"
+LABEL org.opencontainers.image.source="https://github.com/getaiready/aiready-cli"
 LABEL org.opencontainers.image.vendor="AIReady"
 
 WORKDIR /app

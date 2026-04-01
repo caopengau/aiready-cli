@@ -59,7 +59,7 @@ AIReady skills are the procedural backbone of our three-layer ecosystem:
 ### For [skills.sh](https://skills.sh/)
 
 ```bash
-npx skills add caopengau/aiready-skills
+npx skills add getaiready/aiready-skills
 ```
 
 ### For [Playbooks.com (Paks)](https://playbooks.com/)

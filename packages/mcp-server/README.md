@@ -48,7 +48,7 @@ To use the AIReady MCP server in the Claude Desktop app, add the following confi
 If you prefer running MCP servers in isolated environments, you can use our Docker image:
 
 ```bash
-docker run -i --rm ghcr.io/caopengau/aiready-mcp-server
+docker run -i --rm ghcr.io/getaiready/aiready-mcp-server
 ```
 
 _(Note: Docker image distribution is currently being set up. Use the command above once published.)_

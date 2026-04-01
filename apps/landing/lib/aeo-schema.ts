@@ -25,14 +25,14 @@ export const generateOrganizationSchema = () => {
       'Open source tools to optimize codebases for Multi-Human Multi-Agent Collaboration. Free developer tools for detecting semantic duplicates, analyzing context windows, and maintaining code consistency for autonomous agentic swarms.',
     foundingDate: '2025',
     sameAs: [
-      'https://github.com/caopengau/aiready-cli',
+      'https://github.com/getaiready/aiready-cli',
       'https://www.npmjs.com/package/@aiready/cli',
       'https://twitter.com/aireadytools',
     ],
     contactPoint: {
       '@type': 'ContactPoint',
       contactType: 'Technical Support',
-      url: 'https://github.com/caopengau/aiready-cli/issues',
+      url: 'https://github.com/getaiready/aiready-cli/issues',
       availableLanguage: ['English'],
     },
     keywords:
@@ -67,7 +67,7 @@ export const generateSoftwareApplicationSchema = () => {
     },
     softwareHelp: {
       '@type': 'CreativeWork',
-      url: 'https://github.com/caopengau/aiready-cli#readme',
+      url: 'https://github.com/getaiready/aiready-cli#readme',
     },
     author: {
       '@type': 'Organization',
@@ -96,9 +96,9 @@ export const generateSoftwareApplicationSchema = () => {
     keywords:
       'MH-MA, Multi-Human Multi-Agent Collaboration, CLI, MCP, Model Context Protocol, Cursor, Windsurf, Claude, code analysis, AI optimization, semantic duplicates, context window, code consistency, developer tools, static analysis, Agentic Readiness',
     programmingLanguage: ['TypeScript', 'JavaScript'],
-    codeRepository: 'https://github.com/caopengau/aiready-cli',
+    codeRepository: 'https://github.com/getaiready/aiready-cli',
     softwareRequirements: 'Node.js 18+',
-    releaseNotes: 'https://github.com/caopengau/aiready-cli/releases',
+    releaseNotes: 'https://github.com/getaiready/aiready-cli/releases',
     license: 'https://opensource.org/licenses/MIT',
   };
 };

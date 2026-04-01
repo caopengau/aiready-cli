@@ -42,9 +42,9 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/caopengau/aiready-agent-grounding.git"
+    "url": "https://github.com/getaiready/aiready-agent-grounding.git"
   },
-  "homepage": "https://github.com/caopengau/aiready-agent-grounding",
+  "homepage": "https://github.com/getaiready/aiready-agent-grounding",
   "dependencies": {
     "@aiready/core": "workspace:*",
     "@typescript-eslint/types": "^8.53.0",

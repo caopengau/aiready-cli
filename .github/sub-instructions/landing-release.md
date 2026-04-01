@@ -4,7 +4,7 @@ This document describes the release and tagging process for the AIReady landing 
 
 ## Overview
 
-The landing page (`@aiready/landing`) is part of the monorepo and also published to a separate GitHub repository at `caopengau/aiready-landing`. The release workflow ensures that:
+The landing page (`@aiready/landing`) is part of the monorepo and also published to a separate GitHub repository at `getaiready/aiready-landing`. The release workflow ensures that:
 
 1. **Version management**: Landing page version is tracked in `landing/package.json`
 2. **Monorepo tagging**: Version tags (e.g., `landing-v0.1.0`) are created in the monorepo
@@ -115,7 +115,7 @@ git tag -l "landing-v*"
 ### Check Sub-repo Tags
 
 ```bash
-git ls-remote --tags https://github.com/caopengau/aiready-landing.git
+git ls-remote --tags https://github.com/getaiready/aiready-landing.git
 # Output: refs/tags/v0.1.0, refs/tags/v0.2.0, etc.
 ```
 

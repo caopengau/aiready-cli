@@ -56,18 +56,18 @@ stats-github: ## Show GitHub repository statistics
 		echo "$(YELLOW)⚠️  Set GITHUB_TOKEN for accurate stats$(NC)"; \
 		echo "   export GITHUB_TOKEN=ghp_your_token\n"; \
 	fi
-	@gh repo view caopengau/aiready --json stargazerCount,forkCount,issues,pullRequests,watchers 2>/dev/null | \
+	@gh repo view getaiready/aiready-cli --json stargazerCount,forkCount,issues,pullRequests,watchers 2>/dev/null | \
 		jq -r '"  ⭐ Stars: \(.stargazerCount)\n  🍴 Forks: \(.forkCount)\n  👀 Watchers: \(.watchers.totalCount)\n  📝 Open Issues: \(.issues.totalCount)\n  🔀 Open PRs: \(.pullRequests.totalCount)"' || \
 		echo "  Install GitHub CLI: brew install gh"
 
 stats-github-detailed: ## Show detailed GitHub analytics
 	@echo "$(GREEN)⭐ Detailed GitHub Analytics$(NC)\n"
-	@echo "Repository: caopengau/aiready"
-	@gh repo view caopengau/aiready --json stargazerCount,forkCount,issues,pullRequests,watchers,createdAt,updatedAt,description 2>/dev/null | \
+	@echo "Repository: getaiready/aiready-cli"
+	@gh repo view getaiready/aiready-cli --json stargazerCount,forkCount,issues,pullRequests,watchers,createdAt,updatedAt,description 2>/dev/null | \
 		jq -r '"Stars: \(.stargazerCount)\nForks: \(.forkCount)\nWatchers: \(.watchers.totalCount)\nOpen Issues: \(.issues.totalCount)\nOpen PRs: \(.pullRequests.totalCount)\nCreated: \(.createdAt)\nLast Updated: \(.updatedAt)"' || \
 		echo "Install GitHub CLI: brew install gh"
 	@echo "\n$(CYAN)Recent Activity:$(NC)"
-	@gh repo view caopengau/aiready --json latestRelease 2>/dev/null | \
+	@gh repo view getaiready/aiready-cli --json latestRelease 2>/dev/null | \
 		jq -r '"Latest Release: \(.latestRelease.tagName // "none") - \(.latestRelease.publishedAt // "n/a")"' || echo "No releases"
 
 stats-all: stats-npm-detailed stats-github-detailed ## Show all detailed statistics
@@ -100,7 +100,7 @@ stats-export: ## Export stats to JSON file
 		done; \
 		echo "  },"; \
 		printf '  "github": '; \
-		gh repo view caopengau/aiready --json stargazerCount,forkCount,issues,pullRequests,watchers 2>/dev/null || echo "null"; \
+		gh repo view getaiready/aiready-cli --json stargazerCount,forkCount,issues,pullRequests,watchers 2>/dev/null || echo "null"; \
 		echo ""; \
 		echo "}"; \
 	} > .aiready/stats/$(TODAY).json
@@ -164,7 +164,7 @@ stats-dashboard: ## Open NPM/GitHub stats in browser
 	@open "https://npm-stat.com/charts.html?package=@aiready/cli&from=2024-01-01" 2>/dev/null || xdg-open "https://npm-stat.com/charts.html?package=@aiready/cli&from=2024-01-01" 2>/dev/null || true
 	@sleep 1
 	@echo "Opening GitHub insights"
-	@open "https://github.com/caopengau/aiready/pulse" 2>/dev/null || xdg-open "https://github.com/caopengau/aiready/pulse" 2>/dev/null || true
+	@open "https://github.com/getaiready/aiready-cli/pulse" 2>/dev/null || xdg-open "https://github.com/getaiready/aiready-cli/pulse" 2>/dev/null || true
 
 stats-trends: ## Show download trends (requires historical data)
 	@echo "$(CYAN)📈 Download Trends$(NC)\n"
