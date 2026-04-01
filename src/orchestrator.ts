@@ -1,6 +1,5 @@
 import {
   ToolRegistry,
-  ToolName,
   initializeParsers,
   GLOBAL_INFRA_OPTIONS,
   COMMON_FINE_TUNING_OPTIONS,
