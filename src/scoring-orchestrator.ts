@@ -54,7 +54,7 @@ export class ScoringOrchestrator {
           // If we are in the same process, importing will populate the global registry
           await import(packageName);
           provider = this.registry.find(toolId);
-        } catch (err) {
+        } catch (_err) {
           console.warn(
             `⚠️  Warning: Could not dynamically load tool '${toolId}' for scoring.`
           );

@@ -262,7 +262,7 @@ describe('CLI Commands', () => {
         .spyOn(console, 'error')
         .mockImplementation(() => {});
       vi.mocked(fs.existsSync).mockReturnValue(false);
-      vi.mocked(core.findLatestReport).mockReturnValue(undefined);
+      vi.mocked(core.findLatestReport).mockReturnValue(null);
 
       await visualizeAction('.', {});
 
