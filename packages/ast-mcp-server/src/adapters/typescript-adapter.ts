@@ -279,27 +279,27 @@ export class TypeScriptAdapter {
 
     const structure: FileStructure = {
       file: safePath,
-      imports: sourceFile.getImportDeclarations().map((imp: any) => ({
+      imports: sourceFile.getImportDeclarations().map((imp) => ({
         module: imp.getModuleSpecifierValue(),
-        names: imp.getNamedImports().map((ni: any) => ni.getName()),
+        names: imp.getNamedImports().map((ni) => ni.getName()),
       })),
-      exports: sourceFile.getExportSymbols().map((sym: any) => ({
+      exports: sourceFile.getExportSymbols().map((sym) => ({
         name: sym.getName(),
         kind: this.mapSymbolKind(sym),
       })),
       classes: sourceFile
         .getClasses()
-        .map((cls: any) => this.mapToClassInfo(cls)),
+        .map((cls) => this.mapToClassInfo(cls)),
       functions: sourceFile
         .getFunctions()
-        .map((fn: any) => this.mapToFunctionInfo(fn)),
+        .map((fn) => this.mapToFunctionInfo(fn)),
       interfaces: sourceFile
         .getInterfaces()
-        .map((itf: any) => this.mapToInterfaceInfo(itf)),
+        .map((itf) => this.mapToInterfaceInfo(itf)),
       typeAliases: sourceFile
         .getTypeAliases()
-        .map((ta: any) => this.mapToTypeAliasInfo(ta)),
-      enums: sourceFile.getEnums().map((enm: any) => this.mapToEnumInfo(enm)),
+        .map((ta) => this.mapToTypeAliasInfo(ta)),
+      enums: sourceFile.getEnums().map((enm) => this.mapToEnumInfo(enm)),
     };
 
     return structure;
@@ -373,57 +373,57 @@ export class TypeScriptAdapter {
     return {
       name: cls.getName() || 'anonymous',
       ...this.getSymbolDocs(cls),
-      methods: cls.getMethods().map((m: any) => this.mapToFunctionInfo(m)),
+      methods: cls.getMethods().map((m) => this.mapToFunctionInfo(m)),
       properties: cls
         .getProperties()
-        .map((p: any) => this.mapToPropertyInfo(p)),
+        .map((p) => this.mapToPropertyInfo(p)),
     };
   }
 
-  private mapToFunctionInfo(fn: any): FunctionInfo {
+  private mapToFunctionInfo(fn: unknown): FunctionInfo {
     return {
-      name: fn.getName() || 'anonymous',
+      name: ((fn as any)?.getName?.() || 'anonymous'),
       ...this.getSymbolDocs(fn),
-      params: fn.getParameters().map((p: any) => ({
+      params: ((fn as any)?.getParameters?.() || []).map((p: any) => ({
         name: p.getName(),
         type: p.getType().getText(),
       })),
-      returnType: fn.getReturnType().getText(),
+      returnType: ((fn as any)?.getReturnType?.()?.getText?.() || 'unknown'),
     };
   }
 
-  private mapToPropertyInfo(p: any) {
+  private mapToPropertyInfo(p: unknown) {
     return {
-      name: p.getName(),
-      type: p.getType().getText(),
-      ...this.getSymbolDocs(p),
+      name: ((p as any)?.getName?.() || 'unknown'),
+      type: ((p as any)?.getType?.()?.getText?.() || 'unknown'),
+      ...this.getSymbolDocs(p as Node),
     };
   }
 
-  private mapToInterfaceInfo(itf: any): InterfaceInfo {
+  private mapToInterfaceInfo(itf: unknown): InterfaceInfo {
     return {
-      name: itf.getName(),
-      ...this.getSymbolDocs(itf),
-      properties: itf
+      name: ((itf as any)?.getName?.() || 'unknown'),
+      ...this.getSymbolDocs(itf as Node),
+      properties: ((itf as any)
         .getProperties()
-        .map((p: any) => this.mapToPropertyInfo(p)),
-      methods: itf.getMethods().map((m: any) => this.mapToFunctionInfo(m)),
+        .map((p) => this.mapToPropertyInfo(p))) || [],
+      methods: (((itf as any)?.getMethods?.() || []).map((m) => this.mapToFunctionInfo(m))) || [],
     };
   }
 
-  private mapToTypeAliasInfo(ta: any): TypeAliasInfo {
+  private mapToTypeAliasInfo(ta: unknown): TypeAliasInfo {
     return {
-      name: ta.getName(),
-      type: ta.getType().getText(),
-      ...this.getSymbolDocs(ta),
+      name: ((ta as any)?.getName?.() || 'unknown'),
+      type: ((ta as any)?.getType?.()?.getText?.() || 'unknown'),
+      ...this.getSymbolDocs(ta as Node),
     };
   }
 
-  private mapToEnumInfo(enm: any): EnumInfo {
+  private mapToEnumInfo(enm: unknown): EnumInfo {
     return {
-      name: enm.getName(),
-      ...this.getSymbolDocs(enm),
-      members: enm.getMembers().map((m: any) => m.getName()),
+      name: ((enm as any)?.getName?.() || 'unknown'),
+      ...this.getSymbolDocs(enm as Node),
+      members: (((enm as any)?.getMembers?.() || []).map((m: any) => m.getName())) || [],
     };
   }
 

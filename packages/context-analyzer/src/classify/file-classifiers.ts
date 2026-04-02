@@ -1,4 +1,5 @@
 import { DependencyNode } from '../types';
+import type { ExportInfo } from '@aiready/core';
 import {
   BARREL_EXPORT_MIN_EXPORTS,
   BARREL_EXPORT_TOKEN_LIMIT,
@@ -23,7 +24,7 @@ export function isBoilerplateBarrel(node: DependencyNode): boolean {
   if (!exports || exports.length === 0) return false;
 
   // 1. Must be purely re-exports
-  const isPurelyReexports = exports.every((exp: any) => !!exp.source);
+  const isPurelyReexports = exports.every((exp: ExportInfo) => !!exp.source);
   if (!isPurelyReexports) return false;
 
   // 2. Must be low local token cost (no actual logic)
@@ -31,7 +32,7 @@ export function isBoilerplateBarrel(node: DependencyNode): boolean {
 
   // 3. Detect "Architectural Theater"
   // If it re-exports everything from exactly ONE source, it's a pass-through
-  const sources = new Set(exports.map((exp: any) => exp.source));
+  const sources = new Set(exports.map((exp: ExportInfo) => exp.source));
 
   // Pattern: export * from '../actual'
   const isSingleSourcePassThrough = sources.size === 1;
@@ -63,7 +64,7 @@ export function isBarrelExport(node: DependencyNode): boolean {
 
   const isReexportPattern =
     (exports || []).length >= BARREL_EXPORT_MIN_EXPORTS &&
-    (exports || []).every((exp: any) =>
+    (exports || []).every((exp: ExportInfo) =>
       ['const', 'function', 'type', 'interface'].includes(exp.type)
     );
 
@@ -86,7 +87,7 @@ export function isTypeDefinition(node: DependencyNode): boolean {
   const areAllTypes =
     hasExports &&
     nodeExports.every(
-      (exp: any) => exp.type === 'type' || exp.type === 'interface'
+      (exp: ExportInfo) => exp.type === 'type' || exp.type === 'interface'
     );
 
   const isTypePath = /\/(types|interfaces|models)\//i.test(file);
@@ -124,7 +125,7 @@ export function isLambdaHandler(node: DependencyNode): boolean {
   );
   const isHandlerPath = /\/(handlers|lambdas|lambda|functions)\//i.test(file);
   const hasHandlerExport = (exports || []).some(
-    (exp: any) =>
+    (exp: ExportInfo) =>
       ['handler', 'main', 'lambdahandler'].includes(exp.name.toLowerCase()) ||
       exp.name.toLowerCase().endsWith('handler')
   );
@@ -146,11 +147,11 @@ export function isServiceFile(node: DependencyNode): boolean {
     fileName.includes(pattern)
   );
   const isServicePath = file.toLowerCase().includes('/services/');
-  const hasServiceNamedExport = (exports || []).some((exp: any) =>
+  const hasServiceNamedExport = (exports || []).some((exp: ExportInfo) =>
     exp.name.toLowerCase().includes('service')
   );
   const hasClassExport = (exports || []).some(
-    (exp: any) => exp.type === 'class'
+    (exp: ExportInfo) => exp.type === 'class'
   );
   return (
     isServiceName || isServicePath || (hasServiceNamedExport && hasClassExport)
@@ -173,7 +174,7 @@ export function isEmailTemplate(node: DependencyNode): boolean {
   );
   const isEmailPath = /\/(emails|mail|notifications)\//i.test(file);
   const hasTemplateFunction = (exports || []).some(
-    (exp: any) =>
+    (exp: ExportInfo) =>
       exp.type === 'function' &&
       (exp.name.toLowerCase().startsWith('render') ||
         exp.name.toLowerCase().startsWith('generate'))
@@ -197,7 +198,7 @@ export function isParserFile(node: DependencyNode): boolean {
   );
   const isParserPath = /\/(parsers|transformers)\//i.test(file);
   const hasParseFunction = (exports || []).some(
-    (exp: any) =>
+    (exp: ExportInfo) =>
       exp.type === 'function' &&
       (exp.name.toLowerCase().startsWith('parse') ||
         exp.name.toLowerCase().startsWith('transform'))
@@ -220,7 +221,7 @@ export function isSessionFile(node: DependencyNode): boolean {
     fileName.includes(pattern)
   );
   const isSessionPath = /\/(sessions|state)\//i.test(file);
-  const hasSessionExport = (exports || []).some((exp: any) =>
+  const hasSessionExport = (exports || []).some((exp: ExportInfo) =>
     ['session', 'state', 'store'].some((pattern: string) =>
       exp.name.toLowerCase().includes(pattern)
     )
@@ -246,10 +247,10 @@ export function isNextJsPage(node: DependencyNode): boolean {
     return false;
 
   const hasDefaultExport = (exports || []).some(
-    (exp: any) => exp.type === 'default'
+    (exp: ExportInfo) => exp.type === 'default'
   );
 
-  const hasNextJsExport = (exports || []).some((exp: any) =>
+  const hasNextJsExport = (exports || []).some((exp: ExportInfo) =>
     NEXTJS_METADATA_EXPORTS.includes(exp.name.toLowerCase())
   );
 
@@ -272,7 +273,7 @@ export function isConfigFile(node: DependencyNode): boolean {
     fileName.includes(pattern)
   );
   const isConfigPath = /\/(config|settings|schemas)\//i.test(lowerPath);
-  const hasSchemaExport = (exports || []).some((exp: any) =>
+  const hasSchemaExport = (exports || []).some((exp: ExportInfo) =>
     ['schema', 'config', 'setting'].some((pattern: string) =>
       exp.name.toLowerCase().includes(pattern)
     )
