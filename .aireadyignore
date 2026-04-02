@@ -2,22 +2,27 @@
 infra/cdk.out/**
 **/cdk.out/**
 **/cdk.out/*
+**/.smithery/**
 **/asset.*
 **/dist/**
 **/.next/**
+**/.sst/**
 **/build/**
 **/out/**
 node_modules/**
+**/next-env.d.ts
+**/sst-env.d.ts
+**/tsc_errors.txt
 # keep .aiready reports
 !.aiready/**
-# Exclude marketing sites - not core aiready tools
-landing/**
-clawmore/**
-platform/**
-# Exclude action marketplace - separate distribution channel
-action-marketplace/**
-# Exclude vscode extension - separate distribution channel
-vscode-extension/**
+# Exclude serverlessclaw - experimental / not stable
+apps/serverlessclaw/**
+# Exclude tooling infrastructure
+tooling/docker/**
+tooling/github-action/**
+tooling/homebrew/**
+tooling/makefiles/**
+tooling/scripts/**
 # Exclude HTML coverage reports
 packages/cli/coverage/**
 packages/context-analyzer/coverage/**

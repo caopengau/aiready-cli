@@ -1,14 +1,15 @@
 {
   "$schema": "https://getaiready.dev/schema.json",
-  "threshold": 70,
+  "threshold": 75,
   "scan": {
     "include": [
       "src/**/*.ts",
       "src/**/*.js",
       "lib/**/*.ts",
-      "packages/*/src/**/*.ts"
+      "packages/*/src/**/*.ts",
+      "apps/**/*.ts",
+      "apps/**/*.tsx"
     ],
-    "exclude": ["**/node_modules/**", "**/dist/**", "**/build/**"],
     "tools": [
       "pattern-detect",
       "context-analyzer",
