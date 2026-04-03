@@ -39,15 +39,13 @@ describe('searchCode', () => {
       ].join('\n'),
     });
 
-    const results = await searchCode('target', '/repo', '*.ts', 50, true);
+    const results = await searchCode('target', '/repo', '*.ts', 50, true, 0);
 
     expect(validateWorkspacePathMock).toHaveBeenCalledWith('/repo');
     expect(execFileAsyncMock).toHaveBeenCalledWith(
       '/mock/rg',
       expect.arrayContaining([
         '--json',
-        '--max-count',
-        '50',
         'target',
         '/safe/repo',
         '--glob',
@@ -81,24 +79,26 @@ describe('searchCode', () => {
     );
   });
 
-  it('respects limit by slicing parsed matches', async () => {
+  it('respects limit and offset by slicing parsed matches', async () => {
     execFileAsyncMock.mockResolvedValueOnce({
       stdout: [
         JSON.stringify({
           type: 'match',
           data: {
-            path: { text: '/safe/repo/src/a.ts' },
+            path: { text: 'a.ts' },
             line_number: 1,
-            lines: { text: 'x\n' },
-            submatches: [{ start: 0 }, { start: 1 }, { start: 2 }],
+            lines: { text: 'abc\n' },
+            submatches: [{ start: 0 }, { start: 1 }, { start: 2 }], // a, b, c
           },
         }),
       ].join('\n'),
     });
 
-    const results = await searchCode('x', '/repo', undefined, 2, true);
+    // Get 2nd match only
+    const results = await searchCode('x', '/repo', undefined, 1, true, 1);
 
-    expect(results).toHaveLength(2);
+    expect(results).toHaveLength(1);
+    expect(results[0].column).toBe(1); // 'b'
   });
 
   it('returns empty array when ripgrep reports no matches', async () => {

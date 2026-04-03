@@ -17,17 +17,12 @@ export async function searchCode(
   searchPath: string,
   filePattern?: string,
   limit: number = 50,
-  regex: boolean = true
+  regex: boolean = true,
+  offset: number = 0
 ): Promise<SearchResult[]> {
   const safePath = validateWorkspacePath(searchPath);
 
-  const args = [
-    '--json',
-    '--max-count',
-    limit.toString(),
-    '--max-columns',
-    '500',
-  ];
+  const args = ['--json', '--max-columns', '500'];
 
   if (!regex) {
     args.push('--fixed-strings');
@@ -67,7 +62,7 @@ export async function searchCode(
       }
     }
 
-    return results.slice(0, limit);
+    return results.slice(offset, offset + limit);
   } catch (error: any) {
     if (error.code === 1) {
       // rg returns 1 if no matches found

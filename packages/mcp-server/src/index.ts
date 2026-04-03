@@ -12,6 +12,12 @@ import { z } from 'zod';
  */
 const AnalysisArgsSchema = z.object({
   path: z.string().describe('Path to the directory to analyze'),
+  summary_only: z
+    .boolean()
+    .optional()
+    .describe(
+      'If true, returns only the summary and skips the detailed issue list. Best for large projects to save context.'
+    ),
 });
 
 const RemediationArgsSchema = z.object({
@@ -162,6 +168,11 @@ export class AIReadyMcpServer {
                 type: 'string',
                 description: 'Path to the directory to analyze',
               },
+              summary_only: {
+                type: 'boolean',
+                description:
+                  'If true, returns only the summary and skips the detailed issue list. Best for large projects to save context.',
+              },
             },
             required: ['path'],
           },
@@ -215,7 +226,7 @@ export class AIReadyMcpServer {
             `Invalid arguments for ${name}: ${parsedArgs.error.message}`
           );
         }
-        const { path: rootDir } = parsedArgs.data;
+        const { path: rootDir, summary_only } = parsedArgs.data;
 
         let provider = ToolRegistry.find(name);
 
@@ -251,18 +262,31 @@ export class AIReadyMcpServer {
           throw new Error(`Tool ${name} not found after attempting to load`);
         }
 
-        console.error(`[MCP] Executing ${name} on ${rootDir}`);
+        console.error(
+          `[MCP] Executing ${name} on ${rootDir}${
+            summary_only ? ' (summary only)' : ''
+          }`
+        );
 
         const results = await provider.analyze({
           rootDir,
         });
 
         // Format results for the agent
+        const responseData = summary_only
+          ? {
+              summary: results.summary,
+              metadata: results.metadata,
+              notice:
+                'Detailed issues were omitted (summary_only: true). Run without summary_only for full details.',
+            }
+          : results;
+
         return {
           content: [
             {
               type: 'text',
-              text: JSON.stringify(results, null, 2),
+              text: JSON.stringify(responseData, null, 2),
             },
           ],
         };

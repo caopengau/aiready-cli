@@ -52,7 +52,16 @@ export const SearchCodeSchema = z.object({
   pattern: z.string().describe('Search pattern (regex by default)'),
   path: z.string().describe('Directory to search in'),
   filePattern: z.string().optional().describe('Glob filter (e.g., "*.ts")'),
-  limit: z.number().optional().default(50).describe('Max matches to return'),
+  limit: z
+    .number()
+    .optional()
+    .default(50)
+    .describe('Max matches to return (default 50)'),
+  offset: z
+    .number()
+    .optional()
+    .default(0)
+    .describe('Pagination offset (default 0)'),
   regex: z
     .boolean()
     .optional()

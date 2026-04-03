@@ -214,6 +214,10 @@ export class SymbolIndex {
     return this.computeStats(cache, duration, Math.round(memoryUsage));
   }
 
+  public isInitialized(): boolean {
+    return Object.keys(this.index).length > 0;
+  }
+
   public lookup(name: string): SymbolEntry[] {
     return this.index[name] || [];
   }

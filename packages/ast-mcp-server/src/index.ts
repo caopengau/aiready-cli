@@ -122,6 +122,7 @@ export class ASTExplorerServer {
                 path: { type: 'string', description: 'Directory to search' },
                 filePattern: { type: 'string', description: 'Glob filter' },
                 limit: { type: 'number', default: 50 },
+                offset: { type: 'number', default: 0 },
                 regex: { type: 'boolean', default: true },
               },
               required: ['pattern', 'path'],
@@ -204,14 +205,15 @@ export class ASTExplorerServer {
             };
           }
           case 'search_code': {
-            const { pattern, path, filePattern, limit, regex } =
+            const { pattern, path, filePattern, limit, offset, regex } =
               SearchCodeSchema.parse(args);
             const results = await searchCode(
               pattern,
               path,
               filePattern,
               limit,
-              regex
+              regex,
+              offset
             );
             return {
               content: [

@@ -47,7 +47,7 @@ describe('AIReady MCP Server Integration', () => {
     expect(toolNames).toContain('naming-consistency');
   });
 
-  it('should expose correct input schema for tools', async () => {
+  it('should expose correct input schema for tools including summary_only', async () => {
     const result = await client.listTools();
 
     const patternDetect = result.tools.find((t) => t.name === 'pattern-detect');
@@ -55,10 +55,30 @@ describe('AIReady MCP Server Integration', () => {
       type: 'object',
       properties: {
         path: { type: 'string' },
+        summary_only: { type: 'boolean' },
       },
       required: ['path'],
     });
   });
+
+  it('should execute pattern-detect with summary_only: true and return only summary', async () => {
+    const result = await client.callTool({
+      name: 'pattern-detect',
+      arguments: {
+        path: path.resolve(__dirname, '../../../core'),
+        summary_only: true,
+      },
+    });
+    const typedResult = result as ToolCallResponse;
+
+    expect(typedResult.content).toBeDefined();
+    const data = JSON.parse((typedResult.content[0] as any).text);
+
+    expect(data).toHaveProperty('summary');
+    expect(data).toHaveProperty('metadata');
+    expect(data).toHaveProperty('notice');
+    expect(data).not.toHaveProperty('results');
+  }, 20000);
 
   it('should execute pattern-detect and return results', async () => {
     const result = await client.callTool({

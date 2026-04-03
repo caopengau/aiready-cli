@@ -1,5 +1,6 @@
 import { Node } from 'ts-morph';
 import fs from 'fs';
+import path from 'path';
 import {
   DefinitionLocation,
   ReferenceLocation,
@@ -23,11 +24,32 @@ export class TypeScriptAdapter {
     const poolSize = parseInt(process.env.AST_WORKER_POOL_SIZE || '2');
     this.pool = new WorkerPool(poolSize);
   }
+
+  private async ensureIndex(p: string): Promise<void> {
+    if (!symbolIndex.isInitialized()) {
+      const absolutePath = path.resolve(p);
+      let searchPath = absolutePath;
+
+      if (!fs.statSync(absolutePath).isDirectory()) {
+        const tsconfig = await projectManager.findNearestTsConfig(absolutePath);
+        searchPath = tsconfig
+          ? path.dirname(tsconfig)
+          : path.dirname(absolutePath);
+      }
+
+      console.error(
+        `[AST] Index not initialized. Building for ${searchPath}...`
+      );
+      await symbolIndex.buildIndex(searchPath);
+    }
+  }
+
   public async resolveDefinition(
     symbolName: string,
     path: string
   ): Promise<DefinitionLocation[]> {
     validateWorkspacePath(path);
+    await this.ensureIndex(path);
 
     // Fast path: index lookup (O(1)) to find the file
     const indexHits = symbolIndex.lookup(symbolName);
@@ -100,6 +122,7 @@ export class TypeScriptAdapter {
     offset: number = 0
   ): Promise<{ references: ReferenceLocation[]; total_count: number }> {
     validateWorkspacePath(path);
+    await this.ensureIndex(path);
 
     // Index lookup to find definition location
     const hits = symbolIndex.lookup(symbolName);
@@ -177,6 +200,7 @@ export class TypeScriptAdapter {
     offset: number = 0
   ): Promise<{ implementations: ReferenceLocation[]; total_count: number }> {
     validateWorkspacePath(path);
+    await this.ensureIndex(path);
     const hits = symbolIndex.lookup(symbolName);
     if (hits.length === 0) return { implementations: [], total_count: 0 };
 
