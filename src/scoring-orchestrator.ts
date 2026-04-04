@@ -62,7 +62,20 @@ export class ScoringOrchestrator {
       }
 
       const output = results[toolId];
-      if (!output || !provider) continue;
+      if (!output) {
+        // Create an empty valid output if missing to ensure scoring occurs
+        results[toolId] = {
+          results: [],
+          summary: {
+            totalFiles: results.summary.totalFiles || 0,
+            totalIssues: 0,
+          },
+        };
+      }
+      if (!provider) {
+        console.warn(`⚠️  Warning: No provider found for tool '${toolId}'.`);
+        continue;
+      }
 
       try {
         const toolScore = provider.score(output, options);
