@@ -198,5 +198,6 @@ MIT License - see [LICENSE](./LICENSE) for details.
 - 🌐 [Website](https://getaiready.dev)
 - 📖 [Documentation](https://docs.getaiready.dev)
 - 📦 [npm](https://www.npmjs.com/package/@aiready/cli)
+- 💖 [Sponsor](https://github.com/sponsors/caopengau)
 - 📊 [GitHub Actions](https://github.com/marketplace/actions/aiready-action)
 - 🔌 [VS Code Extension](https://marketplace.visualstudio.com/items?itemName=pengcao.aiready)
