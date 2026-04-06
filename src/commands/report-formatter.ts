@@ -213,6 +213,7 @@ export function mapToUnifiedReport(
   const totalFilesSet = new Set<string>();
   let criticalCount = 0;
   let majorCount = 0;
+  let minorCount = 0;
 
   res.summary.toolsRun.forEach((toolId: string) => {
     const spokeRes = res[toolId];
@@ -225,8 +226,10 @@ export function mapToUnifiedReport(
         i.toolId = toolId; // Inject toolId for gating/baseline logic
         if (i.severity === Severity.Critical || i.severity === 'critical')
           criticalCount++;
-        if (i.severity === Severity.Major || i.severity === 'major')
+        else if (i.severity === Severity.Major || i.severity === 'major')
           majorCount++;
+        else if (i.severity === Severity.Minor || i.severity === 'minor')
+          minorCount++;
       });
     });
   });
@@ -239,6 +242,7 @@ export function mapToUnifiedReport(
       totalFiles: totalFilesSet.size,
       criticalIssues: criticalCount,
       majorIssues: majorCount,
+      minorIssues: minorCount,
     },
     scoring,
   };
