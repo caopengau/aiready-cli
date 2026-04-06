@@ -346,6 +346,9 @@ program
   .option(CLI_CONSTANTS.OPTIONS.REPO_ID, 'Platform repository ID (optional)')
   .option(CLI_CONSTANTS.OPTIONS.SERVER, 'Custom platform URL')
   .addHelpText('after', UPLOAD_HELP_TEXT)
+  /**
+   * Uploads an AIReady report to the platform for persistence and trend analysis.
+   */
   .action(async (file, options) => {
     await uploadAction(file, options);
   });
@@ -365,6 +368,9 @@ program
   )
   .option(CLI_CONSTANTS.OPTIONS.SERVER, 'Custom platform URL')
   .addHelpText('after', REMEDIATE_HELP_TEXT)
+  /**
+   * Suggests automated refactors to improve AI-readiness based on a scan report.
+   */
   .action(async (directory, options) => {
     await remediateAction(directory, options);
   });
@@ -379,6 +385,10 @@ program
     'Submit the issue directly using the GitHub CLI (gh)'
   )
   .addHelpText('after', BUG_HELP_TEXT)
+  /**
+   * Submits a bug report or feedback directly to the team.
+   * Agent-friendly command for reporting issues during autonomous runs.
+   */
   .action(async (message, options) => {
     await bugAction(message, { ...options, submit: !!options.submit });
   });
