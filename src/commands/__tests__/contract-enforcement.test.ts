@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import * as core from '@aiready/core';
-import * as fs from 'fs';
 
 vi.mock('@aiready/core', async () => {
   const actual = await vi.importActual('@aiready/core');

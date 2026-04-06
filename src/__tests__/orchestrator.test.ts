@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // Mock initializeParsers to avoid heavy startup work while preserving other exports
 vi.mock('@aiready/core', async (importOriginal) => {
-  const actual = await importOriginal();
+  const actual = await importOriginal<typeof import('@aiready/core')>();
   return {
     ...actual,
     initializeParsers: vi.fn().mockResolvedValue(undefined),
@@ -22,7 +22,7 @@ describe('UnifiedOrchestrator', () => {
         if (name === 'patterns')
           return {
             id: 'pattern-detect',
-            analyze: async (opts: any) => ({
+            analyze: async (_opts: any) => ({
               results: [{ issues: [1] }],
               summary: { totalFiles: 5 },
               metadata: { config: { sample: true } },

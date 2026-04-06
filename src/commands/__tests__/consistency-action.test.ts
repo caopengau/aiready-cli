@@ -41,7 +41,13 @@ describe('Consistency Action (mocked executeToolAction)', () => {
 
         const elapsedTime = '0.05';
         const score = options?.score
-          ? { score: 80, toolName: 'Consistency' }
+          ? {
+              score: 80,
+              toolName: 'Consistency',
+              rawMetrics: {},
+              factors: [],
+              recommendations: [],
+            }
           : undefined;
 
         config.renderConsole({
@@ -112,7 +118,13 @@ describe('Consistency Action (mocked executeToolAction)', () => {
           architectureIssues: 0,
         };
         const elapsedTime = '0.02';
-        const score = { score: 88, toolName: 'Consistency' };
+        const score = {
+          score: 88,
+          toolName: 'Consistency',
+          rawMetrics: {},
+          factors: [],
+          recommendations: [],
+        };
         config.renderConsole({
           results: report,
           summary,

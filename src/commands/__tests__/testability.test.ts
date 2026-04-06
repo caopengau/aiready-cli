@@ -68,4 +68,26 @@ describe('Testability CLI Action', () => {
     expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('NO TESTS'));
     logSpy.mockRestore();
   });
+
+  it('executes calculateScore mapping when recommendations exist', async () => {
+    const testability = await import('@aiready/testability');
+    vi.spyOn(
+      testability,
+      'calculateTestabilityScore' as any
+    ).mockReturnValueOnce({
+      score: 70,
+      recommendations: ['rec1', 'rec2'],
+    });
+
+    const core = await import('@aiready/core');
+    vi.spyOn(core, 'resolveOutputFormat' as any).mockReturnValue({
+      format: 'console',
+      file: undefined,
+    });
+
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    await testabilityAction('.', { output: 'console', score: true });
+    expect(testability.calculateTestabilityScore).toHaveBeenCalled();
+    logSpy.mockRestore();
+  });
 });

@@ -35,6 +35,7 @@ describe('Context Action (mocked executeToolAction)', () => {
           summary,
           elapsedTime,
           score: undefined,
+          finalOptions: options,
         });
         return { results: {}, summary, elapsedTime };
       }

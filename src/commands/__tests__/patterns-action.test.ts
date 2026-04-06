@@ -25,15 +25,13 @@ const mockAnalyzePatterns = vi.fn().mockResolvedValue({
 const mockGenerateSummary = vi
   .fn()
   .mockReturnValue({ totalPatterns: 0, totalTokenCost: 0, patternsByType: {} });
-const mockCalculatePatternScore = vi
-  .fn()
-  .mockReturnValue({
-    score: 80,
-    toolName: 'Pattern detection',
-    rawMetrics: {},
-    factors: [],
-    recommendations: [],
-  });
+const mockCalculatePatternScore = vi.fn().mockReturnValue({
+  score: 80,
+  toolName: 'Pattern detection',
+  rawMetrics: {},
+  factors: [],
+  recommendations: [],
+});
 
 vi.mock('@aiready/pattern-detect', () => ({
   analyzePatterns: mockAnalyzePatterns,
@@ -240,6 +238,7 @@ describe('Patterns Action', () => {
       summary,
       elapsedTime: '0.5',
       score: undefined,
+      finalOptions: {},
     });
 
     expect(consoleSpy).toHaveBeenCalled();

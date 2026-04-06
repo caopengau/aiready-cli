@@ -79,4 +79,64 @@ describe('ScoringOrchestrator', () => {
     expect(result.rating).toBe('Critical');
     expect(result.breakdown).toHaveLength(0);
   });
+
+  it('calculates tokenBudget for pattern-detect duplicates', async () => {
+    const mockProvider = {
+      id: ToolName.PatternDetect,
+      score: vi.fn().mockReturnValue({ toolName: 'pattern-detect', score: 75 }),
+    };
+    registry.register(mockProvider as any);
+
+    const results = {
+      summary: { toolsRun: [ToolName.PatternDetect], totalFiles: 2 },
+      [ToolName.PatternDetect]: {
+        duplicates: [{ tokenCost: 10 }, { tokenCost: 20 }],
+        results: [],
+      },
+    } as any;
+
+    const result = await orchestrator.score(results, {} as any);
+    expect(result.breakdown[0].tokenBudget).toBeDefined();
+  });
+
+  it('calculates tokenBudget for context-analyzer from summary', async () => {
+    const mockProvider = {
+      id: ToolName.ContextAnalyzer,
+      score: vi
+        .fn()
+        .mockReturnValue({ toolName: 'context-analyzer', score: 70 }),
+    };
+    registry.register(mockProvider as any);
+
+    const results = {
+      summary: { toolsRun: [ToolName.ContextAnalyzer], totalFiles: 1 },
+      [ToolName.ContextAnalyzer]: {
+        summary: { totalTokens: 500, totalPotentialSavings: 50 },
+        results: [],
+      },
+    } as any;
+
+    const result = await orchestrator.score(results, {} as any);
+    expect(result.breakdown[0].tokenBudget).toBeDefined();
+  });
+
+  it('logs error when provider.score throws', async () => {
+    const mockProvider = {
+      id: ToolName.PatternDetect,
+      score: vi.fn().mockImplementation(() => {
+        throw new Error('score fail');
+      }),
+    };
+    registry.register(mockProvider as any);
+
+    const results = {
+      summary: { toolsRun: [ToolName.PatternDetect] },
+      [ToolName.PatternDetect]: { results: [] },
+    } as any;
+
+    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const result = await orchestrator.score(results, {} as any);
+    expect(errSpy).toHaveBeenCalled();
+    errSpy.mockRestore();
+  });
 });

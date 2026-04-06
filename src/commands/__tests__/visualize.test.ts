@@ -1,5 +1,4 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { visualizeAction } from '../visualize';
 import * as fs from 'fs';
 import * as core from '@aiready/core';
 import { spawn } from 'child_process';
@@ -34,7 +33,7 @@ vi.mock('@aiready/core', () => ({
 
 // Top-level mocks for modules used in serve path
 vi.mock('http', () => ({
-  createServer: vi.fn((handler: any) => ({
+  createServer: vi.fn((_handler: any) => ({
     listen: (port: number, cb: any) => cb(),
     close: () => {},
   })),
@@ -45,8 +44,14 @@ vi.mock('fs/promises', () => ({
 }));
 
 describe('Visualize CLI Action', () => {
-  beforeEach(() => {
+  let visualizeAction: any;
+
+  beforeEach(async () => {
     vi.clearAllMocks();
+    // Import the module under test after top-level mocks are registered
+    const mod = await import('../visualize');
+    visualizeAction = mod.visualizeAction;
+
     vi.spyOn(fs, 'existsSync').mockReturnValue(true);
     vi.spyOn(fs, 'readFileSync').mockReturnValue(
       JSON.stringify({ scoring: { overall: 80 } })
@@ -108,7 +113,7 @@ describe('Visualize CLI Action', () => {
 
   it('should start Vite dev server when available', async () => {
     vi.clearAllMocks();
-    vi.spyOn(fs, 'existsSync').mockImplementation((p: string) => {
+    vi.spyOn(fs, 'existsSync').mockImplementation((p: any) => {
       // Simulate local visualizer and vite config present
       if (p.endsWith('packages/visualizer')) return true;
       if (p.endsWith('web/vite.config.ts')) return true;
@@ -127,7 +132,7 @@ describe('Visualize CLI Action', () => {
   it('should use require.resolve fallback to find visualizer package', async () => {
     vi.clearAllMocks();
     // Simulate not having local packages/visualizer but require.resolve succeeds
-    vi.spyOn(fs, 'existsSync').mockImplementation((p: string) => {
+    vi.spyOn(fs, 'existsSync').mockImplementation((p: any) => {
       // report should exist and web vite config should be found relative to resolved package
       if (p.endsWith('report.json')) return true;
       if (p.endsWith('web/vite.config.ts')) return true;
@@ -153,7 +158,7 @@ describe('Visualize CLI Action', () => {
   it('logs an error when copying report to visualizer fails', async () => {
     vi.clearAllMocks();
     // Simulate local visualizer present
-    vi.spyOn(fs, 'existsSync').mockImplementation((p: string) => {
+    vi.spyOn(fs, 'existsSync').mockImplementation((p: any) => {
       if (p.endsWith('packages/visualizer')) return true;
       if (p.endsWith('web/vite.config.ts')) return true;
       return true;
@@ -177,7 +182,7 @@ describe('Visualize CLI Action', () => {
 
   it('should fallback to static HTML if dev not available', async () => {
     vi.clearAllMocks();
-    vi.spyOn(fs, 'existsSync').mockImplementation((p: string) => {
+    vi.spyOn(fs, 'existsSync').mockImplementation((p: any) => {
       // Visualizer not present anywhere
       if (p.endsWith('packages/visualizer')) return false;
       if (p.includes('@aiready') && p.includes('visualizer')) return false;
@@ -212,12 +217,12 @@ describe('Visualize CLI Action', () => {
   it('should use graph config from aiready.json when available', async () => {
     vi.clearAllMocks();
     // report exists
-    vi.spyOn(fs, 'existsSync').mockImplementation((p: string) => {
+    vi.spyOn(fs, 'existsSync').mockImplementation((p: any) => {
       if (p.endsWith('aiready.json')) return true;
       return true;
     });
 
-    vi.spyOn(fs, 'readFileSync').mockImplementation((p: string) => {
+    vi.spyOn(fs, 'readFileSync').mockImplementation((p: any) => {
       if (p.endsWith('aiready.json')) {
         return JSON.stringify({
           visualizer: { graph: { maxNodes: 123, maxEdges: 456 } },
@@ -235,13 +240,13 @@ describe('Visualize CLI Action', () => {
 
   it('should ignore invalid aiready.json and continue with defaults', async () => {
     vi.clearAllMocks();
-    vi.spyOn(fs, 'existsSync').mockImplementation((p: string) => {
+    vi.spyOn(fs, 'existsSync').mockImplementation((p: any) => {
       if (p.endsWith('aiready.json')) return true;
       return true;
     });
 
     // invalid JSON for config
-    vi.spyOn(fs, 'readFileSync').mockImplementation((p: string) => {
+    vi.spyOn(fs, 'readFileSync').mockImplementation((p: any) => {
       if (p.endsWith('aiready.json')) return 'not-a-json';
       return JSON.stringify({ scoring: { overall: 80 } });
     });
@@ -260,7 +265,8 @@ describe('Visualize CLI Action', () => {
       JSON.stringify({ scoring: { overall: 80 } })
     );
 
-    const viz = await import('@aiready/visualizer');
+    const _vizPkg = '@' + 'aiready/visualizer';
+    const viz = await import(_vizPkg as any);
     vi.mocked(viz.GraphBuilder.buildFromReport).mockImplementationOnce(() => {
       throw new Error('boom');
     });

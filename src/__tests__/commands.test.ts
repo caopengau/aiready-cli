@@ -248,6 +248,15 @@ describe('CLI Commands', () => {
         JSON.stringify({ results: [], summary: {} })
       );
 
+      // Mock visualizer module before importing visualizeAction
+      vi.mock('@aiready/visualizer', () => ({
+        GraphBuilder: {
+          buildFromReport: vi.fn().mockReturnValue({ nodes: [], edges: [] }),
+        },
+      }));
+
+      const { visualizeAction } = await import('../commands/visualize');
+
       await visualizeAction('.', { report: 'r.json' });
 
       expect(fs.writeFileSync).toHaveBeenCalled();
@@ -263,6 +272,15 @@ describe('CLI Commands', () => {
         .mockImplementation(() => {});
       vi.mocked(fs.existsSync).mockReturnValue(false);
       vi.mocked(core.findLatestReport).mockReturnValue(null);
+
+      // Mock visualizer module before importing visualizeAction
+      vi.mock('@aiready/visualizer', () => ({
+        GraphBuilder: {
+          buildFromReport: vi.fn().mockReturnValue({ nodes: [], edges: [] }),
+        },
+      }));
+
+      const { visualizeAction } = await import('../commands/visualize');
 
       await visualizeAction('.', {});
 

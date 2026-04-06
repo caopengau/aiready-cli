@@ -67,4 +67,43 @@ describe('report-formatter utilities', () => {
     expect(spy).toHaveBeenCalled();
     spy.mockRestore();
   });
+
+  it('covers progress bar color thresholds and recommendation priorities', () => {
+    const scoring = {
+      breakdown: [
+        { toolName: 't-green', score: 95, recommendations: [] },
+        {
+          toolName: 't-cyan',
+          score: 80,
+          recommendations: [
+            { action: 'm', estimatedImpact: 3, priority: 'medium' },
+          ],
+        },
+        {
+          toolName: 't-yellow',
+          score: 65,
+          recommendations: [
+            { action: 'l', estimatedImpact: 1, priority: 'low' },
+          ],
+        },
+        { toolName: 't-red', score: 50, recommendations: [] },
+      ],
+    } as any;
+
+    const spy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    printScoring(scoring, 'detailed');
+    expect(spy).toHaveBeenCalled();
+    spy.mockRestore();
+  });
+
+  it('prints scan summary with no issues (skips severity/topFiles)', () => {
+    const results = {
+      summary: { toolsRun: ['t1'] },
+      t1: { results: [] },
+    } as any;
+    const spy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    printScanSummary(results, Date.now() - 2000);
+    expect(spy).toHaveBeenCalled();
+    spy.mockRestore();
+  });
 });

@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { runUnifiedScan } from '../scan-orchestrator';
 import * as index from '../../index';
 import * as core from '@aiready/core';
+import fs from 'fs';
 
 vi.mock('../../index', () => ({
   analyzeUnified: vi.fn(),
@@ -112,7 +113,7 @@ describe('Scan Orchestrator', () => {
       overall: 90,
       breakdown: [],
     } as any);
-    vi.spyOn(require('fs'), 'readFileSync').mockReturnValueOnce(
+    vi.spyOn(fs, 'readFileSync').mockReturnValueOnce(
       JSON.stringify({ scoring: { overall: 80 } })
     );
     await runUnifiedScan(
@@ -127,7 +128,7 @@ describe('Scan Orchestrator', () => {
       overall: 70,
       breakdown: [],
     } as any);
-    vi.spyOn(require('fs'), 'readFileSync').mockReturnValueOnce(
+    vi.spyOn(fs, 'readFileSync').mockReturnValueOnce(
       JSON.stringify({ scoring: { overall: 80 } })
     );
     await runUnifiedScan(
@@ -142,7 +143,7 @@ describe('Scan Orchestrator', () => {
       overall: 80,
       breakdown: [],
     } as any);
-    vi.spyOn(require('fs'), 'readFileSync').mockReturnValueOnce(
+    vi.spyOn(fs, 'readFileSync').mockReturnValueOnce(
       JSON.stringify({ scoring: { overall: 80 } })
     );
     await runUnifiedScan(

@@ -58,7 +58,7 @@ const agentGroundingConfig = {
       },
     };
   },
-  renderConsole: ({ results, summary, score }: any) => {
+  renderConsole: ({ _results, summary, score }: any) => {
     renderToolHeader(
       'Agent Grounding',
       '🧠',
