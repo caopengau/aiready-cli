@@ -32,7 +32,7 @@ const CLI_CONSTANTS = {
   NAME: 'aiready',
   DESCRIPTION: 'AIReady - Assess and improve AI-readiness of codebases',
   CONFIG_FILES: 'aiready.json, .aiready.json, aiready.config.*',
-  DOCS_URL: 'https://getaiready.dev/docs/cli',
+  DOCS_URL: 'https://getaiready.dev/docs#cli',
   GITHUB_URL: 'https://github.com/getaiready/aiready-cli',
   LANDING_URL: 'https://github.com/getaiready/aiready-landing',
   DEFAULT_DIRECTORY: '.',

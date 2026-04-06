@@ -196,7 +196,7 @@ MIT License - see [LICENSE](./LICENSE) for details.
 ## 🔗 Related Links
 
 - 🌐 [Website](https://getaiready.dev)
-- 📖 [Documentation](https://docs.getaiready.dev)
+- 📖 [Documentation](https://getaiready.dev/docs)
 - 📦 [npm](https://www.npmjs.com/package/@aiready/cli)
 - 💖 [Sponsor](https://github.com/sponsors/caopengau)
 - 📊 [GitHub Actions](https://github.com/marketplace/actions/aiready-action)
