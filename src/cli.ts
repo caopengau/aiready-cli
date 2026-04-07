@@ -74,12 +74,11 @@ const CLI_CONSTANTS = {
  * Get the current directory name, handling both ESM and CJS.
  * @deprecated Use getDirname from @aiready/core instead.
  */
-const getDirnameLocal = () => {
-  return getDirname(import.meta.url);
-};
+const __DIRNAME =
+  typeof __dirname !== 'undefined' ? __dirname : getDirname(import.meta.url);
 
 const packageJson = JSON.parse(
-  readFileSync(join(getDirname(import.meta.url), '../package.json'), 'utf8')
+  readFileSync(join(__DIRNAME, '../package.json'), 'utf8')
 );
 
 const program = new Command();
