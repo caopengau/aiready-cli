@@ -127,6 +127,9 @@ definePatternsCommand(program);
 defineContextCommand(program);
 defineConsistencyCommand(program);
 
+// Config validation command
+defineValidateCommand(program);
+
 // Init command
 program
   .command('init')
