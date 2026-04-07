@@ -13,6 +13,7 @@ import {
   getRepoMetadata,
   emitIssuesAsAnnotations,
   Severity,
+  safeJsonStringify,
 } from '@aiready/core';
 import type { UnifiedReport, ScoringResult } from '@aiready/core';
 import { getReportTimestamp, warnIfGraphCapExceeded } from '../utils';
@@ -96,7 +97,7 @@ export async function scanAction(directory: string, options: ScanOptions) {
       );
     } else {
       try {
-        writeFileSync(outputPath, JSON.stringify(outputData, null, 2));
+        writeFileSync(outputPath, safeJsonStringify(outputData, 2));
         console.log(chalk.dim(`✅ Report auto-persisted to ${outputPath}`));
       } catch (err) {
         void err;
