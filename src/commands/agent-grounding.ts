@@ -23,6 +23,8 @@ interface GroundingOptions {
 
 const agentGroundingConfig = createStandardToolConfig<GroundingOptions>({
   toolName: 'agent-grounding',
+  label: 'Agent grounding',
+  emoji: '🧭',
   importPath: '@aiready/agent-grounding',
   analyzeFnName: 'analyzeAgentGrounding',
   scoreFnName: 'calculateGroundingScore',
@@ -86,9 +88,6 @@ export async function agentGroundingAction(
   const { executeToolAction } = await import('./scan-helpers');
 
   return await executeToolAction(directory, options, {
-    toolName: 'agent-grounding',
-    label: 'Agent grounding',
-    emoji: '🧭',
     ...agentGroundingConfig,
   });
 }

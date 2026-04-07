@@ -22,6 +22,8 @@ interface TestabilityOptions {
 
 const testabilityConfig = createStandardToolConfig<TestabilityOptions>({
   toolName: 'testability-index',
+  label: 'Testability analysis',
+  emoji: '🧪',
   importPath: '@aiready/testability',
   analyzeFnName: 'analyzeTestability',
   scoreFnName: 'calculateTestabilityScore',
@@ -81,9 +83,6 @@ export async function testabilityAction(
   const { executeToolAction } = await import('./scan-helpers');
 
   return await executeToolAction(directory, options, {
-    toolName: 'testability-index',
-    label: 'Testability analysis',
-    emoji: '🧪',
     ...testabilityConfig,
   });
 }

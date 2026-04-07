@@ -158,12 +158,20 @@ export {
  */
 export interface StandardToolConfig<TOptions = any> {
   toolName: string;
+  label: string;
+  emoji: string;
   importPath: string;
   analyzeFnName: string;
   scoreFnName?: string;
   defaults?: Record<string, any>;
   getCliOptions?: (opts: TOptions) => Record<string, any>;
-  render?: (params: { results: any; summary: any; score: any }) => void;
+  render?: (params: {
+    results: any;
+    summary: any;
+    elapsedTime: string;
+    score?: ToolScoringOutput;
+    finalOptions: any;
+  }) => void;
 }
 
 /**
@@ -173,6 +181,9 @@ export function createStandardToolConfig<TOptions = any>(
   config: StandardToolConfig<TOptions>
 ): ToolActionConfig<any, any, any> {
   return {
+    toolName: config.toolName,
+    label: config.label,
+    emoji: config.emoji,
     defaults: {
       rootDir: '',
       include: undefined,

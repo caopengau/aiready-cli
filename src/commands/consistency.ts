@@ -9,6 +9,7 @@ import {
   renderToolScoreFooter,
   printTerminalHeader,
   chalk,
+  createStandardToolConfig,
 } from './shared/command-builder';
 import type { Severity } from '@aiready/core';
 
@@ -24,80 +25,26 @@ interface ConsistencyOptions {
 }
 
 /**
- * Define the consistency command.
- *
- * @param program - Commander program instance
- */
-export function defineConsistencyCommand(program: Command) {
-  defineToolCommand(program, {
-    name: 'consistency',
-    description: 'Check naming conventions and architectural consistency',
-    toolName: 'naming-consistency',
-    label: 'Consistency analysis',
-    emoji: '📏',
-    options: [
-      {
-        flags: '--naming',
-        description: 'Check naming conventions (default: true)',
-      },
-      {
-        flags: '--no-naming',
-        description: 'Skip naming analysis',
-      },
-      {
-        flags: '--patterns',
-        description: 'Check code patterns (default: true)',
-      },
-      {
-        flags: '--no-patterns',
-        description: 'Skip pattern analysis',
-      },
-      {
-        flags: '--min-severity <level>',
-        description: 'Minimum severity: info|minor|major|critical',
-        defaultValue: 'info',
-      },
-    ],
-    actionConfig: SHARED_CONSISTENCY_CONFIG,
-  });
-}
-
-/**
  * Shared configuration for the consistency command to avoid duplication.
  */
-const SHARED_CONSISTENCY_CONFIG = {
+const SHARED_CONSISTENCY_CONFIG = createStandardToolConfig<ConsistencyOptions>({
   toolName: 'naming-consistency',
   label: 'Consistency analysis',
   emoji: '📏',
+  importPath: '@aiready/consistency',
+  analyzeFnName: 'analyzeConsistency',
+  scoreFnName: 'calculateConsistencyScore',
   defaults: {
-    rootDir: '',
     checkNaming: true,
     checkPatterns: true,
     minSeverity: 'info' as Severity,
-    include: undefined,
-    exclude: undefined,
-    output: { format: 'console', file: undefined },
   },
-  getCliOptions: (opts: ConsistencyOptions) => ({
+  getCliOptions: (opts) => ({
     checkNaming: opts.naming !== false,
     checkPatterns: opts.patterns !== false,
     minSeverity: opts.minSeverity as Severity | undefined,
   }),
-  importTool: async () => {
-    const { analyzeConsistency, generateSummary, calculateConsistencyScore } =
-      await import('@aiready/consistency');
-    return {
-      analyze: async (opts: any) => {
-        const report = await analyzeConsistency(opts);
-        // Return the full report so renderConsole can access summary/results
-        return report;
-      },
-      generateSummary,
-      calculateScore: (data: any, resultsCount?: number) =>
-        calculateConsistencyScore(data, resultsCount ?? 0),
-    };
-  },
-  renderConsole: ({ results: report, summary, elapsedTime, score }: any) => {
+  render: ({ results: report, summary, elapsedTime, score }) => {
     printTerminalHeader('CONSISTENCY ANALYSIS SUMMARY');
 
     console.log(
@@ -157,9 +104,50 @@ const SHARED_CONSISTENCY_CONFIG = {
       console.log(chalk.green('\n✨ Great! No consistency issues detected.\n'));
     }
 
-    renderToolScoreFooter(score);
+    if (score) {
+      renderToolScoreFooter(score);
+    }
   },
-};
+});
+
+/**
+ * Define the consistency command.
+ *
+ * @param program - Commander program instance
+ */
+export function defineConsistencyCommand(program: Command) {
+  defineToolCommand(program, {
+    name: 'consistency',
+    description: 'Check naming conventions and architectural consistency',
+    toolName: 'naming-consistency',
+    label: 'Consistency analysis',
+    emoji: '📏',
+    options: [
+      {
+        flags: '--naming',
+        description: 'Check naming conventions (default: true)',
+      },
+      {
+        flags: '--no-naming',
+        description: 'Skip naming analysis',
+      },
+      {
+        flags: '--patterns',
+        description: 'Check code patterns (default: true)',
+      },
+      {
+        flags: '--no-patterns',
+        description: 'Skip pattern analysis',
+      },
+      {
+        flags: '--min-severity <level>',
+        description: 'Minimum severity: info|minor|major|critical',
+        defaultValue: 'info',
+      },
+    ],
+    actionConfig: SHARED_CONSISTENCY_CONFIG,
+  });
+}
 
 /**
  * Action handler for consistency analysis.
