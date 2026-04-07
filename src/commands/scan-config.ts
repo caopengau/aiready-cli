@@ -51,10 +51,10 @@ export async function resolveScanConfig(
   }
 
   const cliOverrides: any = {
-    include: options.include?.split(','),
-    exclude: options.exclude?.split(','),
     changedFilesOnly: options.changedFilesOnly,
   };
+  if (options.include) cliOverrides.include = options.include.split(',');
+  if (options.exclude) cliOverrides.exclude = options.exclude.split(',');
   if (profileTools) cliOverrides.tools = profileTools;
 
   const baseOptions = (await loadMergedConfig(
