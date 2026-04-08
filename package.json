@@ -1,13 +1,12 @@
 {
-  "name": "@serverlessclaw/cli",
+  "name": "@aiready/cli",
   "version": "0.15.27",
   "description": "The unified CLI for Agentic Readiness. Optimize codebases for AI agents like Cursor, Windsurf, and Claude. Detect semantic duplicates, analyze context fragmentation, and improve agentic leverage.",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
   "bin": {
-    "aiready": "./dist/cli.js",
-    "claw": "./dist/cli.js"
+    "aiready": "./dist/cli.js"
   },
   "exports": {
     ".": {
@@ -42,7 +41,7 @@
     "@aiready/consistency": "workspace:*",
     "@aiready/context-analyzer": "workspace:*",
     "@aiready/contract-enforcement": "workspace:*",
-    "@serverlessclaw/core": "workspace:*",
+    "@aiready/core": "workspace:*",
     "@aiready/deps": "workspace:*",
     "@aiready/doc-drift": "workspace:*",
     "@aiready/pattern-detect": "workspace:*",
