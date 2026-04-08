@@ -6,8 +6,6 @@ import { Command } from 'commander';
 import {
   defineToolCommand,
   renderSubSection,
-  renderToolScoreFooter,
-  printTerminalHeader,
   chalk,
   createStandardToolConfig,
   renderStandardSummary,
@@ -30,7 +28,7 @@ interface ConsistencyOptions {
  */
 const SHARED_CONSISTENCY_CONFIG = createStandardToolConfig<ConsistencyOptions>({
   toolName: 'naming-consistency',
-  label: 'Consistency analysis',
+  label: 'Consistency Analysis',
   emoji: '📏',
   importPath: '@aiready/consistency',
   analyzeFnName: 'analyzeConsistency',
@@ -45,16 +43,18 @@ const SHARED_CONSISTENCY_CONFIG = createStandardToolConfig<ConsistencyOptions>({
     checkPatterns: opts.patterns !== false,
     minSeverity: opts.minSeverity as Severity | undefined,
   }),
-  render: ({ results: report, summary, elapsedTime, score }) => {
+  renderConsole: ({ results, summary, elapsedTime, score }) => {
+    const report = results as any;
+    const summaryData = summary as any;
     renderStandardSummary({
       label: 'Consistency Analysis',
       emoji: '📏',
-      summary,
+      summary: summaryData,
       elapsedTime,
       score,
     });
 
-    if (summary.totalIssues > 0 && report.results) {
+    if (summaryData.totalIssues > 0 && report.results) {
       renderSubSection('Top Consistency Issues');
       const sortedIssues = [...report.results]
         .flatMap((file: any) =>
@@ -93,6 +93,10 @@ const SHARED_CONSISTENCY_CONFIG = createStandardToolConfig<ConsistencyOptions>({
         );
         console.log(`     ${issue.message}`);
       });
+    } else if (summaryData.totalIssues === 0) {
+      console.log(
+        chalk.green('\n  ✅ No consistency issues detected. Excellent work!')
+      );
     }
   },
 });
@@ -107,7 +111,7 @@ export function defineConsistencyCommand(program: Command) {
     name: 'consistency',
     description: 'Check naming conventions and architectural consistency',
     toolName: 'naming-consistency',
-    label: 'Consistency analysis',
+    label: 'Consistency Analysis',
     emoji: '📏',
     options: [
       {

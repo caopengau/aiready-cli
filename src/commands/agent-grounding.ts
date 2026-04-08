@@ -4,10 +4,6 @@
 
 import {
   defineToolCommand,
-  renderToolHeader,
-  renderSafetyRating,
-  renderToolScoreFooter,
-  chalk,
   createStandardToolConfig,
   renderStandardSummary,
 } from './shared/command-builder';
@@ -36,7 +32,7 @@ const agentGroundingConfig = createStandardToolConfig<GroundingOptions>({
       ? parseInt(opts.readmeStaleDays)
       : undefined,
   }),
-  render: ({ summary, score, elapsedTime }) => {
+  renderConsole: ({ summary, score, elapsedTime }) => {
     const summaryRecord = summary as Record<string, any>;
     renderStandardSummary({
       label: 'Agent Grounding',

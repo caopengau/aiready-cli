@@ -7,11 +7,7 @@
 import chalk from 'chalk';
 import { Command } from 'commander';
 import { printTerminalHeader, type ToolScoringOutput } from '@aiready/core';
-import {
-  executeToolAction,
-  type BaseCommandOptions,
-  type ToolActionConfig,
-} from '../scan-helpers';
+import type { BaseCommandOptions, ToolActionConfig } from '../scan-helpers';
 import {
   renderSubSection,
   renderToolScoreFooter,
@@ -130,6 +126,7 @@ export function defineToolCommand<
 
   // Set up action handler
   cmd.action(async (directory: string, options: TOptions) => {
+    const { executeToolAction } = await import('../scan-helpers');
     if (config.customAction) {
       await config.customAction(directory, options);
     } else {
@@ -165,7 +162,7 @@ export interface StandardToolConfig<TOptions = Record<string, unknown>> {
   scoreFnName?: string;
   defaults?: Record<string, unknown>;
   getCliOptions?: (opts: TOptions) => Record<string, unknown>;
-  render?: (params: {
+  renderConsole?: (params: {
     results: unknown;
     summary: Record<string, unknown>;
     elapsedTime: string;
@@ -239,8 +236,15 @@ export function createStandardToolConfig<TOptions = any>(
       const tool = await import(config.importPath);
       return {
         analyze: tool[config.analyzeFnName],
-        generateSummary: (report: any) => report.summary || report,
-        calculateScore: (data: any) => {
+        generateSummary: (report: any) => {
+          try {
+            const genSum = tool.generateSummary;
+            return genSum ? genSum(report) : report.summary || report;
+          } catch {
+            return report.summary || report;
+          }
+        },
+        calculateScore: (data: any, resultsCount?: number) => {
           const scoreFn = config.scoreFnName
             ? tool[config.scoreFnName]
             : undefined;
@@ -253,7 +257,7 @@ export function createStandardToolConfig<TOptions = any>(
               recommendations: [],
             };
           }
-          const score = scoreFn(data);
+          const score = scoreFn(data, resultsCount);
           return {
             ...score,
             toolName: config.toolName,
@@ -274,8 +278,8 @@ export function createStandardToolConfig<TOptions = any>(
       };
     },
     renderConsole: (params) => {
-      if (config.render) {
-        config.render(params);
+      if (config.renderConsole) {
+        config.renderConsole(params);
       } else {
         renderStandardSummary({
           label: config.label,

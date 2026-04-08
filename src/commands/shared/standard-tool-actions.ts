@@ -89,7 +89,7 @@ const aiSignalClarityConfig = createStandardToolConfig<AiSignalClarityOptions>({
   getCliOptions: (opts) => ({
     minSeverity: opts.minSeverity,
   }),
-  render: ({ summary, score, elapsedTime }) => {
+  renderConsole: ({ summary, score, elapsedTime }) => {
     renderStandardSummary({
       label: 'AI Signal Clarity',
       emoji: '🧠',

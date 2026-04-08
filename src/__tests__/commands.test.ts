@@ -105,10 +105,10 @@ describe('CLI Commands', () => {
 
       expect(executeToolAction).toHaveBeenCalledWith(
         'src',
-        options,
+        expect.objectContaining(options),
         expect.objectContaining({
           toolName: 'naming-consistency',
-          label: 'Consistency analysis',
+          label: 'Consistency Analysis',
         })
       );
     });
@@ -121,10 +121,10 @@ describe('CLI Commands', () => {
 
       expect(executeToolAction).toHaveBeenCalledWith(
         'src',
-        options,
+        expect.objectContaining(options),
         expect.objectContaining({
           toolName: 'context-analyzer',
-          label: 'Context analysis',
+          label: 'Context Analysis',
         })
       );
     });
@@ -140,7 +140,7 @@ describe('CLI Commands', () => {
         options,
         expect.objectContaining({
           toolName: 'testability-index',
-          label: 'Testability analysis',
+          label: 'Testability Analysis',
         })
       );
     });

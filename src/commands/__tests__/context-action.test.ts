@@ -48,10 +48,13 @@ describe('Context Action (mocked executeToolAction)', () => {
     await contextAction('.', {});
     expect(consoleSpy).toHaveBeenCalled();
     expect(consoleSpy).toHaveBeenCalledWith(
-      expect.stringMatching(/fragmented modules/i)
+      expect.stringContaining('CONTEXT ANALYSIS SUMMARY')
     );
     expect(consoleSpy).toHaveBeenCalledWith(
-      expect.stringMatching(/context-expensive files/i)
+      expect.stringMatching(/TOP FRAGMENTED MODULES/i)
+    );
+    expect(consoleSpy).toHaveBeenCalledWith(
+      expect.stringMatching(/TOP CONTEXT-EXPENSIVE FILES/i)
     );
     expect(consoleSpy).toHaveBeenCalledWith(expect.stringMatching(/CRITICAL/i));
     expect(consoleSpy).toHaveBeenCalledWith(expect.stringMatching(/MAJOR/i));

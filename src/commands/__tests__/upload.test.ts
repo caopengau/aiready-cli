@@ -8,9 +8,13 @@ vi.mock('fs', () => ({
   },
 }));
 
-vi.mock('@aiready/core', () => ({
-  handleCLIError: vi.fn(),
-}));
+vi.mock('@aiready/core', async (importOriginal) => {
+  const original = await importOriginal<typeof import('@aiready/core')>();
+  return {
+    ...original,
+    handleCLIError: vi.fn(),
+  };
+});
 
 describe('Upload CLI Action', () => {
   beforeEach(() => {

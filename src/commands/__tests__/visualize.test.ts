@@ -24,12 +24,16 @@ vi.mock('@aiready/visualizer', () => ({
   },
 }));
 
-vi.mock('@aiready/core', () => ({
-  handleCLIError: vi.fn(),
-  generateHTML: vi.fn().mockReturnValue('<html></html>'),
-  findLatestReport: vi.fn(),
-  ensureDir: vi.fn(),
-}));
+vi.mock('@aiready/core', async (importOriginal) => {
+  const original = await importOriginal<typeof import('@aiready/core')>();
+  return {
+    ...original,
+    handleCLIError: vi.fn(),
+    generateHTML: vi.fn().mockReturnValue('<html></html>'),
+    findLatestReport: vi.fn(),
+    ensureDir: vi.fn(),
+  };
+});
 
 // Top-level mocks for modules used in serve path
 vi.mock('http', () => ({

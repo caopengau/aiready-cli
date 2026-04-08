@@ -9,7 +9,7 @@ export interface ConfiguredToolActionConfig<TReport> {
     merged: Record<string, unknown>
   ) => Record<string, unknown>;
   score: (report: TReport) => ToolScoringOutput;
-  render: (report: TReport, scoring: ToolScoringOutput) => void;
+  renderConsole: (report: TReport, scoring: ToolScoringOutput) => void;
 }
 
 export async function runConfiguredToolAction<TReport>(
@@ -30,6 +30,6 @@ export async function runConfiguredToolAction<TReport>(
     return scoring;
   }
 
-  config.render(report, scoring);
+  config.renderConsole(report, scoring);
   return scoring;
 }

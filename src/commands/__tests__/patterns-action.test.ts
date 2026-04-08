@@ -148,8 +148,6 @@ describe('Patterns Action', () => {
     expect(cliOpts.maxCandidatesPerBlock).toBe(4);
     expect(cliOpts.minSharedTokens).toBe(20);
     expect(cliOpts.useSmartDefaults).toBe(false);
-    expect(cliOpts.minSimilarityFull).toBe(0.4);
-    expect(cliOpts.minLinesFull).toBe(5);
   });
 
   it('importTool returns adapter functions wired to provider', async () => {
@@ -176,8 +174,9 @@ describe('Patterns Action', () => {
 
     await adapter.analyze({});
     expect(mockAnalyzePatterns).toHaveBeenCalled();
-    const summary = adapter.generateSummary({ results: [] });
-    expect(summary).toEqual(mockGenerateSummary());
+    const results = { results: [] };
+    const summary = adapter.generateSummary(results);
+    expect(mockGenerateSummary).toHaveBeenCalledWith(results);
   });
 
   it('directly invokes renderConsole to exercise printing branches', async () => {

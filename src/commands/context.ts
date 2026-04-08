@@ -10,7 +10,6 @@ import {
   printTerminalHeader,
   chalk,
   createStandardToolConfig,
-  renderStandardSummary,
 } from './shared/command-builder';
 
 interface ContextOptions {
@@ -25,7 +24,7 @@ interface ContextOptions {
 
 const contextConfig = createStandardToolConfig<ContextOptions>({
   toolName: 'context-analyzer',
-  label: 'Context analysis',
+  label: 'Context Analysis',
   emoji: '🧩',
   importPath: '@aiready/context-analyzer',
   analyzeFnName: 'analyzeContext',
@@ -38,7 +37,8 @@ const contextConfig = createStandardToolConfig<ContextOptions>({
     maxDepth: opts.maxDepth ? parseInt(opts.maxDepth) : undefined,
     maxContextBudget: opts.maxContext ? parseInt(opts.maxContext) : undefined,
   }),
-  render: ({ summary, elapsedTime, score }) => {
+  renderConsole: ({ summary: rawSummary, elapsedTime, score }) => {
+    const summary = rawSummary as any;
     printTerminalHeader('CONTEXT ANALYSIS SUMMARY');
 
     console.log(
@@ -69,6 +69,28 @@ const contextConfig = createStandardToolConfig<ContextOptions>({
       });
     }
 
+    if (summary.topExpensiveFiles && summary.topExpensiveFiles.length > 0) {
+      renderSubSection('Top Context-Expensive Files');
+      summary.topExpensiveFiles.slice(0, 5).forEach((file: any) => {
+        const icon =
+          file.severity === 'critical'
+            ? '🔴'
+            : file.severity === 'major'
+              ? '🟡'
+              : '🔵';
+        const color =
+          file.severity === 'critical'
+            ? chalk.red
+            : file.severity === 'major'
+              ? chalk.yellow
+              : chalk.blue;
+
+        console.log(
+          `  ${icon} ${color(file.severity.toUpperCase())}: ${chalk.white(file.file)} (${chalk.bold(file.contextBudget.toLocaleString())} tokens)`
+        );
+      });
+    }
+
     renderToolScoreFooter(score);
   },
 });
@@ -83,7 +105,7 @@ export function defineContextCommand(program: Command) {
     name: 'context',
     description: 'Analyze context window costs and dependency fragmentation',
     toolName: 'context-analyzer',
-    label: 'Context analysis',
+    label: 'Context Analysis',
     emoji: '🧩',
     options: [
       {

@@ -6,8 +6,6 @@ import { Command } from 'commander';
 import {
   defineToolCommand,
   renderSubSection,
-  renderToolScoreFooter,
-  printTerminalHeader,
   chalk,
   createStandardToolConfig,
   renderStandardSummary,
@@ -97,7 +95,7 @@ const patternsConfig = createStandardToolConfig<PatternsOptions>({
       : undefined,
     useSmartDefaults: !opts.fullScan,
   }),
-  render: ({ results, summary, score, elapsedTime }) => {
+  renderConsole: ({ results, summary, score, elapsedTime }) => {
     const rawResults = results as { duplicates?: any[] };
     const duplicates = rawResults.duplicates || [];
 

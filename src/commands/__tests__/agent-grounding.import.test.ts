@@ -10,6 +10,7 @@ vi.mock('@aiready/agent-grounding', () => ({
     score: 78,
     recommendations: ['add README'],
   }),
+  generateSummary: (report: any) => report.summary || report,
 }));
 
 describe('Agent grounding import-based score mapping', () => {

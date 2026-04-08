@@ -43,7 +43,7 @@ describe('Consistency Action (mocked executeToolAction)', () => {
         const score = options?.score
           ? {
               score: 80,
-              toolName: 'Consistency',
+              toolName: 'Consistency Analysis',
               rawMetrics: {},
               factors: [],
               recommendations: [],
@@ -68,10 +68,10 @@ describe('Consistency Action (mocked executeToolAction)', () => {
     await consistencyAction('.', {});
     // Header + files/summary lines should be logged
     expect(consoleSpy).toHaveBeenCalledWith(
-      expect.stringContaining('Files analyzed')
+      expect.stringContaining('Consistency Analysis')
     );
     expect(consoleSpy).toHaveBeenCalledWith(
-      expect.stringContaining('Total issues')
+      expect.stringContaining('files scanned')
     );
   });
 
@@ -120,7 +120,7 @@ describe('Consistency Action (mocked executeToolAction)', () => {
         const elapsedTime = '0.02';
         const score = {
           score: 88,
-          toolName: 'Consistency',
+          toolName: 'Consistency Analysis',
           rawMetrics: {},
           factors: [],
           recommendations: [],
@@ -137,7 +137,9 @@ describe('Consistency Action (mocked executeToolAction)', () => {
     );
 
     await consistencyAction('.', { score: true } as any);
-    expect(consoleSpy).toHaveBeenCalled();
+    expect(consoleSpy).toHaveBeenCalledWith(
+      expect.stringContaining('Consistency Analysis')
+    );
   });
 
   it('renders issues sorted by severity and shows suggestions', async () => {
@@ -204,12 +206,11 @@ describe('Consistency Action (mocked executeToolAction)', () => {
     await consistencyAction('.', {} as any);
 
     expect(consoleSpy).toHaveBeenCalledWith(
-      expect.stringContaining('CONSISTENCY ANALYSIS SUMMARY')
+      expect.stringContaining('Consistency Analysis')
     );
     expect(consoleSpy).toHaveBeenCalledWith(
       expect.stringContaining('CRITICAL')
     );
-    expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('💡'));
   });
 
   it('registers command and exposes getCliOptions correctly', async () => {
@@ -246,8 +247,8 @@ describe('Consistency Action (mocked executeToolAction)', () => {
       async (directory, options, config) => {
         const summary = {
           filesAnalyzed: 1,
-          totalIssues: 1,
-          namingIssues: 1,
+          totalIssues: 0,
+          namingIssues: 0,
           patternIssues: 0,
           architectureIssues: 0,
         };

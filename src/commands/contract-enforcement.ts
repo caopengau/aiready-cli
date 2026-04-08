@@ -4,8 +4,6 @@
 
 import {
   defineToolCommand,
-  renderToolHeader,
-  renderToolScoreFooter,
   chalk,
   createStandardToolConfig,
   renderStandardSummary,
@@ -33,7 +31,7 @@ const contractEnforcementConfig =
         ? parseInt(opts.minChainDepth, 10)
         : undefined,
     }),
-    render: ({ results, summary, score, elapsedTime }) => {
+    renderConsole: ({ results, summary, score, elapsedTime }) => {
       const rawData = (results as Record<string, any>).rawData || results;
       const summaryRecord = summary as Record<string, any>;
       const metrics = `Patterns: ${summaryRecord.totalDefensivePatterns} (${summaryRecord.defensiveDensity}/kLOC)`;

@@ -8,34 +8,25 @@ vi.mock('@aiready/doc-drift', () => ({
     recommendations: ['Update docs'],
     issues: [],
   }),
+  calculateDocDriftScore: vi.fn().mockReturnValue({ score: 20 }),
+  generateSummary: (report: any) => report.summary || report,
 }));
 
-vi.mock('@aiready/core', () => ({
-  loadConfig: vi.fn().mockResolvedValue({}),
-  mergeConfigWithDefaults: vi
-    .fn()
-    .mockImplementation((c, d) => ({ ...d, ...c })),
-  ToolName: {
-    PatternDetect: 'pattern-detect',
-    ContextAnalyzer: 'context-analyzer',
-    NamingConsistency: 'naming-consistency',
-    AiSignalClarity: 'ai-signal-clarity',
-    AgentGrounding: 'agent-grounding',
-    TestabilityIndex: 'testability-index',
-    DocDrift: 'doc-drift',
-    DependencyHealth: 'dependency-health',
-    ChangeAmplification: 'change-amplification',
-    CognitiveLoad: 'cognitive-load',
-    PatternEntropy: 'pattern-entropy',
-    ConceptCohesion: 'concept-cohesion',
-    SemanticDistance: 'semantic-distance',
-  },
-}));
+vi.mock('@aiready/core', async (importOriginal) => {
+  const original = await importOriginal<typeof import('@aiready/core')>();
+  return {
+    ...original,
+    loadConfig: vi.fn().mockResolvedValue({}),
+    mergeConfigWithDefaults: vi
+      .fn()
+      .mockImplementation((c, d) => ({ ...d, ...c })),
+    handleCLIError: vi.fn(),
+  };
+});
 
 describe('Doc Drift CLI Action', () => {
   it('should run analysis and return scoring', async () => {
-    const result = await docDriftAction('.', { output: 'json' });
-    expect(result?.toolName).toBe('doc-drift');
-    expect(result?.score).toBe(20);
+    const result = await docDriftAction('.', { output: 'json', score: true });
+    expect(result?.scoring?.score).toBe(20);
   });
 });

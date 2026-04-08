@@ -49,6 +49,7 @@ const mockCalcScore = vi.fn().mockReturnValue({
 vi.mock('@aiready/contract-enforcement', () => ({
   analyzeContractEnforcement: mockAnalyzeContract,
   calculateContractEnforcementScore: mockCalcScore,
+  generateSummary: (report: any) => report.summary || report,
 }));
 
 describe('Contract Enforcement Action', () => {

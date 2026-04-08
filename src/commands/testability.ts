@@ -4,9 +4,6 @@
 
 import {
   defineToolCommand,
-  renderToolHeader,
-  renderSafetyRating,
-  renderToolScoreFooter,
   chalk,
   createStandardToolConfig,
   renderStandardSummary,
@@ -23,7 +20,7 @@ interface TestabilityOptions {
 
 const testabilityConfig = createStandardToolConfig<TestabilityOptions>({
   toolName: 'testability-index',
-  label: 'Testability analysis',
+  label: 'Testability Analysis',
   emoji: '🧪',
   importPath: '@aiready/testability',
   analyzeFnName: 'analyzeTestability',
@@ -34,7 +31,7 @@ const testabilityConfig = createStandardToolConfig<TestabilityOptions>({
       ? parseFloat(opts.minCoverage)
       : undefined,
   }),
-  render: ({ results, summary, score, elapsedTime }) => {
+  renderConsole: ({ results, summary, score, elapsedTime }) => {
     const rawData = (results as Record<string, any>).rawData || results;
     const summaryRecord = summary as Record<string, any>;
     const coverage = Math.round(
@@ -66,7 +63,7 @@ export function defineTestabilityCommand(program: import('commander').Command) {
     name: 'testability',
     description: 'Analyze test coverage and AI change safety',
     toolName: 'testability-index',
-    label: 'Testability analysis',
+    label: 'Testability Analysis',
     emoji: '🧪',
     options: [
       {
