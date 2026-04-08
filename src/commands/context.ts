@@ -9,6 +9,8 @@ import {
   renderToolScoreFooter,
   printTerminalHeader,
   chalk,
+  createStandardToolConfig,
+  renderStandardSummary,
 } from './shared/command-builder';
 
 interface ContextOptions {
@@ -21,30 +23,22 @@ interface ContextOptions {
   score?: boolean;
 }
 
-const contextConfig = {
+const contextConfig = createStandardToolConfig<ContextOptions>({
+  toolName: 'context-analyzer',
+  label: 'Context analysis',
+  emoji: '🧩',
+  importPath: '@aiready/context-analyzer',
+  analyzeFnName: 'analyzeContext',
+  scoreFnName: 'calculateContextScore',
   defaults: {
-    rootDir: '',
     maxDepth: 5,
     maxContextBudget: 10000,
-    include: undefined,
-    exclude: undefined,
-    output: { format: 'console', file: undefined },
   },
-  getCliOptions: (opts: ContextOptions) => ({
+  getCliOptions: (opts) => ({
     maxDepth: opts.maxDepth ? parseInt(opts.maxDepth) : undefined,
     maxContextBudget: opts.maxContext ? parseInt(opts.maxContext) : undefined,
   }),
-  importTool: async () => {
-    const { analyzeContext, generateSummary, calculateContextScore } =
-      await import('@aiready/context-analyzer');
-    return {
-      analyze: analyzeContext,
-      generateSummary,
-      calculateScore: (data: any, _resultsCount?: number) =>
-        calculateContextScore(data),
-    };
-  },
-  renderConsole: ({ results: _results, summary, elapsedTime, score }: any) => {
+  render: ({ summary, elapsedTime, score }) => {
     printTerminalHeader('CONTEXT ANALYSIS SUMMARY');
 
     console.log(
@@ -53,11 +47,6 @@ const contextConfig = {
     console.log(
       chalk.white(
         `💸 Total tokens (context budget): ${chalk.bold(summary.totalTokens.toLocaleString())}`
-      )
-    );
-    console.log(
-      chalk.cyan(
-        `📊 Average context budget: ${chalk.bold(summary.avgContextBudget.toFixed(0))} tokens`
       )
     );
     console.log(
@@ -80,31 +69,9 @@ const contextConfig = {
       });
     }
 
-    if (summary.topExpensiveFiles.length > 0) {
-      renderSubSection('Top Context-Expensive Files');
-      summary.topExpensiveFiles.slice(0, 5).forEach((item: any) => {
-        const icon =
-          item.severity === 'critical'
-            ? '🔴'
-            : item.severity === 'major'
-              ? '🟡'
-              : '🔵';
-        const color =
-          item.severity === 'critical'
-            ? chalk.red
-            : item.severity === 'major'
-              ? chalk.yellow
-              : chalk.blue;
-
-        console.log(
-          `  ${icon} ${color(item.severity.toUpperCase())}: ${chalk.white(item.file.split('/').pop())} ${chalk.dim(`(${item.contextBudget.toLocaleString()} tokens)`)}`
-        );
-      });
-    }
-
     renderToolScoreFooter(score);
   },
-};
+});
 
 /**
  * Define the context command.
@@ -143,10 +110,5 @@ export async function contextAction(
 ) {
   const { executeToolAction } = await import('./scan-helpers');
 
-  return await executeToolAction(directory, options, {
-    toolName: 'context-analyzer',
-    label: 'Context analysis',
-    emoji: '🧩',
-    ...contextConfig,
-  });
+  return await executeToolAction(directory, options, contextConfig);
 }

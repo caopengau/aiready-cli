@@ -34,6 +34,7 @@ export interface ScanOptions {
   server?: string;
   baseline?: boolean;
   changedFilesOnly?: boolean;
+  verbose?: boolean;
 }
 
 /**
@@ -45,6 +46,7 @@ export interface BaseCommandOptions {
   output?: string;
   outputFile?: string;
   score?: boolean;
+  [key: string]: any;
 }
 
 /**
@@ -59,7 +61,10 @@ export interface ToolActionConfig<TResults, TSummary, TOptions> {
   importTool: () => Promise<{
     analyze: (options: TOptions) => Promise<TResults>;
     generateSummary: (results: TResults) => TSummary;
-    calculateScore?: (data: any, resultsCount?: number) => ToolScoringOutput;
+    calculateScore?: (
+      data: unknown,
+      resultsCount?: number
+    ) => ToolScoringOutput;
   }>;
   renderConsole: (data: {
     results: TResults;
@@ -84,7 +89,7 @@ export async function executeToolAction<
   TOptions extends Record<string, any>,
 >(
   directory: string,
-  options: BaseCommandOptions & any,
+  options: BaseCommandOptions,
   config: ToolActionConfig<TResults, TSummary, TOptions>
 ) {
   console.log(chalk.blue(`${config.emoji} ${config.label}...\n`));
@@ -126,16 +131,16 @@ export async function executeToolAction<
       // - pattern-detect: calculateScore(duplicates, totalFilesAnalyzed)
       // - consistency: calculateScore(issues, totalFilesAnalyzed)
       // - others: calculateScore(summary)
-      const resultsAny = results as any;
+      const resultsAny = results as Record<string, unknown>;
       const scoreData =
         resultsAny.rawData ||
         resultsAny.duplicates ||
         resultsAny.issues ||
         resultsAny;
       const filesCount =
-        resultsAny.length ||
-        resultsAny.summary?.filesAnalyzed ||
-        resultsAny.summary?.totalFiles;
+        (resultsAny.length as number) ||
+        ((resultsAny.summary as any)?.filesAnalyzed as number) ||
+        ((resultsAny.summary as any)?.totalFiles as number);
       toolScore = calculateScore(scoreData, filesCount);
     }
 
@@ -249,7 +254,7 @@ export function getDefaultTools(): string[] {
  * Create progress callback for tool execution
  */
 export function createProgressCallback() {
-  return (event: any) => {
+  return (event: { tool: string; message?: string; data?: unknown }) => {
     // Handle progress messages
     if (event.message) {
       process.stdout.write(`\r\x1b[K   [${event.tool}] ${event.message}`);
@@ -259,7 +264,7 @@ export function createProgressCallback() {
     // Handle tool completion
     process.stdout.write('\r\x1b[K'); // Clear the progress line
     console.log(chalk.cyan(`--- ${event.tool.toUpperCase()} RESULTS ---`));
-    const toolResult = event.data;
+    const toolResult = event.data as Record<string, any>;
     if (toolResult && toolResult.summary) {
       if (toolResult.summary.totalIssues !== undefined)
         console.log(

@@ -8,6 +8,7 @@ import {
   renderToolScoreFooter,
   chalk,
   createStandardToolConfig,
+  renderStandardSummary,
 } from './shared/command-builder';
 
 interface ContractEnforcementOptions {
@@ -32,57 +33,40 @@ const contractEnforcementConfig =
         ? parseInt(opts.minChainDepth, 10)
         : undefined,
     }),
-    render: ({ results, summary, score }) => {
-      renderToolHeader(
-        'Contract Enforcement',
-        '🛡️',
-        score?.score || 0,
-        summary.rating
-      );
+    render: ({ results, summary, score, elapsedTime }) => {
+      const rawData = (results as Record<string, any>).rawData || results;
+      const summaryRecord = summary as Record<string, any>;
+      const metrics = `Patterns: ${summaryRecord.totalDefensivePatterns} (${summaryRecord.defensiveDensity}/kLOC)`;
 
-      const rawData = results.rawData || results;
-      console.log(
-        chalk.dim(
-          `     Patterns: ${summary.totalDefensivePatterns}  (${summary.defensiveDensity}/kLOC)  |  ${summary.sourceFiles} files scanned`
-        )
-      );
+      renderStandardSummary({
+        label: 'Contract Enforcement',
+        emoji: '🛡️',
+        summary: summaryRecord,
+        score,
+        elapsedTime,
+        metrics,
+      });
 
-      const dims = summary.dimensions;
+      const dims = summaryRecord.dimensions as Record<string, number>;
       if (dims) {
-        const entries = [
-          ['Type Escape Hatches', dims.typeEscapeHatchScore],
-          ['Fallback Cascades', dims.fallbackCascadeScore],
-          ['Error Transparency', dims.errorTransparencyScore],
-          ['Boundary Validation', dims.boundaryValidationScore],
-        ] as const;
-
-        for (const [name, val] of entries) {
-          const color =
-            val >= 80 ? chalk.green : val >= 60 ? chalk.yellow : chalk.red;
-          console.log(chalk.dim(`     ${name}: ${color(val + '/100')}`));
-        }
+        console.log(
+          chalk.dim(
+            `     Types: ${dims.typeEscapeHatchScore} | Fallbacks: ${dims.fallbackCascadeScore} | Errors: ${dims.errorTransparencyScore} | Validation: ${dims.boundaryValidationScore}`
+          )
+        );
       }
 
       if (
-        summary.totalDefensivePatterns > 0 &&
+        (summaryRecord.totalDefensivePatterns as number) > 0 &&
         rawData['as-any'] !== undefined
       ) {
         const breakdown = [
-          `as-any: ${rawData['as-any'] || 0}`,
-          `as-unknown: ${rawData['as-unknown'] || 0}`,
-          `deep-?.: ${rawData['deep-optional-chain'] || 0}`,
-          `?? literal: ${rawData['nullish-literal-default'] || 0}`,
-          `swallowed-error: ${rawData['swallowed-error'] || 0}`,
-          `env-fallback: ${rawData['env-fallback'] || 0}`,
-          `guard-clause: ${rawData['unnecessary-guard'] || 0}`,
-          `any-param: ${rawData['any-parameter'] || 0}`,
-          `any-return: ${rawData['any-return'] || 0}`,
+          `any: ${Number(rawData['as-any']) + Number(rawData['any-parameter']) + Number(rawData['any-return'])}`,
+          `unknown: ${rawData['as-unknown']}`,
+          `chaining: ${rawData['deep-optional-chain']}`,
+          `fallbacks: ${Number(rawData['nullish-literal-default']) + Number(rawData['env-fallback'])}`,
         ].join('  |  ');
-        console.log(chalk.dim(`     ${breakdown}`));
-      }
-
-      if (score) {
-        renderToolScoreFooter(score);
+        console.log(chalk.dim(`     Details: ${breakdown}`));
       }
     },
   });
@@ -94,9 +78,9 @@ contractEnforcementConfig.importTool = async () => {
   const base = await originalImportTool();
   return {
     ...base,
-    calculateScore: (data: any, resultsCount?: number) => {
+    calculateScore: (data: unknown, resultsCount?: number) => {
       const result = tool.calculateContractEnforcementScore(
-        data,
+        data as any,
         resultsCount ?? 0,
         resultsCount ?? 0
       );

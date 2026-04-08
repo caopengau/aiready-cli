@@ -205,7 +205,7 @@ function applyGatingRules(
   let majorCount = 0;
   let minorCount = 0;
 
-  report.results.forEach((fileRes: any) => {
+  report.results.forEach((fileRes: Record<string, any>) => {
     const relPath = relative(
       resolvedDir,
       resolvePath(resolvedDir, fileRes.fileName || fileRes.filePath)
@@ -214,8 +214,10 @@ function applyGatingRules(
       // a. Apply Severity Overrides
       const toolId = issue.toolId || 'unknown';
       const category = issue.category || '';
-      const toolConfig = (finalOptions.tools as any)?.[toolId] || {};
-      const overrides = toolConfig.severityOverrides || {};
+      const toolConfig =
+        (finalOptions.tools as Record<string, any>)?.[toolId] || {};
+      const overrides =
+        (toolConfig.severityOverrides as Record<string, any>) || {};
 
       if (overrides[category]) {
         issue.severity = overrides[category];
@@ -233,7 +235,7 @@ function applyGatingRules(
 
     fileRes.issues = filteredIssues;
     filteredIssues.forEach((i: any) => {
-      const s = i.severity?.toLowerCase();
+      const s = String(i.severity || '').toLowerCase();
       if (s === 'critical') criticalCount++;
       else if (s === 'major') majorCount++;
       else if (s === 'minor') minorCount++;
@@ -397,6 +399,7 @@ export function defineScanCommand(program: Command) {
     .option('--api-key <key>', 'Platform API key for automatic upload')
     .option('--upload', 'Automatically upload results to the platform')
     .option('--server <url>', 'Custom platform URL')
+    .option('--verbose', 'Show verbose output for debugging')
     .addHelpText('after', SCAN_HELP_TEXT)
     .action(async (directory, options) => {
       await scanAction(directory, options);

@@ -156,22 +156,65 @@ export {
 /**
  * Standard configuration for a tool to reduce duplication in command files.
  */
-export interface StandardToolConfig<TOptions = any> {
+export interface StandardToolConfig<TOptions = Record<string, unknown>> {
   toolName: string;
   label: string;
   emoji: string;
   importPath: string;
   analyzeFnName: string;
   scoreFnName?: string;
-  defaults?: Record<string, any>;
-  getCliOptions?: (opts: TOptions) => Record<string, any>;
+  defaults?: Record<string, unknown>;
+  getCliOptions?: (opts: TOptions) => Record<string, unknown>;
   render?: (params: {
-    results: any;
-    summary: any;
+    results: unknown;
+    summary: Record<string, unknown>;
     elapsedTime: string;
     score?: ToolScoringOutput;
-    finalOptions: any;
+    finalOptions: TOptions;
   }) => void;
+}
+
+/**
+ * Standard summary rendering for common tool outputs.
+ */
+export function renderStandardSummary(params: {
+  label: string;
+  emoji: string;
+  summary: Record<string, any>;
+  elapsedTime: string;
+  score?: ToolScoringOutput;
+  metrics?: string;
+}) {
+  const { label, emoji, summary, elapsedTime, score, metrics } = params;
+
+  renderToolHeader(
+    label,
+    emoji,
+    score?.score || 0,
+    summary.rating || 'UNKNOWN'
+  );
+
+  // Show safety rating if available (for testability, grounding)
+  if (summary.aiChangeSafetyRating) {
+    renderSafetyRating(summary.aiChangeSafetyRating);
+  }
+
+  const filesAnalyzed =
+    summary.sourceFiles ?? summary.filesAnalyzed ?? summary.totalFiles ?? 0;
+
+  console.log(
+    chalk.dim(
+      `     Analysis complete in ${chalk.bold(elapsedTime + 's')} | ${filesAnalyzed} files scanned`
+    )
+  );
+
+  if (metrics) {
+    console.log(chalk.dim(`     ${metrics}`));
+  }
+
+  if (score) {
+    renderToolScoreFooter(score);
+  }
 }
 
 /**
@@ -196,9 +239,12 @@ export function createStandardToolConfig<TOptions = any>(
       const tool = await import(config.importPath);
       return {
         analyze: tool[config.analyzeFnName],
-        generateSummary: (report: any) => report.summary,
+        generateSummary: (report: any) => report.summary || report,
         calculateScore: (data: any) => {
-          if (!config.scoreFnName || !tool[config.scoreFnName]) {
+          const scoreFn = config.scoreFnName
+            ? tool[config.scoreFnName]
+            : undefined;
+          if (!scoreFn) {
             return {
               score: 0,
               toolName: config.toolName,
@@ -207,7 +253,7 @@ export function createStandardToolConfig<TOptions = any>(
               recommendations: [],
             };
           }
-          const score = tool[config.scoreFnName](data);
+          const score = scoreFn(data);
           return {
             ...score,
             toolName: config.toolName,
@@ -227,6 +273,18 @@ export function createStandardToolConfig<TOptions = any>(
         },
       };
     },
-    renderConsole: config.render || (() => {}),
+    renderConsole: (params) => {
+      if (config.render) {
+        config.render(params);
+      } else {
+        renderStandardSummary({
+          label: config.label,
+          emoji: config.emoji,
+          summary: params.summary,
+          elapsedTime: params.elapsedTime,
+          score: params.score,
+        });
+      }
+    },
   };
 }

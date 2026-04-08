@@ -9,6 +9,7 @@ import {
   renderToolScoreFooter,
   chalk,
   createStandardToolConfig,
+  renderStandardSummary,
 } from './shared/command-builder';
 
 interface TestabilityOptions {
@@ -33,27 +34,29 @@ const testabilityConfig = createStandardToolConfig<TestabilityOptions>({
       ? parseFloat(opts.minCoverage)
       : undefined,
   }),
-  render: ({ results, summary, score }) => {
-    renderToolHeader('Testability', '🧪', score?.score || 0, summary.rating);
-    renderSafetyRating(summary.aiChangeSafetyRating);
-
-    const rawData = results.rawData || results;
-    console.log(
-      chalk.dim(
-        `     Coverage: ${Math.round(summary.coverageRatio * 100)}%  (${rawData.testFiles} test / ${rawData.sourceFiles} source files)`
-      )
+  render: ({ results, summary, score, elapsedTime }) => {
+    const rawData = (results as Record<string, any>).rawData || results;
+    const summaryRecord = summary as Record<string, any>;
+    const coverage = Math.round(
+      ((summaryRecord.coverageRatio as number) || 0) * 100
     );
+    const metrics = `Coverage: ${coverage}%  (${rawData.testFiles} test / ${rawData.sourceFiles} source files)`;
 
-    if (summary.aiChangeSafetyRating === 'blind-risk') {
+    renderStandardSummary({
+      label: 'Testability',
+      emoji: '🧪',
+      summary: summaryRecord,
+      score,
+      elapsedTime,
+      metrics,
+    });
+
+    if (summaryRecord.aiChangeSafetyRating === 'blind-risk') {
       console.log(
         chalk.red.bold(
           '\n     ⚠️  NO TESTS — AI changes to this codebase are completely unverifiable!\n'
         )
       );
-    }
-
-    if (score) {
-      renderToolScoreFooter(score);
     }
   },
 });

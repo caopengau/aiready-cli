@@ -9,6 +9,7 @@ import {
   renderToolScoreFooter,
   chalk,
   createStandardToolConfig,
+  renderStandardSummary,
 } from './shared/command-builder';
 
 interface GroundingOptions {
@@ -35,24 +36,16 @@ const agentGroundingConfig = createStandardToolConfig<GroundingOptions>({
       ? parseInt(opts.readmeStaleDays)
       : undefined,
   }),
-  render: ({ summary, score }) => {
-    renderToolHeader(
-      'Agent Grounding',
-      '🧠',
-      score?.score || 0,
-      summary.rating
-    );
-    renderSafetyRating(summary.rating);
-
-    console.log(
-      chalk.dim(
-        `     Files: ${summary.filesAnalyzed}  Dirs: ${summary.directoriesAnalyzed}`
-      )
-    );
-
-    if (score) {
-      renderToolScoreFooter(score);
-    }
+  render: ({ summary, score, elapsedTime }) => {
+    const summaryRecord = summary as Record<string, any>;
+    renderStandardSummary({
+      label: 'Agent Grounding',
+      emoji: '🧠',
+      summary: summaryRecord,
+      score,
+      elapsedTime,
+      metrics: `Files: ${summaryRecord.filesAnalyzed}  Dirs: ${summaryRecord.directoriesAnalyzed}`,
+    });
   },
 });
 

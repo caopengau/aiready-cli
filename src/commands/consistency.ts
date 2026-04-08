@@ -10,6 +10,7 @@ import {
   printTerminalHeader,
   chalk,
   createStandardToolConfig,
+  renderStandardSummary,
 } from './shared/command-builder';
 import type { Severity } from '@aiready/core';
 
@@ -45,20 +46,16 @@ const SHARED_CONSISTENCY_CONFIG = createStandardToolConfig<ConsistencyOptions>({
     minSeverity: opts.minSeverity as Severity | undefined,
   }),
   render: ({ results: report, summary, elapsedTime, score }) => {
-    printTerminalHeader('CONSISTENCY ANALYSIS SUMMARY');
-
-    console.log(
-      chalk.white(`📁 Files analyzed: ${chalk.bold(summary.filesAnalyzed)}`)
-    );
-    console.log(
-      chalk.white(`⚠  Total issues: ${chalk.bold(summary.totalIssues)}`)
-    );
-    console.log(
-      chalk.gray(`⏱  Analysis time: ${chalk.bold(elapsedTime + 's')}`)
-    );
+    renderStandardSummary({
+      label: 'Consistency Analysis',
+      emoji: '📏',
+      summary,
+      elapsedTime,
+      score,
+    });
 
     if (summary.totalIssues > 0 && report.results) {
-      renderSubSection('Issues Breakdown');
+      renderSubSection('Top Consistency Issues');
       const sortedIssues = [...report.results]
         .flatMap((file: any) =>
           (file.issues || []).map((issue: any) => ({
@@ -75,7 +72,7 @@ const SHARED_CONSISTENCY_CONFIG = createStandardToolConfig<ConsistencyOptions>({
           };
           return (levels[b.severity] || 0) - (levels[a.severity] || 0);
         })
-        .slice(0, 10);
+        .slice(0, 5);
 
       sortedIssues.forEach((issue: any) => {
         const icon =
@@ -95,17 +92,7 @@ const SHARED_CONSISTENCY_CONFIG = createStandardToolConfig<ConsistencyOptions>({
           `  ${icon} ${color(issue.severity.toUpperCase())}: ${chalk.white(issue.file)}${issue.line ? `:${issue.line}` : ''}`
         );
         console.log(`     ${issue.message}`);
-        if (issue.suggestion) {
-          console.log(chalk.dim(`     💡 ${issue.suggestion}`));
-        }
-        console.log();
       });
-    } else {
-      console.log(chalk.green('\n✨ Great! No consistency issues detected.\n'));
-    }
-
-    if (score) {
-      renderToolScoreFooter(score);
     }
   },
 });
