@@ -112,7 +112,7 @@ make sync               # Syncs all spokes and publishes
 make npm-publish SPOKE=cli  # Publish CLI individually
 ```
 
-For more details, see [Release Management](../../.github/sub-instructions/release-management.md)
+For more details, see [Release Management](../../docs/workflows/release-management.md)
 
 ## 🐛 Reporting Issues
 
