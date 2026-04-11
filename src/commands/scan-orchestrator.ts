@@ -10,7 +10,7 @@ import { analyzeUnified, scoreUnified, type ScoringResult } from '../index';
 import {
   printScanSummary,
   printBusinessImpact,
-  printScoring,
+  printScoringBreakdown,
 } from './report-formatter';
 import { createProgressCallback, type ScanOptions } from './scan-helpers';
 
@@ -63,12 +63,10 @@ export async function runUnifiedScan(
       },
     });
 
-    printScoring(scoringResult, scoringProfile);
+    printScoringBreakdown(scoringResult);
 
     // Trend comparison logic
-    if (options.compareTo) {
-      handleTrendComparison(options.compareTo, scoringResult);
-    }
+    // Trend comparison logic will be handled in the main scan action
 
     // Token Budget & Cost Logic
     await handleBusinessImpactMetrics(
@@ -78,47 +76,7 @@ export async function runUnifiedScan(
     );
   }
 
-  return { results, scoringResult };
-}
-
-/**
- * Handles trend comparison logic if a baseline report is provided.
- */
-function handleTrendComparison(
-  baselinePath: string,
-  currentScoring: ScoringResult
-) {
-  try {
-    const prevReport = JSON.parse(
-      readFileSync(resolvePath(process.cwd(), baselinePath), 'utf8')
-    );
-    const prevScore = prevReport.scoring?.overall ?? prevReport.scoring?.score;
-
-    if (typeof prevScore === 'number') {
-      const diff = currentScoring.overall - prevScore;
-      const diffStr = diff > 0 ? `+${diff}` : String(diff);
-      if (diff > 0)
-        console.log(
-          chalk.green(
-            `  📈 Trend: ${diffStr} compared to ${baselinePath} (${prevScore} → ${currentScoring.overall})`
-          )
-        );
-      else if (diff < 0)
-        console.log(
-          chalk.red(
-            `  📉 Trend: ${diffStr} compared to ${baselinePath} (${prevScore} → ${currentScoring.overall})`
-          )
-        );
-      else
-        console.log(
-          chalk.blue(
-            `  ➖ Trend: No change (${prevScore} → ${currentScoring.overall})`
-          )
-        );
-    }
-  } catch (e) {
-    void e;
-  }
+  return { results, scoringResult, scoringProfile };
 }
 
 /**

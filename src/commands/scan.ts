@@ -17,7 +17,11 @@ import {
 } from '@aiready/core';
 import type { UnifiedReport, ScoringResult } from '@aiready/core';
 import { getReportTimestamp, warnIfGraphCapExceeded } from '../utils';
-import { mapToUnifiedReport } from './report-formatter';
+import {
+  mapToUnifiedReport,
+  printOverallScore,
+  handleTrendComparison,
+} from './report-formatter';
 import { uploadAction } from './upload';
 import { type ScanOptions } from './scan-helpers';
 import { resolveScanConfig } from './scan-config';
@@ -42,7 +46,7 @@ export async function scanAction(directory: string, options: ScanOptions) {
     const finalOptions = await resolveScanConfig(resolvedDir, options);
 
     // 2. Execute Scan Orchestration
-    const { results, scoringResult } = await runUnifiedScan(
+    const { results, scoringResult, scoringProfile } = await runUnifiedScan(
       resolvedDir,
       finalOptions,
       options,
@@ -113,7 +117,15 @@ export async function scanAction(directory: string, options: ScanOptions) {
 
     await warnIfGraphCapExceeded(outputData, resolvedDir);
 
-    // 6. Gatekeeper Logic (Thresholds & CI Failures)
+    // 6. Final Scoring Summary
+    if (scoringResult) {
+      printOverallScore(scoringResult, scoringProfile || 'default');
+      if (options.compareTo) {
+        handleTrendComparison(options.compareTo, scoringResult);
+      }
+    }
+
+    // 7. Gatekeeper Logic (Thresholds & CI Failures)
     await handleGatekeeper(
       outputData,
       scoringResult,
@@ -122,7 +134,7 @@ export async function scanAction(directory: string, options: ScanOptions) {
       resolvedDir
     );
 
-    // 5. Deep Link to Platform
+    // 8. Deep Link to Platform
     const isCI = options.ci ?? process.env.CI === 'true';
     if (!isCI) {
       console.log(

@@ -1,4 +1,6 @@
 import chalk from 'chalk';
+import { readFileSync } from 'fs';
+import { resolve as resolvePath } from 'path';
 import {
   Severity,
   ScoringResult,
@@ -149,16 +151,21 @@ export function printBusinessImpact(roi: any, unifiedBudget: any) {
 }
 
 /**
- * Print detailed scoring breakdown by tool.
+ * Print only the overall score block.
  */
-export function printScoring(
+export function printOverallScore(
   scoringResult: ScoringResult,
   scoringProfile: string
 ) {
   console.log(chalk.bold('\n📊 AI Readiness Overall Score'));
   console.log(`  ${formatScore(scoringResult)}`);
   console.log(chalk.dim(`  (Scoring Profile: ${scoringProfile})`));
+}
 
+/**
+ * Print detailed scoring breakdown by tool.
+ */
+export function printScoringBreakdown(scoringResult: ScoringResult) {
   if (scoringResult.breakdown) {
     console.log(chalk.bold('\nTool breakdown:'));
     scoringResult.breakdown.forEach((tool: any) => {
@@ -171,6 +178,57 @@ export function printScoring(
     });
 
     printTopRecommendations(scoringResult.breakdown);
+  }
+}
+
+/**
+ * Print detailed scoring breakdown by tool (Combined version for backward compatibility).
+ */
+export function printScoring(
+  scoringResult: ScoringResult,
+  scoringProfile: string
+) {
+  printOverallScore(scoringResult, scoringProfile);
+  printScoringBreakdown(scoringResult);
+}
+
+/**
+ * Handles trend comparison logic if a baseline report is provided.
+ */
+export function handleTrendComparison(
+  baselinePath: string,
+  currentScoring: ScoringResult
+) {
+  try {
+    const prevReport = JSON.parse(
+      readFileSync(resolvePath(process.cwd(), baselinePath), 'utf8')
+    );
+    const prevScore = prevReport.scoring?.overall ?? prevReport.scoring?.score;
+
+    if (typeof prevScore === 'number') {
+      const diff = currentScoring.overall - prevScore;
+      const diffStr = diff > 0 ? `+${diff}` : String(diff);
+      if (diff > 0)
+        console.log(
+          chalk.green(
+            `  📈 Trend: ${diffStr} compared to ${baselinePath} (${prevScore} → ${currentScoring.overall})`
+          )
+        );
+      else if (diff < 0)
+        console.log(
+          chalk.red(
+            `  📉 Trend: ${diffStr} compared to ${baselinePath} (${prevScore} → ${currentScoring.overall})`
+          )
+        );
+      else
+        console.log(
+          chalk.blue(
+            `  ➖ Trend: No change (${prevScore} → ${currentScoring.overall})`
+          )
+        );
+    }
+  } catch (e) {
+    void e;
   }
 }
 
