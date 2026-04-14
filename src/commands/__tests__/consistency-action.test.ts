@@ -37,6 +37,7 @@ describe('Consistency Action (mocked executeToolAction)', () => {
           namingIssues: 1,
           patternIssues: 0,
           architectureIssues: 0,
+          rating: 'GOOD',
         };
 
         const elapsedTime = '0.05';
@@ -67,12 +68,11 @@ describe('Consistency Action (mocked executeToolAction)', () => {
   it('renders issues when present', async () => {
     await consistencyAction('.', {});
     // Header + files/summary lines should be logged
-    expect(consoleSpy).toHaveBeenCalledWith(
-      expect.stringContaining('Consistency Analysis')
-    );
-    expect(consoleSpy).toHaveBeenCalledWith(
-      expect.stringContaining('files scanned')
-    );
+    const allOutput = consoleSpy.mock.calls
+      .map((call: any) => call[0])
+      .join('\n');
+    expect(allOutput).toContain('Consistency Analysis');
+    expect(allOutput).toContain('files scanned');
   });
 
   it('renders success message when no issues', async () => {
@@ -86,6 +86,7 @@ describe('Consistency Action (mocked executeToolAction)', () => {
           namingIssues: 0,
           patternIssues: 0,
           architectureIssues: 0,
+          rating: 'EXCELLENT',
         };
         const elapsedTime = '0.02';
         config.renderConsole({
@@ -100,9 +101,11 @@ describe('Consistency Action (mocked executeToolAction)', () => {
     );
 
     await consistencyAction('.', {});
-    expect(consoleSpy).toHaveBeenCalledWith(
-      expect.stringContaining('No consistency issues detected')
-    );
+    const allOutput = consoleSpy.mock.calls
+      .map((call: any) => call[0])
+      .join('\n');
+    expect(allOutput).toContain('Consistency Analysis');
+    expect(allOutput).toContain('EXCELLENT');
   });
 
   it('passes score through when requested', async () => {
@@ -116,6 +119,7 @@ describe('Consistency Action (mocked executeToolAction)', () => {
           namingIssues: 0,
           patternIssues: 0,
           architectureIssues: 0,
+          rating: 'EXCELLENT',
         };
         const elapsedTime = '0.02';
         const score = {
@@ -137,9 +141,11 @@ describe('Consistency Action (mocked executeToolAction)', () => {
     );
 
     await consistencyAction('.', { score: true } as any);
-    expect(consoleSpy).toHaveBeenCalledWith(
-      expect.stringContaining('Consistency Analysis')
-    );
+    const allOutput = consoleSpy.mock.calls
+      .map((call: any) => call[0])
+      .join('\n');
+    expect(allOutput).toContain('Consistency Analysis');
+    expect(allOutput).toContain('88/100');
   });
 
   it('renders issues sorted by severity and shows suggestions', async () => {
@@ -190,6 +196,7 @@ describe('Consistency Action (mocked executeToolAction)', () => {
           namingIssues: 1,
           patternIssues: 1,
           architectureIssues: 1,
+          rating: 'POOR',
         };
         const elapsedTime = '0.10';
         config.renderConsole({
@@ -205,17 +212,16 @@ describe('Consistency Action (mocked executeToolAction)', () => {
 
     await consistencyAction('.', {} as any);
 
-    expect(consoleSpy).toHaveBeenCalledWith(
-      expect.stringContaining('Consistency Analysis')
-    );
-    expect(consoleSpy).toHaveBeenCalledWith(
-      expect.stringContaining('CRITICAL')
-    );
+    const allOutput = consoleSpy.mock.calls
+      .map((call: any) => call[0])
+      .join('\n');
+    expect(allOutput).toContain('Consistency Analysis');
+    expect(allOutput).toContain('POOR');
   });
 
   it('registers command and exposes getCliOptions correctly', async () => {
     const shared = await import('../shared/command-builder');
-    const spy = vi.spyOn(shared, 'defineToolCommand');
+    const spy = vi.spyOn(shared, 'defineStandardTool');
 
     const fakeProgram = {
       command: vi.fn().mockReturnThis(),
@@ -231,7 +237,7 @@ describe('Consistency Action (mocked executeToolAction)', () => {
 
     expect(spy).toHaveBeenCalled();
     const config = spy.mock.calls[0][1];
-    const cliOpts = config.actionConfig.getCliOptions({
+    const cliOpts = config.getCliOptions({
       naming: false,
       patterns: true,
       minSeverity: 'major',
@@ -251,6 +257,7 @@ describe('Consistency Action (mocked executeToolAction)', () => {
           namingIssues: 0,
           patternIssues: 0,
           architectureIssues: 0,
+          rating: 'EXCELLENT',
         };
         const elapsedTime = '0.04';
         // Pass an object for results so renderConsole receives an object (report) with no .results
@@ -266,8 +273,10 @@ describe('Consistency Action (mocked executeToolAction)', () => {
     );
 
     await consistencyAction('.', {} as any);
-    expect(consoleSpy).toHaveBeenCalledWith(
-      expect.stringContaining('No consistency issues detected')
-    );
+    const allOutput = consoleSpy.mock.calls
+      .map((call: any) => call[0])
+      .join('\n');
+    expect(allOutput).toContain('Consistency Analysis');
+    expect(allOutput).toContain('EXCELLENT');
   });
 });

@@ -119,7 +119,7 @@ describe('Patterns Action', () => {
 
   it('registers command and maps CLI options correctly', async () => {
     const shared = await import('../shared/command-builder');
-    const spy = vi.spyOn(shared, 'defineToolCommand');
+    const spy = vi.spyOn(shared, 'defineStandardTool');
 
     const fakeProgram = {
       command: vi.fn().mockReturnThis(),
@@ -135,7 +135,7 @@ describe('Patterns Action', () => {
 
     expect(spy).toHaveBeenCalled();
     const config = spy.mock.calls[0][1];
-    const cliOpts = config.actionConfig.getCliOptions({
+    const cliOpts = config.getCliOptions({
       similarity: '0.6',
       minLines: '10',
       maxCandidates: '4',
@@ -152,7 +152,7 @@ describe('Patterns Action', () => {
 
   it('importTool returns adapter functions wired to provider', async () => {
     const shared = await import('../shared/command-builder');
-    const spy = vi.spyOn(shared, 'defineToolCommand');
+    const spy = vi.spyOn(shared, 'defineStandardTool');
 
     const fakeProgram = {
       command: vi.fn().mockReturnThis(),
@@ -166,7 +166,8 @@ describe('Patterns Action', () => {
     const mod = await import('../patterns');
     mod.definePatternsCommand(fakeProgram);
     const config = spy.mock.calls[0][1];
-    const adapter = await config.actionConfig.importTool();
+    const actionConfig = shared.createStandardToolConfig(config);
+    const adapter = await actionConfig.importTool();
 
     expect(adapter.analyze).toBeDefined();
     expect(adapter.generateSummary).toBeDefined();
@@ -181,7 +182,7 @@ describe('Patterns Action', () => {
 
   it('directly invokes renderConsole to exercise printing branches', async () => {
     const shared = await import('../shared/command-builder');
-    const spy = vi.spyOn(shared, 'defineToolCommand');
+    const spy = vi.spyOn(shared, 'defineStandardTool');
 
     const fakeProgram = {
       command: vi.fn().mockReturnThis(),
@@ -195,7 +196,7 @@ describe('Patterns Action', () => {
     const mod = await import('../patterns');
     mod.definePatternsCommand(fakeProgram);
     const config = spy.mock.calls[0][1];
-    const actionConfig = config.actionConfig;
+    const actionConfig = shared.createStandardToolConfig(config);
 
     const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 

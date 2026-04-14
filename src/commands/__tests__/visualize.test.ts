@@ -14,9 +14,14 @@ vi.mock('fs', async () => {
   };
 });
 
-vi.mock('child_process', () => ({
-  spawn: vi.fn().mockReturnValue({ on: vi.fn(), kill: vi.fn() }),
-}));
+vi.mock('child_process', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('child_process')>();
+  return {
+    ...actual,
+    spawn: vi.fn().mockReturnValue({ on: vi.fn(), kill: vi.fn() }),
+    execFile: vi.fn(),
+  };
+});
 
 vi.mock('@aiready/visualizer', () => ({
   GraphBuilder: {
